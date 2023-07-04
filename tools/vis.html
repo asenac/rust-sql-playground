@@ -1,0 +1,74 @@
+<html>
+<head>
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+    <style type="text/css">
+        #mynetwork {
+            width: 100%;
+            height: 80%;
+            border: 1px solid lightgray;
+        }
+        #myedit{
+            width: 100%;
+            height: 20%;
+            border: 1px solid lightgray;
+        }
+    </style>
+</head>
+<body>
+<div id="mynetwork"></div>
+<textarea id="myedit" name="textarea" rows="10" cols="50"></textarea>
+
+<script type="text/javascript">
+    const textarea = document.getElementById('myedit');
+
+    function drawGraph(graph) {
+        // create an array with nodes
+        var nodes = new vis.DataSet(graph.nodes);
+
+        // create an array with edges
+        var edges = new vis.DataSet(graph.edges);
+
+        // create a network
+        var container = document.getElementById('mynetwork');
+
+        // provide the data in the vis format
+        var data = {
+            nodes: nodes,
+            edges: edges
+        };
+        var options = {
+            layout: {
+                hierarchical: {
+                    direction: "UD",
+                    sortMethod: "directed",
+                    parentCentralization: false,
+                },
+            },
+            edges: {
+                arrows: "to",
+                smooth: true,
+            },
+            nodes: {
+                shape: "box",
+            }
+        };
+
+        // initialize your network!
+        var network = new vis.Network(container, data, options);
+    }
+
+    // Add an event listener for the 'input' event, which fires whenever the textarea content changes
+    textarea.addEventListener('input', function() {
+        // Execute your JavaScript code here
+        // console.log('Textarea content changed:', textarea.value);
+        try {
+            const parsedData = JSON.parse(textarea.value);
+            drawGraph(parsedData);
+        } catch (error) {
+            console.error('Error parsing JSON:', error);
+        }
+    });
+</script>
+</body>
+</html>

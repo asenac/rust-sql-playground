@@ -1,0 +1,108 @@
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1">
+
+    <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+    <script src="https://unpkg.com/dagre@0.7.4/dist/dagre.js"></script>
+    <script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
+
+    <style>
+      body {
+        font-family: helvetica;
+        font-size: 14px;
+      }
+
+      #cy {
+        width: 100%;
+        height: 80%;
+        border: 1px solid lightgray;
+      }
+
+      #myedit{
+        width: 100%;
+        height: 20%;
+        border: 1px solid lightgray;
+      }
+    </style>
+
+  </head>
+
+  <body>
+    <div id="cy"></div>
+    <textarea id="myedit" name="textarea" rows="10" cols="50"></textarea>
+
+
+    <script type="text/javascript">
+        function drawGraph(graph) {
+
+            console.log(graph.nodes);
+            console.log(graph.edges);
+
+            var nodes = graph.nodes.map(n => { return {data: { id: n.id, label: n.label, width: n.label.length * 4}}; });
+            var edges = graph.edges.map(e => { return {data: { id: e.id, source: e.from, target: e.to, label: e.label}}; });
+            console.log(nodes);
+            console.log(edges);
+
+            var cy = window.cy = cytoscape({
+                container: document.getElementById('cy'),
+
+                boxSelectionEnabled: false,
+                autounselectify: true,
+
+                layout: {
+                    name: 'dagre'
+                },
+
+                style: [
+                    {
+                        selector: 'node',
+                        style: {
+                            // 'background-color': '#ffffff',
+                            'content': 'data(label)',
+                            'text-valign': 'center',
+                            'text-halign': 'center',
+                            'width': 'data(width)',
+                            'height': '20px',
+                            'shape': 'rectangle',
+                            'font-size': '8px',
+                        }
+                    },
+
+                    {
+                        selector: 'edge',
+                        style: {
+                            'width': 2,
+                            'target-arrow-shape': 'triangle',
+                            // 'line-color': '#9dbaea',
+                            // 'target-arrow-color': '#9dbaea',
+                            'curve-style': 'bezier',
+                            'content': 'data(label)',
+                            'font-size': '6px',
+                        }
+                    }
+                ],
+
+                elements: {
+                    nodes : nodes,
+                    edges: edges,
+                }
+            });
+        }
+
+        const textarea = document.getElementById('myedit');
+
+        // Add an event listener for the 'input' event, which fires whenever the textarea content changes
+        textarea.addEventListener('input', function() {
+            // Execute your JavaScript code here
+            // console.log('Textarea content changed:', textarea.value);
+            try {
+                const parsedData = JSON.parse(textarea.value);
+                drawGraph(parsedData);
+            } catch (error) {
+                console.error('Error parsing JSON:', error);
+            }
+        });
+    </script>
+  </body>
+
+</html>
