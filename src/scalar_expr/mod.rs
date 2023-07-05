@@ -1,3 +1,5 @@
+//! This module contains the representation used for scalar expressions by the
+//! query compiler and its query plan representation.
 use core::fmt;
 use std::rc::Rc;
 
@@ -102,6 +104,7 @@ impl fmt::Display for NaryOp {
     }
 }
 
+/// Handy expression constructors.
 impl ScalarExpr {
     pub fn string_literal(value: String) -> ScalarExpr {
         ScalarExpr::Literal(Literal {
@@ -150,7 +153,9 @@ impl ScalarExpr {
     pub fn to_ref(self) -> ScalarExprRef {
         Rc::new(self)
     }
+}
 
+impl ScalarExpr {
     pub fn data_type(&self, row_type: &[DataType]) -> DataType {
         // TODO(asenac) compute types recursively
         match self {
@@ -185,6 +190,8 @@ impl ScalarExpr {
         }
     }
 
+    /// Creates a clone of the given expression but whose inputs will be
+    /// the given ones. Used for doing copy-on-write when rewritting expressions.
     pub fn clone_with_new_inputs(&self, inputs: &[ScalarExprRef]) -> ScalarExpr {
         assert!(inputs.len() == self.num_inputs());
         match self {
