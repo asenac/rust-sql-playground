@@ -1,0 +1,59 @@
+run
+filter_merge_1
+----
+----
+[2] Filter [gt(ref_2, ref_3)]
+    - Num Columns: 10
+    - Row Type: string, string, string, string, string, string, string, string, string, string
+    - Pulled Up Predicates: gt(ref_2, ref_3), eq(ref_0, ref_1)
+  [1] Filter [eq(ref_0, ref_1)]
+      - Num Columns: 10
+      - Row Type: string, string, string, string, string, string, string, string, string, string
+      - Pulled Up Predicates: eq(ref_0, ref_1)
+    [0] TableScan id: 0, num_columns: 10
+        - Num Columns: 10
+        - Row Type: string, string, string, string, string, string, string, string, string, string
+
+
+Optimized:
+[3] Filter [gt(ref_2, ref_3), eq(ref_0, ref_1)]
+    - Num Columns: 10
+    - Row Type: string, string, string, string, string, string, string, string, string, string
+    - Pulled Up Predicates: gt(ref_2, ref_3), eq(ref_0, ref_1)
+  [0] TableScan id: 0, num_columns: 10
+      - Num Columns: 10
+      - Row Type: string, string, string, string, string, string, string, string, string, string
+----
+----
+
+run
+filter_merge_2
+----
+----
+[3] Filter [lt(ref_4, ref_5)]
+    - Num Columns: 10
+    - Row Type: string, string, string, string, string, string, string, string, string, string
+    - Pulled Up Predicates: gt(ref_2, ref_3), eq(ref_0, ref_1), lt(ref_4, ref_5)
+  [2] Filter [gt(ref_2, ref_3)]
+      - Num Columns: 10
+      - Row Type: string, string, string, string, string, string, string, string, string, string
+      - Pulled Up Predicates: gt(ref_2, ref_3), eq(ref_0, ref_1)
+    [1] Filter [eq(ref_0, ref_1)]
+        - Num Columns: 10
+        - Row Type: string, string, string, string, string, string, string, string, string, string
+        - Pulled Up Predicates: eq(ref_0, ref_1)
+      [0] TableScan id: 0, num_columns: 10
+          - Num Columns: 10
+          - Row Type: string, string, string, string, string, string, string, string, string, string
+
+
+Optimized:
+[5] Filter [lt(ref_4, ref_5), gt(ref_2, ref_3), eq(ref_0, ref_1)]
+    - Num Columns: 10
+    - Row Type: string, string, string, string, string, string, string, string, string, string
+    - Pulled Up Predicates: gt(ref_2, ref_3), eq(ref_0, ref_1), lt(ref_4, ref_5)
+  [0] TableScan id: 0, num_columns: 10
+      - Num Columns: 10
+      - Row Type: string, string, string, string, string, string, string, string, string, string
+----
+----

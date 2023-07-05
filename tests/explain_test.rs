@@ -2,10 +2,9 @@ use std::collections::{BTreeSet, HashMap, HashSet};
 
 use datadriven::walk;
 use rust_sql::query_graph::explain::Explainer;
-use rust_sql::query_graph::json::{Graph, JsonSerializer};
+use rust_sql::query_graph::json::JsonSerializer;
 use rust_sql::query_graph::optimizer::{OptimizerContext, OptimizerListener, DEFAULT_OPTIMIZER};
-use rust_sql::query_graph::properties::default_annotators;
-use rust_sql::query_graph::{NodeId, QueryGraph, QueryNode};
+use rust_sql::query_graph::{QueryGraph, QueryNode};
 use rust_sql::scalar_expr::BinaryOp;
 use rust_sql::scalar_expr::NaryOp;
 use rust_sql::scalar_expr::ScalarExpr;
@@ -447,6 +446,39 @@ fn static_queries() -> HashMap<String, QueryGraph> {
             inputs: vec![project_1, project_2],
         });
         query_graph.set_entry_node(union_1);
+        query_graph
+    });
+    // filter_merge.test
+    queries.insert("filter_merge_1".to_string(), {
+        let mut query_graph = QueryGraph::new();
+        let table_scan_id = query_graph.table_scan(0, 10);
+        let filter_1 = ScalarExpr::input_ref(0)
+            .binary(BinaryOp::Eq, ScalarExpr::input_ref(1).to_ref())
+            .to_ref();
+        let filter_id_1 = query_graph.filter(table_scan_id, vec![filter_1.clone()]);
+        let filter_2 = ScalarExpr::input_ref(2)
+            .binary(BinaryOp::Gt, ScalarExpr::input_ref(3).to_ref())
+            .to_ref();
+        let filter_id_2 = query_graph.filter(filter_id_1, vec![filter_2.clone()]);
+        query_graph.set_entry_node(filter_id_2);
+        query_graph
+    });
+    queries.insert("filter_merge_2".to_string(), {
+        let mut query_graph = QueryGraph::new();
+        let table_scan_id = query_graph.table_scan(0, 10);
+        let filter_1 = ScalarExpr::input_ref(0)
+            .binary(BinaryOp::Eq, ScalarExpr::input_ref(1).to_ref())
+            .to_ref();
+        let filter_id_1 = query_graph.filter(table_scan_id, vec![filter_1.clone()]);
+        let filter_2 = ScalarExpr::input_ref(2)
+            .binary(BinaryOp::Gt, ScalarExpr::input_ref(3).to_ref())
+            .to_ref();
+        let filter_id_2 = query_graph.filter(filter_id_1, vec![filter_2.clone()]);
+        let filter_3 = ScalarExpr::input_ref(4)
+            .binary(BinaryOp::Lt, ScalarExpr::input_ref(5).to_ref())
+            .to_ref();
+        let filter_id_3 = query_graph.filter(filter_id_2, vec![filter_3.clone()]);
+        query_graph.set_entry_node(filter_id_3);
         query_graph
     });
     queries
