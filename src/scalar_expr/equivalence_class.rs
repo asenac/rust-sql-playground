@@ -1,8 +1,18 @@
 use crate::scalar_expr::*;
 use std::collections::BTreeSet;
 
+/// An equivalence class is a group of expressions within a given context that
+/// are known to always lead to the same values.
+///
+/// If `ref_0 = ref_1` is known to be true, then `ref_0` and `ref_1` belong to
+/// the same equivalence class.
 pub struct EquivalenceClass {
+    /// Indicates that any of the equality predicates that lead to this class
+    /// was using the null-rejecting equality operator, ie. the SQL equality
+    /// operator (`BinaryOp::Eq`), and hence, none of the expression within the
+    /// class will evaluate to NULL.
     pub null_rejecting: bool,
+    /// The list of expressions belonging to the class.
     pub members: BTreeSet<ScalarExprRef>,
 }
 
@@ -16,12 +26,15 @@ impl EquivalenceClass {
         }
     }
 
+    /// Merges two equivalence classes.
     fn merge(&mut self, mut other: Self) {
         self.null_rejecting = self.null_rejecting || other.null_rejecting;
         self.members.append(&mut other.members);
     }
 }
 
+/// Returns the index of the class within the given list of classes, if any,
+/// the given expression belongs to.
 pub fn find_class(classes: &EquivalenceClasses, expr: &ScalarExprRef) -> Option<usize> {
     classes.iter().enumerate().find_map(|(class_id, class)| {
         if class.members.contains(expr) {
@@ -32,6 +45,12 @@ pub fn find_class(classes: &EquivalenceClasses, expr: &ScalarExprRef) -> Option<
     })
 }
 
+/// Extract the equivalence classes using the equality predicates among the given
+/// list of predicates.
+///
+/// The same expression cannot belong to the two different classes. If `ref_0 = ref_1`
+/// and `ref_1 = ref_2` are present in the given list of predicates, then `ref_0`, `ref_1`
+/// and `ref_2` are part of the same equivalence class.
 pub fn extract_equivalence_classes(predicates: &Vec<ScalarExprRef>) -> EquivalenceClasses {
     let mut classes: EquivalenceClasses = Vec::new();
     for predicate in predicates.iter() {

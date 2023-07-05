@@ -14,7 +14,9 @@ pub mod visitor;
 pub enum BinaryOp {
     Gt,
     Ge,
+    /// SQL equality operator, that evaluates to NULL when any of its inputs is NULL.
     Eq,
+    /// Non-null-rejecting equality, equivalent to SQL's IS NOT DISTINCT FROM
     RawEq,
     Lt,
     Le,
