@@ -80,6 +80,16 @@ impl SingleReplacementRule for EqualityPropagationRule {
 }
 
 impl EqualityPropagationRule {
+    /// Uses the equality predicates in the given conditions to build two maps
+    /// from converting expressions written in terms of the output of each of
+    /// the inputs of the join to expressions written in terms of the output
+    /// of the opposite input of the join.
+    ///
+    /// For example, given a join between two tables A and B with join condition
+    /// A.x = B.y, this function returns a map for converting expressions from A
+    /// into expressions in terms of columns from B that contains a single entry
+    /// A.x -> B.y, and another map for doing the opposite conversion with the
+    /// opposite single entry B.y -> A.x.
     fn translation_maps(
         conditions: &Vec<ScalarExprRef>,
         left_num_columns: usize,
