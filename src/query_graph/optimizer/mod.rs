@@ -251,6 +251,7 @@ lazy_static! {
             wrap(EqualityPropagationRule {}),
             wrap(FilterAggregateTransposeRule {}),
             wrap(FilterMergeRule {}),
+            wrap(FilterProjectTransposeRule {}),
             wrap(ProjectMergeRule {}),
             wrap(ProjectNormalizationRule {}),
             wrap(PruneAggregateInputRule {}),
