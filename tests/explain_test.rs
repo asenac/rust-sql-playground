@@ -520,12 +520,12 @@ impl OptimizerListener for DebugOptimizerListener {
     }
 }
 
-struct DebugOptimizerListener2<'a> {
+struct FullGraphCollector<'a> {
     serializer: JsonSerializer<'a>,
     replacement_count: usize,
 }
 
-impl<'a> DebugOptimizerListener2<'a> {
+impl<'a> FullGraphCollector<'a> {
     fn new() -> Self {
         Self {
             serializer: JsonSerializer::new_with_all_annotators(),
@@ -534,7 +534,7 @@ impl<'a> DebugOptimizerListener2<'a> {
     }
 }
 
-impl<'a> OptimizerListener for DebugOptimizerListener2<'a> {
+impl<'a> OptimizerListener for FullGraphCollector<'a> {
     fn node_replacement(
         &mut self,
         rule: &dyn rust_sql::query_graph::optimizer::Rule,
@@ -571,7 +571,7 @@ fn test_explain_properties() {
             println!("{}", serializer.serialize().unwrap());
 
             let mut cloned_query_graph = query_graph.clone();
-            let mut listener2 = DebugOptimizerListener2::new();
+            let mut listener2 = FullGraphCollector::new();
             listener2
                 .serializer
                 .add_subgraph(&cloned_query_graph, cloned_query_graph.entry_node);
