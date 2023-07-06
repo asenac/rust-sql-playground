@@ -377,6 +377,7 @@ fn static_queries() -> HashMap<String, QueryGraph> {
         query_graph.set_entry_node(union_);
         query_graph
     });
+    // union_merge.test
     queries.insert("union_merge".to_string(), {
         let mut query_graph = QueryGraph::new();
         let table_scan_1 = query_graph.table_scan(1, 10);
@@ -392,6 +393,7 @@ fn static_queries() -> HashMap<String, QueryGraph> {
         query_graph.set_entry_node(union_3);
         query_graph
     });
+    // union_pruning.test
     queries.insert("union_pruning".to_string(), {
         let mut query_graph = QueryGraph::new();
         let table_scan_1 = query_graph.table_scan(1, 10);
@@ -418,7 +420,8 @@ fn static_queries() -> HashMap<String, QueryGraph> {
         query_graph.set_entry_node(union_3);
         query_graph
     });
-    queries.insert("join_pruning".to_string(), {
+    // join_pruning.test
+    queries.insert("join_pruning_1".to_string(), {
         let mut query_graph = QueryGraph::new();
         let table_scan_1 = query_graph.table_scan(1, 10);
         let join = query_graph.join(
@@ -437,6 +440,48 @@ fn static_queries() -> HashMap<String, QueryGraph> {
         );
         let project_2 = query_graph.project(
             join,
+            vec![
+                ScalarExpr::input_ref(3).to_ref(),
+                ScalarExpr::input_ref(12).to_ref(),
+            ],
+        );
+        let union_1 = query_graph.add_node(QueryNode::Union {
+            inputs: vec![project_1, project_2],
+        });
+        query_graph.set_entry_node(union_1);
+        query_graph
+    });
+    queries.insert("join_pruning_2".to_string(), {
+        let mut query_graph = QueryGraph::new();
+        let table_scan_1 = query_graph.table_scan(1, 10);
+        let join = query_graph.join(
+            table_scan_1,
+            table_scan_1,
+            vec![ScalarExpr::input_ref(4)
+                .binary(BinaryOp::Eq, ScalarExpr::input_ref(15).to_ref())
+                .to_ref()],
+        );
+        let filter_1 = query_graph.filter(
+            join,
+            vec![ScalarExpr::input_ref(2)
+                .binary(BinaryOp::Eq, ScalarExpr::input_ref(16).to_ref())
+                .to_ref()],
+        );
+        let project_1 = query_graph.project(
+            filter_1,
+            vec![
+                ScalarExpr::input_ref(0).to_ref(),
+                ScalarExpr::input_ref(18).to_ref(),
+            ],
+        );
+        let filter_2 = query_graph.filter(
+            join,
+            vec![ScalarExpr::input_ref(3)
+                .binary(BinaryOp::Eq, ScalarExpr::input_ref(15).to_ref())
+                .to_ref()],
+        );
+        let project_2 = query_graph.project(
+            filter_2,
             vec![
                 ScalarExpr::input_ref(3).to_ref(),
                 ScalarExpr::input_ref(12).to_ref(),

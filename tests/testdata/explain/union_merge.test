@@ -1,0 +1,37 @@
+run
+union_merge
+----
+----
+[3] Union
+    - Num Columns: 10
+    - Row Type: string, string, string, string, string, string, string, string, string, string
+  [1] Union
+      - Num Columns: 10
+      - Row Type: string, string, string, string, string, string, string, string, string, string
+    [0] TableScan id: 1, num_columns: 10
+        - Num Columns: 10
+        - Row Type: string, string, string, string, string, string, string, string, string, string
+    Recurring node 0
+  [2] Union
+      - Num Columns: 10
+      - Row Type: string, string, string, string, string, string, string, string, string, string
+    Recurring node 1
+    Recurring node 1
+    Recurring node 0
+
+
+Optimized:
+[4] Union
+    - Num Columns: 10
+    - Row Type: string, string, string, string, string, string, string, string, string, string
+  [0] TableScan id: 1, num_columns: 10
+      - Num Columns: 10
+      - Row Type: string, string, string, string, string, string, string, string, string, string
+  Recurring node 0
+  Recurring node 0
+  Recurring node 0
+  Recurring node 0
+  Recurring node 0
+  Recurring node 0
+----
+----
