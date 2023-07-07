@@ -1,3 +1,5 @@
+use itertools::Itertools;
+
 use crate::{
     query_graph::{
         optimizer::{OptRuleType, SingleReplacementRule},
@@ -9,6 +11,15 @@ use crate::{
     },
 };
 
+/// Rule that, among other things, removes filter nodes, either partially or fully, enforcing
+/// predicates that are already enforced by some descendent node.
+///
+/// Expressions are normalized so that each sub-expression is replaced with the representative
+/// of their class, if any. For example, if we know that `'hello'` and `ref_1` belong to the
+/// same equivalence class, then we can replace any appearance of `ref_1` with `'hello'` literal
+/// as literals come before input references.
+///
+/// Finally, it removes TRUE conditions from filter nodes.
 pub struct FilterNormalizationRule {}
 
 impl SingleReplacementRule for FilterNormalizationRule {
@@ -22,16 +33,34 @@ impl SingleReplacementRule for FilterNormalizationRule {
             let predicates = pulled_up_predicates(query_graph, *input);
             let mut replacement_map = to_replacement_map(&classes);
             let true_literal = ScalarExpr::true_literal().to_ref();
+            // Anything that is already enforced by a descendent node, can be assumed
+            // to be true.
             replacement_map.extend(
                 predicates
                     .iter()
                     .map(|predicate| (predicate.clone(), true_literal.clone())),
             );
-            let new_conditions = conditions
-                .iter()
-                .map(|expr| replace_sub_expressions_pre(expr, &replacement_map))
-                .filter(|expr| *expr != true_literal)
-                .collect::<Vec<_>>();
+            // [A = 1, B = 1 OR A = 1] results in [A = 1, B = 1 OR TRUE] which will
+            // be later reduced to just [A = 1].
+            let mut new_conditions = conditions.clone();
+            for i in 0..new_conditions.len() {
+                let mut replacement_map = replacement_map.clone();
+                replacement_map.extend(
+                    new_conditions
+                        .iter()
+                        .enumerate()
+                        .filter(|(j, _)| i != *j)
+                        .map(|(_, e)| (e.clone(), true_literal.clone())),
+                );
+                new_conditions[i] =
+                    replace_sub_expressions_pre(&new_conditions[i], &replacement_map);
+            }
+            // TODO(asenac) reduce expressions after applying the replacements. All of the above
+            // could be part of the reduction of AND expressions.
+            let new_conditions = new_conditions
+                .into_iter()
+                .filter(|e| *e != true_literal)
+                .collect_vec();
 
             if new_conditions != *conditions {
                 return Some(query_graph.filter(*input, new_conditions));
