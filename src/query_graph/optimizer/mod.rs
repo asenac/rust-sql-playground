@@ -242,6 +242,27 @@ where
     Box::new(SingleReplacementRuleWrapper::new(rule))
 }
 
+pub fn build_rule(rule_name: &str) -> Result<Box<dyn Rule>, ()> {
+    println!("asenac {}", rule_name);
+    use self::rules::*;
+    match rule_name {
+        "AggregateRemoveRule" => Ok(wrap(AggregateRemoveRule {})),
+        "AggregateSimplifierRule" => Ok(wrap(AggregateSimplifierRule {})),
+        "EqualityPropagationRule" => Ok(wrap(EqualityPropagationRule {})),
+        "FilterAggregateTransposeRule" => Ok(wrap(FilterAggregateTransposeRule {})),
+        "FilterMergeRule" => Ok(wrap(FilterMergeRule {})),
+        "FilterProjectTransposeRule" => Ok(wrap(FilterProjectTransposeRule {})),
+        "ProjectMergeRule" => Ok(wrap(ProjectMergeRule {})),
+        "ProjectNormalizationRule" => Ok(wrap(ProjectNormalizationRule {})),
+        "PruneAggregateInputRule" => Ok(wrap(PruneAggregateInputRule {})),
+        "RemovePassthroughProjectRule" => Ok(wrap(RemovePassthroughProjectRule {})),
+        "UnionMergeRule" => Ok(wrap(UnionMergeRule {})),
+        "UnionPruningRule" => Ok(Box::new(UnionPruningRule {})),
+        "JoinPruningRule" => Ok(Box::new(JoinPruningRule {})),
+        _ => Err(()),
+    }
+}
+
 lazy_static! {
     pub static ref DEFAULT_OPTIMIZER: Optimizer = {
         use self::rules::*;

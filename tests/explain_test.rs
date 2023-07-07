@@ -3,7 +3,9 @@ use std::collections::{BTreeSet, HashMap, HashSet};
 use datadriven::walk;
 use rust_sql::query_graph::explain::Explainer;
 use rust_sql::query_graph::json::JsonSerializer;
-use rust_sql::query_graph::optimizer::{OptimizerContext, OptimizerListener, DEFAULT_OPTIMIZER};
+use rust_sql::query_graph::optimizer::{
+    build_rule, Optimizer, OptimizerContext, OptimizerListener, DEFAULT_OPTIMIZER,
+};
 use rust_sql::query_graph::{QueryGraph, QueryNode};
 use rust_sql::scalar_expr::BinaryOp;
 use rust_sql::scalar_expr::NaryOp;
@@ -641,7 +643,14 @@ fn test_explain_properties() {
             let mut opt_context = OptimizerContext::new();
             opt_context.append_listener(&mut listener);
             opt_context.append_listener(&mut listener2);
-            optimizer.optimize(&mut opt_context, &mut cloned_query_graph);
+
+            if let Some(rules) = test_case.args.get("rules") {
+                let optimizer =
+                    Optimizer::new(rules.iter().map(|rule| build_rule(rule).unwrap()).collect());
+                optimizer.optimize(&mut opt_context, &mut cloned_query_graph);
+            } else {
+                optimizer.optimize(&mut opt_context, &mut cloned_query_graph);
+            }
 
             let mut serializer = JsonSerializer::new_with_all_annotators();
             serializer.add_subgraph(&cloned_query_graph, cloned_query_graph.entry_node);
