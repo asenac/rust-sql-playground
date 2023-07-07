@@ -243,7 +243,6 @@ where
 }
 
 pub fn build_rule(rule_name: &str) -> Result<Box<dyn Rule>, ()> {
-    println!("asenac {}", rule_name);
     use self::rules::*;
     match rule_name {
         "AggregateRemoveRule" => Ok(wrap(AggregateRemoveRule {})),
