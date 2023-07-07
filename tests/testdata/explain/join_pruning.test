@@ -86,7 +86,7 @@ Optimized:
 [6] Union
     - Num Columns: 2
     - Row Type: string, string
-  [21] Project [ref_0, ref_7]
+  [22] Project [ref_0, ref_7]
       - Num Columns: 2
       - Row Type: string, string
     [15] Filter [eq(ref_1, ref_6)]
@@ -107,13 +107,13 @@ Optimized:
             - Num Columns: 4
             - Row Type: string, string, string, string
           Recurring node 0
-  [22] Project [ref_2, ref_4]
+  [23] Project [ref_2, ref_4]
       - Num Columns: 2
       - Row Type: string, string
-    [18] Filter [eq(ref_2, ref_5)]
+    [21] Filter [eq(ref_2, ref_3)]
         - Num Columns: 8
         - Row Type: string, string, string, string, string, string, string, string
-        - Pulled Up Predicates: eq(ref_2, ref_5), eq(ref_3, ref_5)
+        - Pulled Up Predicates: eq(ref_2, ref_3), eq(ref_3, ref_5)
       Recurring node 9
 ----
 ----
