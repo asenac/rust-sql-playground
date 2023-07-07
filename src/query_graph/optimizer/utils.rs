@@ -62,6 +62,10 @@ pub(crate) fn required_columns_from_parent_projections(
             let mut only_filter_and_project = true;
             query_graph.visit_subgraph_upwards_pre(
                 &mut |query_graph, node_id| match query_graph.node(node_id) {
+                    QueryNode::Aggregate { group_key, .. } => {
+                        required_columns.extend(group_key);
+                        PreOrderVisitationResult::DoNotVisitInputs
+                    }
                     QueryNode::Project { outputs, .. } => {
                         for proj_expr in outputs.iter() {
                             store_input_dependencies(proj_expr, &mut required_columns);
@@ -145,13 +149,13 @@ pub(crate) fn apply_map_to_parent_projections_and_replace_input(
         ) -> PreOrderVisitationResult {
             self.stack.push(node_id);
             match query_graph.node(node_id) {
-                QueryNode::Project { .. } => {
+                QueryNode::Project { .. } | QueryNode::Aggregate { .. } => {
                     // The projection has been reached, stop here
                     self.paths.push(self.stack.clone());
                     PreOrderVisitationResult::DoNotVisitInputs
                 }
                 QueryNode::Filter { .. } => PreOrderVisitationResult::VisitInputs,
-                _ => panic!("expected projection or filter node"),
+                _ => panic!("expected aggregate, project or filter node"),
             }
         }
 
@@ -178,6 +182,17 @@ pub(crate) fn apply_map_to_parent_projections_and_replace_input(
         for current_node_id in path.iter() {
             if let None = replacements.get(current_node_id) {
                 let new_node = match query_graph.node(*current_node_id) {
+                    QueryNode::Aggregate { group_key, input } => {
+                        let new_input = *replacements.get(input).unwrap();
+                        let new_agg = query_graph.add_node(QueryNode::Aggregate {
+                            group_key: group_key
+                                .iter()
+                                .map(|k| column_map.get(k).unwrap().to_owned())
+                                .collect(),
+                            input: new_input,
+                        });
+                        new_agg
+                    }
                     QueryNode::Project { outputs, input } => {
                         let new_input = *replacements.get(input).unwrap();
                         let new_proj = query_graph.project(
@@ -198,7 +213,7 @@ pub(crate) fn apply_map_to_parent_projections_and_replace_input(
                         );
                         new_filter
                     }
-                    _ => panic!("expected projection or filter node"),
+                    _ => panic!("expected aggregate, project or filter node"),
                 };
                 replacements.insert(*current_node_id, new_node);
             };

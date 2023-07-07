@@ -11,6 +11,9 @@ use crate::{
     scalar_expr::ScalarExpr,
 };
 
+/// Given an aggregate node not using all the columns from its input, it inserts
+/// a pruning projection and replaces it with a new aggregation over the pruning
+/// projection.
 pub struct PruneAggregateInputRule {}
 
 impl SingleReplacementRule for PruneAggregateInputRule {

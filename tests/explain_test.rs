@@ -495,6 +495,37 @@ fn static_queries() -> HashMap<String, QueryGraph> {
         query_graph.set_entry_node(union_1);
         query_graph
     });
+    queries.insert("join_pruning_3".to_string(), {
+        let mut query_graph = QueryGraph::new();
+        let table_scan_1 = query_graph.table_scan(1, 4);
+        let table_scan_2 = query_graph.table_scan(1, 5);
+        let join = query_graph.join(
+            table_scan_1,
+            table_scan_2,
+            vec![ScalarExpr::input_ref(0)
+                .binary(BinaryOp::Eq, ScalarExpr::input_ref(4).to_ref())
+                .to_ref()],
+        );
+        let filter_1 = query_graph.filter(
+            join,
+            vec![ScalarExpr::input_ref(2)
+                .binary(BinaryOp::Eq, ScalarExpr::input_ref(1).to_ref())
+                .to_ref()],
+        );
+        let agg_1 = query_graph.add_node(QueryNode::Aggregate {
+            group_key: BTreeSet::from([0, 1]),
+            input: filter_1,
+        });
+        let agg_2 = query_graph.add_node(QueryNode::Aggregate {
+            group_key: BTreeSet::from([2, 5]),
+            input: join,
+        });
+        let union_1 = query_graph.add_node(QueryNode::Union {
+            inputs: vec![agg_1, agg_2],
+        });
+        query_graph.set_entry_node(union_1);
+        query_graph
+    });
     // filter_merge.test
     queries.insert("filter_merge_1".to_string(), {
         let mut query_graph = QueryGraph::new();
