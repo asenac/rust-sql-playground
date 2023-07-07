@@ -6,6 +6,8 @@ use crate::{
     visitor_utils::PreOrderVisitationResult,
 };
 
+use super::num_columns;
+
 /// Returns the predicates that are known to evaluate to true on top of the given node.
 ///
 /// Example:
@@ -154,7 +156,7 @@ impl PulledUpPredicates {
                 left,
                 right,
             } => {
-                let left_size = query_graph.node(*left).num_inputs();
+                let left_size = num_columns(query_graph, *left);
                 predicates.extend(conditions.iter().cloned());
                 predicates.extend(
                     self.predicates_unchecked(query_graph, *left)

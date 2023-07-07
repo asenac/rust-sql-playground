@@ -59,9 +59,9 @@ impl SingleReplacementRule for EqualityPropagationRule {
             let new_right_predicates = new_right_predicates
                 .iter()
                 .map(|e| shift_left_input_refs(e, left_num_columns))
-                .collect();
+                .collect::<Vec<_>>();
 
-            if !left_predicates.is_empty() || !right_predicates.is_empty() {
+            if !new_left_predicates.is_empty() || !new_right_predicates.is_empty() {
                 let join_conditions = conditions.clone();
                 let left = *left;
                 let right = *right;

@@ -1,6 +1,6 @@
 //! Module containing utilities used by several optimization rules.
 
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{HashMap, HashSet};
 
 use itertools::Itertools;
 

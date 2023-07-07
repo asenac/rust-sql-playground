@@ -545,6 +545,64 @@ fn static_queries() -> HashMap<String, QueryGraph> {
         query_graph.set_entry_node(filter_id_2);
         query_graph
     });
+    // filter_join_transpose.test
+    queries.insert("filter_join_transpose_1".to_string(), {
+        let mut query_graph = QueryGraph::new();
+        let table_scan_1 = query_graph.table_scan(1, 5);
+        let table_scan_2 = query_graph.table_scan(2, 5);
+        let join = query_graph.join(
+            table_scan_1,
+            table_scan_2,
+            vec![ScalarExpr::input_ref(0)
+                .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).to_ref())
+                .to_ref()],
+        );
+        let filter_1 = query_graph.filter(
+            join,
+            vec![
+                ScalarExpr::input_ref(1)
+                    .binary(
+                        BinaryOp::Lt,
+                        ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                    )
+                    .to_ref(),
+                ScalarExpr::input_ref(2)
+                    .binary(
+                        BinaryOp::Eq,
+                        ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                    )
+                    .to_ref(),
+                ScalarExpr::input_ref(6)
+                    .binary(
+                        BinaryOp::Gt,
+                        ScalarExpr::string_literal("world".to_string()).to_ref(),
+                    )
+                    .to_ref(),
+            ],
+        );
+        let filter_2 = query_graph.filter(
+            join,
+            vec![
+                ScalarExpr::input_ref(6)
+                    .binary(
+                        BinaryOp::Gt,
+                        ScalarExpr::string_literal("world".to_string()).to_ref(),
+                    )
+                    .to_ref(),
+                ScalarExpr::input_ref(2)
+                    .binary(
+                        BinaryOp::Eq,
+                        ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                    )
+                    .to_ref(),
+            ],
+        );
+        let union_ = query_graph.add_node(QueryNode::Union {
+            inputs: vec![filter_2, filter_1],
+        });
+        query_graph.set_entry_node(union_);
+        query_graph
+    });
     queries
 }
 
