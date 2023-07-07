@@ -603,6 +603,43 @@ fn static_queries() -> HashMap<String, QueryGraph> {
         query_graph.set_entry_node(union_);
         query_graph
     });
+    // project_normalization.test
+    queries.insert("project_normalization_1".to_string(), {
+        let mut query_graph = QueryGraph::new();
+        let table_scan_1 = query_graph.table_scan(1, 5);
+        let filter_1 = query_graph.filter(
+            table_scan_1,
+            vec![
+                ScalarExpr::input_ref(1)
+                    .binary(
+                        BinaryOp::Lt,
+                        ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                    )
+                    .to_ref(),
+                ScalarExpr::input_ref(2)
+                    .binary(
+                        BinaryOp::Eq,
+                        ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                    )
+                    .to_ref(),
+            ],
+        );
+        let project_1 = query_graph.project(
+            filter_1,
+            vec![
+                ScalarExpr::input_ref(1).to_ref(),
+                ScalarExpr::input_ref(2).to_ref(),
+                ScalarExpr::input_ref(2)
+                    .binary(
+                        BinaryOp::Eq,
+                        ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                    )
+                    .to_ref(),
+            ],
+        );
+        query_graph.set_entry_node(project_1);
+        query_graph
+    });
     queries
 }
 

@@ -1,0 +1,31 @@
+run
+project_normalization_1
+----
+----
+[2] Project [ref_1, ref_2, eq(ref_2, 'hello')]
+    - Num Columns: 3
+    - Row Type: string, string, bool
+    - Pulled Up Predicates: ref_2, raw_eq(ref_2, eq(ref_1, 'hello')), lt(ref_0, 'hello')
+  [1] Filter [lt(ref_1, 'hello'), eq(ref_2, 'hello')]
+      - Num Columns: 5
+      - Row Type: string, string, string, string, string
+      - Pulled Up Predicates: eq(ref_2, 'hello'), lt(ref_1, 'hello')
+    [0] TableScan id: 1, num_columns: 5
+        - Num Columns: 5
+        - Row Type: string, string, string, string, string
+
+
+Optimized:
+[3] Project [ref_1, 'hello', TRUE]
+    - Num Columns: 3
+    - Row Type: string, string, bool
+    - Pulled Up Predicates: raw_eq(ref_1, 'hello'), raw_eq(ref_2, TRUE), lt(ref_0, ref_1)
+  [1] Filter [lt(ref_1, 'hello'), eq(ref_2, 'hello')]
+      - Num Columns: 5
+      - Row Type: string, string, string, string, string
+      - Pulled Up Predicates: eq(ref_2, 'hello'), lt(ref_1, 'hello')
+    [0] TableScan id: 1, num_columns: 5
+        - Num Columns: 5
+        - Row Type: string, string, string, string, string
+----
+----

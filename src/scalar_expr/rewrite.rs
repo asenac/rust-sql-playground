@@ -297,6 +297,23 @@ pub fn normalize_scalar_expr(expr: &ScalarExprRef, classes: &EquivalenceClasses)
     .unwrap()
 }
 
+/// Applies the replacements in the given map in pre-order.
+pub fn replace_sub_expressions_pre(
+    expr: &ScalarExprRef,
+    replacement_map: &HashMap<ScalarExprRef, ScalarExprRef>,
+) -> ScalarExprRef {
+    rewrite_scalar_expr_pre(
+        &mut |expr: &ScalarExprRef| {
+            if let Some(replacement) = replacement_map.get(expr) {
+                return Ok(Some(replacement.clone()));
+            }
+            Ok(None)
+        },
+        expr,
+    )
+    .unwrap()
+}
+
 #[cfg(test)]
 mod tests {
     use crate::scalar_expr::{rewrite::lift_scalar_expr, *};

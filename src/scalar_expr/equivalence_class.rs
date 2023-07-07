@@ -1,5 +1,5 @@
 use crate::scalar_expr::*;
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, HashMap};
 
 /// An equivalence class is a group of expressions within a given context that
 /// are known to always lead to the same values.
@@ -86,4 +86,21 @@ pub fn extract_equivalence_classes(predicates: &Vec<ScalarExprRef>) -> Equivalen
         }
     }
     classes
+}
+
+/// Converts a set of classes into a replacement map in order to replace each member of a
+/// class with the first element of the class, ie. with the representative of the class.
+pub fn to_replacement_map(classes: &EquivalenceClasses) -> HashMap<ScalarExprRef, ScalarExprRef> {
+    classes
+        .iter()
+        .map(|class| {
+            let first = class.members.first().unwrap();
+            class
+                .members
+                .iter()
+                .skip(1)
+                .map(|other| (other.clone(), first.clone()))
+        })
+        .flatten()
+        .collect::<HashMap<_, _>>()
 }
