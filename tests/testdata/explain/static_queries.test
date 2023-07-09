@@ -117,7 +117,7 @@ redundant_key_3
     - Num Columns: 4
     - Row Type: string, string, string, string
     - Pulled Up Predicates: raw_eq(ref_1, ref_3), raw_eq(ref_1, concat(ref_0, ref_2)), raw_eq(ref_3, ref_1), raw_eq(ref_3, concat(ref_0, ref_2))
-    - Keys: [key: [ref_0, ref_1, ref_2, ref_3], lower_bound: 0, upper_bound: 1]
+    - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1], [key: [ref_0, ref_1, ref_2, ref_3], lower_bound: 0, upper_bound: 1]
   [1] Project [ref_0, concat(ref_0, ref_2), ref_2, concat(ref_0, ref_2)]
       - Num Columns: 4
       - Row Type: string, string, string, string
@@ -154,7 +154,7 @@ constant_key
     - Num Columns: 3
     - Row Type: string, string, string
     - Pulled Up Predicates: raw_eq(ref_0, 'hello'), raw_eq(ref_1, 'world'), raw_eq(ref_2, 'bla')
-    - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+    - Keys: [key: [], lower_bound: 0, upper_bound: 1], [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
   [1] Project ['hello', 'world', 'bla']
       - Num Columns: 3
       - Row Type: string, string, string
@@ -169,11 +169,12 @@ Optimized:
     - Num Columns: 3
     - Row Type: string, string, string
     - Pulled Up Predicates: raw_eq(ref_0, 'hello'), raw_eq(ref_1, 'world'), raw_eq(ref_2, 'bla')
+    - Keys: [key: [], lower_bound: 0, upper_bound: 1]
   [10] Aggregate key: [ref_0]
       - Num Columns: 1
       - Row Type: string
       - Pulled Up Predicates: raw_eq(ref_0, 'bla')
-      - Keys: [key: [ref_0], lower_bound: 0, upper_bound: 1]
+      - Keys: [key: [], lower_bound: 0, upper_bound: 1], [key: [ref_0], lower_bound: 0, upper_bound: 1]
     [11] Project ['bla']
         - Num Columns: 1
         - Row Type: string
@@ -234,7 +235,7 @@ recurrent_node
       - Num Columns: 3
       - Row Type: string, string, string
       - Pulled Up Predicates: eq(ref_0, 'world')
-      - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+      - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1], [key: [ref_1, ref_2], lower_bound: 0, upper_bound: 1]
     Recurring node 1
 
 
@@ -257,7 +258,7 @@ Optimized:
       - Num Columns: 3
       - Row Type: string, string, string
       - Pulled Up Predicates: eq(ref_0, 'world')
-      - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+      - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1], [key: [ref_1, ref_2], lower_bound: 0, upper_bound: 1]
     Recurring node 5
 ----
 ----

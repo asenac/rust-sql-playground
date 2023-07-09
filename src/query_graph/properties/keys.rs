@@ -7,14 +7,14 @@ use crate::{
     query_graph::{visitor::QueryGraphPrePostVisitor, JoinType, NodeId, QueryGraph, QueryNode},
     scalar_expr::{
         equivalence_class::{extract_equivalence_classes, find_class},
-        rewrite::{lift_scalar_expr, shift_right_input_refs},
+        rewrite::{lift_scalar_expr, normalize_scalar_expr, shift_right_input_refs},
         ScalarExpr, ScalarExprRef,
     },
     value::Value,
     visitor_utils::PreOrderVisitationResult,
 };
 
-use super::num_columns;
+use super::{equivalence_classes, num_columns};
 
 /// Bounds associated with a key.
 ///
@@ -23,7 +23,7 @@ use super::num_columns;
 ///
 /// An empty key indicates that the bounds are the minimum and the maximum number of rows
 /// that will be produced.
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct KeyBounds {
     pub key: Rc<Vec<ScalarExprRef>>,
     pub lower_bound: usize,
@@ -334,6 +334,31 @@ impl Keys {
                 }
             }
         };
+        // Normalize the keys, remove constants
+        // TODO(asenac) consider removing the non-normalized version
+        let classes = equivalence_classes(query_graph, node_id);
+        let normalized_keys = keys.clone().into_iter().map(|k| KeyBounds {
+            key: Rc::new(
+                k.key
+                    .iter()
+                    .map(|e| normalize_scalar_expr(e, &classes))
+                    .filter(|e| {
+                        if let ScalarExpr::Literal(_) = e.as_ref() {
+                            false
+                        } else {
+                            true
+                        }
+                    })
+                    .sorted()
+                    .dedup()
+                    .collect(),
+            ),
+            lower_bound: k.lower_bound,
+            upper_bound: k.upper_bound,
+        });
+        keys.extend(normalized_keys);
+        keys.sort();
+        keys.dedup();
         Rc::new(keys)
     }
 }
