@@ -1,0 +1,59 @@
+run
+filter_aggregate
+----
+----
+[4] Union
+    - Num Columns: 3
+    - Row Type: string, string, string
+    - Pulled Up Predicates: gt(ref_0, 'world')
+    - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 2]
+  [3] Filter [gt(ref_0, 'world')]
+      - Num Columns: 3
+      - Row Type: string, string, string
+      - Pulled Up Predicates: gt(ref_0, 'world')
+      - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+    [1] Aggregate key: [ref_0, ref_1, ref_2]
+        - Num Columns: 3
+        - Row Type: string, string, string
+        - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+      [0] TableScan id: 1, num_columns: 10
+          - Num Columns: 10
+          - Row Type: string, string, string, string, string, string, string, string, string, string
+  [2] Filter [lt(ref_1, 'hello'), gt(ref_0, 'world')]
+      - Num Columns: 3
+      - Row Type: string, string, string
+      - Pulled Up Predicates: gt(ref_0, 'world'), lt(ref_1, 'hello')
+      - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+    Recurring node 1
+
+
+Optimized:
+[4] Union
+    - Num Columns: 3
+    - Row Type: string, string, string
+    - Pulled Up Predicates: gt(ref_0, 'world')
+    - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 2]
+  [8] Aggregate key: [ref_0, ref_1, ref_2]
+      - Num Columns: 3
+      - Row Type: string, string, string
+      - Pulled Up Predicates: gt(ref_0, 'world')
+      - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+    [7] Project [ref_0, ref_1, ref_2]
+        - Num Columns: 3
+        - Row Type: string, string, string
+        - Pulled Up Predicates: gt(ref_0, 'world')
+      [5] Filter [gt(ref_0, 'world')]
+          - Num Columns: 10
+          - Row Type: string, string, string, string, string, string, string, string, string, string
+          - Pulled Up Predicates: gt(ref_0, 'world')
+        [0] TableScan id: 1, num_columns: 10
+            - Num Columns: 10
+            - Row Type: string, string, string, string, string, string, string, string, string, string
+  [9] Filter [lt(ref_1, 'hello')]
+      - Num Columns: 3
+      - Row Type: string, string, string
+      - Pulled Up Predicates: gt(ref_0, 'world'), lt(ref_1, 'hello')
+      - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+    Recurring node 8
+----
+----

@@ -1,0 +1,195 @@
+run
+join_between_keyless_aggregations
+----
+----
+[2] Inner Join []
+    - Num Columns: 0
+    - Row Type: 
+    - Keys: [key: [], lower_bound: 1, upper_bound: 1], [key: [], lower_bound: 1, upper_bound: 1]
+  [1] Aggregate key: []
+      - Num Columns: 0
+      - Row Type: 
+      - Keys: [key: [], lower_bound: 1, upper_bound: 1]
+    [0] TableScan id: 1, num_columns: 10
+        - Num Columns: 10
+        - Row Type: string, string, string, string, string, string, string, string, string, string
+  Recurring node 1
+
+
+Optimized:
+[2] Inner Join []
+    - Num Columns: 0
+    - Row Type: 
+    - Keys: [key: [], lower_bound: 1, upper_bound: 1], [key: [], lower_bound: 1, upper_bound: 1]
+  [4] Aggregate key: []
+      - Num Columns: 0
+      - Row Type: 
+      - Keys: [key: [], lower_bound: 1, upper_bound: 1]
+    [3] Project []
+        - Num Columns: 0
+        - Row Type: 
+      [0] TableScan id: 1, num_columns: 10
+          - Num Columns: 10
+          - Row Type: string, string, string, string, string, string, string, string, string, string
+  Recurring node 4
+----
+----
+
+run
+join_keys_1
+----
+----
+[4] Project [ref_2, ref_1, ref_0]
+    - Num Columns: 3
+    - Row Type: string, string, string
+    - Keys: [key: [], lower_bound: 0, upper_bound: 1], [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+  [3] Inner Join []
+      - Num Columns: 3
+      - Row Type: string, string, string
+      - Keys: [key: [], lower_bound: 0, upper_bound: 1], [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+    [2] Aggregate key: []
+        - Num Columns: 0
+        - Row Type: 
+        - Keys: [key: [], lower_bound: 1, upper_bound: 1]
+      [0] TableScan id: 1, num_columns: 10
+          - Num Columns: 10
+          - Row Type: string, string, string, string, string, string, string, string, string, string
+    [1] Aggregate key: [ref_0, ref_1, ref_2]
+        - Num Columns: 3
+        - Row Type: string, string, string
+        - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+      Recurring node 0
+
+
+Optimized:
+[4] Project [ref_2, ref_1, ref_0]
+    - Num Columns: 3
+    - Row Type: string, string, string
+    - Keys: [key: [], lower_bound: 0, upper_bound: 1], [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+  [3] Inner Join []
+      - Num Columns: 3
+      - Row Type: string, string, string
+      - Keys: [key: [], lower_bound: 0, upper_bound: 1], [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+    [6] Aggregate key: []
+        - Num Columns: 0
+        - Row Type: 
+        - Keys: [key: [], lower_bound: 1, upper_bound: 1]
+      [5] Project []
+          - Num Columns: 0
+          - Row Type: 
+        [0] TableScan id: 1, num_columns: 10
+            - Num Columns: 10
+            - Row Type: string, string, string, string, string, string, string, string, string, string
+    [8] Aggregate key: [ref_0, ref_1, ref_2]
+        - Num Columns: 3
+        - Row Type: string, string, string
+        - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+      [7] Project [ref_0, ref_1, ref_2]
+          - Num Columns: 3
+          - Row Type: string, string, string
+        Recurring node 0
+----
+----
+
+run
+join_keys_2
+----
+----
+[4] Project [ref_2, ref_1, ref_0]
+    - Num Columns: 3
+    - Row Type: string, string, string
+    - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1], [key: [], lower_bound: 0, upper_bound: 1]
+  [3] Inner Join []
+      - Num Columns: 3
+      - Row Type: string, string, string
+      - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1], [key: [], lower_bound: 0, upper_bound: 1]
+    [1] Aggregate key: [ref_0, ref_1, ref_2]
+        - Num Columns: 3
+        - Row Type: string, string, string
+        - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+      [0] TableScan id: 1, num_columns: 10
+          - Num Columns: 10
+          - Row Type: string, string, string, string, string, string, string, string, string, string
+    [2] Aggregate key: []
+        - Num Columns: 0
+        - Row Type: 
+        - Keys: [key: [], lower_bound: 1, upper_bound: 1]
+      Recurring node 0
+
+
+Optimized:
+[4] Project [ref_2, ref_1, ref_0]
+    - Num Columns: 3
+    - Row Type: string, string, string
+    - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1], [key: [], lower_bound: 0, upper_bound: 1]
+  [3] Inner Join []
+      - Num Columns: 3
+      - Row Type: string, string, string
+      - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1], [key: [], lower_bound: 0, upper_bound: 1]
+    [6] Aggregate key: [ref_0, ref_1, ref_2]
+        - Num Columns: 3
+        - Row Type: string, string, string
+        - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+      [5] Project [ref_0, ref_1, ref_2]
+          - Num Columns: 3
+          - Row Type: string, string, string
+        [0] TableScan id: 1, num_columns: 10
+            - Num Columns: 10
+            - Row Type: string, string, string, string, string, string, string, string, string, string
+    [8] Aggregate key: []
+        - Num Columns: 0
+        - Row Type: 
+        - Keys: [key: [], lower_bound: 1, upper_bound: 1]
+      [7] Project []
+          - Num Columns: 0
+          - Row Type: 
+        Recurring node 0
+----
+----
+
+run
+join_keys_3
+----
+----
+[3] Project [ref_2, ref_1, ref_0]
+    - Num Columns: 3
+    - Row Type: string, string, string
+    - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+  [2] Inner Join [eq(ref_0, ref_3), eq(ref_1, ref_4), eq(ref_2, ref_5)]
+      - Num Columns: 6
+      - Row Type: string, string, string, string, string, string
+      - Pulled Up Predicates: eq(ref_0, ref_3), eq(ref_1, ref_4), eq(ref_2, ref_5)
+      - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1], [key: [ref_3, ref_4, ref_5], lower_bound: 0, upper_bound: 1]
+    [1] Aggregate key: [ref_0, ref_1, ref_2]
+        - Num Columns: 3
+        - Row Type: string, string, string
+        - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+      [0] TableScan id: 1, num_columns: 10
+          - Num Columns: 10
+          - Row Type: string, string, string, string, string, string, string, string, string, string
+    Recurring node 1
+
+
+Optimized:
+[3] Project [ref_2, ref_1, ref_0]
+    - Num Columns: 3
+    - Row Type: string, string, string
+    - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+  [2] Inner Join [eq(ref_0, ref_3), eq(ref_1, ref_4), eq(ref_2, ref_5)]
+      - Num Columns: 6
+      - Row Type: string, string, string, string, string, string
+      - Pulled Up Predicates: eq(ref_0, ref_3), eq(ref_1, ref_4), eq(ref_2, ref_5)
+      - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1], [key: [ref_3, ref_4, ref_5], lower_bound: 0, upper_bound: 1]
+    [5] Aggregate key: [ref_0, ref_1, ref_2]
+        - Num Columns: 3
+        - Row Type: string, string, string
+        - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+      [4] Project [ref_0, ref_1, ref_2]
+          - Num Columns: 3
+          - Row Type: string, string, string
+        [0] TableScan id: 1, num_columns: 10
+            - Num Columns: 10
+            - Row Type: string, string, string, string, string, string, string, string, string, string
+    Recurring node 5
+----
+----

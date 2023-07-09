@@ -1,0 +1,44 @@
+
+run
+union_predicates
+----
+----
+[3] Union
+    - Num Columns: 10
+    - Row Type: string, string, string, string, string, string, string, string, string, string
+    - Pulled Up Predicates: eq(ref_0, 'world')
+  [1] Filter [eq(ref_0, 'world')]
+      - Num Columns: 10
+      - Row Type: string, string, string, string, string, string, string, string, string, string
+      - Pulled Up Predicates: eq(ref_0, 'world')
+    [0] TableScan id: 1, num_columns: 10
+        - Num Columns: 10
+        - Row Type: string, string, string, string, string, string, string, string, string, string
+  [2] Filter [eq(ref_1, 'hello'), eq(ref_0, 'world')]
+      - Num Columns: 10
+      - Row Type: string, string, string, string, string, string, string, string, string, string
+      - Pulled Up Predicates: eq(ref_0, 'world'), eq(ref_1, 'hello')
+    Recurring node 0
+  Recurring node 1
+
+
+Optimized:
+[3] Union
+    - Num Columns: 10
+    - Row Type: string, string, string, string, string, string, string, string, string, string
+    - Pulled Up Predicates: eq(ref_0, 'world')
+  [1] Filter [eq(ref_0, 'world')]
+      - Num Columns: 10
+      - Row Type: string, string, string, string, string, string, string, string, string, string
+      - Pulled Up Predicates: eq(ref_0, 'world')
+    [0] TableScan id: 1, num_columns: 10
+        - Num Columns: 10
+        - Row Type: string, string, string, string, string, string, string, string, string, string
+  [2] Filter [eq(ref_1, 'hello'), eq(ref_0, 'world')]
+      - Num Columns: 10
+      - Row Type: string, string, string, string, string, string, string, string, string, string
+      - Pulled Up Predicates: eq(ref_0, 'world'), eq(ref_1, 'hello')
+    Recurring node 0
+  Recurring node 1
+----
+----

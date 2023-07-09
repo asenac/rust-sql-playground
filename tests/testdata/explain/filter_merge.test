@@ -89,3 +89,43 @@ Optimized:
       - Row Type: string, string, string, string, string, string, string, string, string, string
 ----
 ----
+
+run
+mergeable_filters
+----
+----
+[4] Project [ref_0, ref_2]
+    - Num Columns: 2
+    - Row Type: string, string
+    - Pulled Up Predicates: eq(ref_0, 'hello')
+  [3] Project [ref_0, ref_9, concat(ref_2, ref_4)]
+      - Num Columns: 3
+      - Row Type: string, string, string
+      - Pulled Up Predicates: eq(ref_0, 'hello')
+    [2] Filter [eq(ref_5, 'world')]
+        - Num Columns: 10
+        - Row Type: string, string, string, string, string, string, string, string, string, string
+        - Pulled Up Predicates: eq(ref_0, 'hello'), eq(ref_5, 'world')
+      [1] Filter [eq(ref_0, 'hello')]
+          - Num Columns: 10
+          - Row Type: string, string, string, string, string, string, string, string, string, string
+          - Pulled Up Predicates: eq(ref_0, 'hello')
+        [0] TableScan id: 1, num_columns: 10
+            - Num Columns: 10
+            - Row Type: string, string, string, string, string, string, string, string, string, string
+
+
+Optimized:
+[6] Project ['hello', concat(ref_2, ref_4)]
+    - Num Columns: 2
+    - Row Type: string, string
+    - Pulled Up Predicates: raw_eq(ref_0, 'hello')
+  [7] Filter [eq(ref_5, 'world'), eq(ref_0, 'hello')]
+      - Num Columns: 10
+      - Row Type: string, string, string, string, string, string, string, string, string, string
+      - Pulled Up Predicates: eq(ref_0, 'hello'), eq(ref_5, 'world')
+    [0] TableScan id: 1, num_columns: 10
+        - Num Columns: 10
+        - Row Type: string, string, string, string, string, string, string, string, string, string
+----
+----

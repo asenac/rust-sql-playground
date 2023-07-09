@@ -11,138 +11,591 @@ use rust_sql::scalar_expr::BinaryOp;
 use rust_sql::scalar_expr::NaryOp;
 use rust_sql::scalar_expr::ScalarExpr;
 
+mod test_queries {
+    use super::*;
+
+    pub(crate) fn aggregate_remove(queries: &mut HashMap<String, QueryGraph>) {
+        queries.insert("redundant_aggregate".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 10);
+            let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
+                group_key: (0..3).collect(),
+                input: table_scan_1,
+            });
+            let aggregate_2 = query_graph.add_node(QueryNode::Aggregate {
+                group_key: (0..3).collect(),
+                input: aggregate_1,
+            });
+            query_graph.set_entry_node(aggregate_2);
+            query_graph
+        });
+    }
+
+    pub(crate) fn filter_merge(queries: &mut HashMap<String, QueryGraph>) {
+        queries.insert("filter_merge_1".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_id = query_graph.table_scan(0, 10);
+            let filter_1 = ScalarExpr::input_ref(0)
+                .binary(BinaryOp::Eq, ScalarExpr::input_ref(1).to_ref())
+                .to_ref();
+            let filter_id_1 = query_graph.filter(table_scan_id, vec![filter_1.clone()]);
+            let filter_2 = ScalarExpr::input_ref(2)
+                .binary(BinaryOp::Gt, ScalarExpr::input_ref(3).to_ref())
+                .to_ref();
+            let filter_id_2 = query_graph.filter(filter_id_1, vec![filter_2.clone()]);
+            query_graph.set_entry_node(filter_id_2);
+            query_graph
+        });
+        queries.insert("filter_merge_2".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_id = query_graph.table_scan(0, 10);
+            let filter_1 = ScalarExpr::input_ref(0)
+                .binary(BinaryOp::Eq, ScalarExpr::input_ref(1).to_ref())
+                .to_ref();
+            let filter_id_1 = query_graph.filter(table_scan_id, vec![filter_1]);
+            let filter_2 = ScalarExpr::input_ref(2)
+                .binary(BinaryOp::Gt, ScalarExpr::input_ref(3).to_ref())
+                .to_ref();
+            let filter_id_2 = query_graph.filter(filter_id_1, vec![filter_2]);
+            let filter_3 = ScalarExpr::input_ref(4)
+                .binary(BinaryOp::Lt, ScalarExpr::input_ref(5).to_ref())
+                .to_ref();
+            let filter_id_3 = query_graph.filter(filter_id_2, vec![filter_3]);
+            query_graph.set_entry_node(filter_id_3);
+            query_graph
+        });
+        queries.insert("mergeable_filters".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            // select col0, col2 from (select col0, col9, col2 || col4 from (select * from table_1 where col0 = 'hello') where col5 = 'world')
+            let table_scan_1 = query_graph.table_scan(1, 10);
+            let filter_1 = query_graph.filter(
+                table_scan_1,
+                vec![ScalarExpr::input_ref(0)
+                    .binary(
+                        BinaryOp::Eq,
+                        ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                    )
+                    .to_ref()],
+            );
+            let filter_2 = query_graph.filter(
+                filter_1,
+                vec![ScalarExpr::input_ref(5)
+                    .binary(
+                        BinaryOp::Eq,
+                        ScalarExpr::string_literal("world".to_string()).to_ref(),
+                    )
+                    .to_ref()],
+            );
+            let project_1 = query_graph.project(
+                filter_2,
+                vec![
+                    ScalarExpr::input_ref(0).to_ref(),
+                    ScalarExpr::input_ref(9).to_ref(),
+                    ScalarExpr::nary(
+                        NaryOp::Concat,
+                        vec![
+                            ScalarExpr::input_ref(2).to_ref(),
+                            ScalarExpr::input_ref(4).to_ref(),
+                        ],
+                    )
+                    .to_ref(),
+                ],
+            );
+            let project_2 = query_graph.project(
+                project_1,
+                vec![
+                    ScalarExpr::input_ref(0).to_ref(),
+                    ScalarExpr::input_ref(2).to_ref(),
+                ],
+            );
+            query_graph.set_entry_node(project_2);
+            query_graph
+        });
+    }
+
+    pub(crate) fn keys_join(queries: &mut HashMap<String, QueryGraph>) {
+        queries.insert("join_between_keyless_aggregations".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 10);
+            let aggregate = query_graph.add_node(QueryNode::Aggregate {
+                group_key: BTreeSet::new(),
+                input: table_scan_1,
+            });
+            let join = query_graph.inner_join(aggregate, aggregate, Vec::new());
+            query_graph.set_entry_node(join);
+            query_graph
+        });
+        queries.insert("join_keys_1".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 10);
+            let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
+                group_key: (0..3).collect(),
+                input: table_scan_1,
+            });
+            let aggregate_2 = query_graph.add_node(QueryNode::Aggregate {
+                group_key: BTreeSet::new(),
+                input: table_scan_1,
+            });
+            let join = query_graph.inner_join(aggregate_2, aggregate_1, Vec::new());
+            let project = query_graph.project(
+                join,
+                (0..3)
+                    .rev()
+                    .map(|col| ScalarExpr::input_ref(col).to_ref())
+                    .collect(),
+            );
+            query_graph.set_entry_node(project);
+            query_graph
+        });
+        queries.insert("join_keys_2".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 10);
+            let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
+                group_key: (0..3).collect(),
+                input: table_scan_1,
+            });
+            let aggregate_2 = query_graph.add_node(QueryNode::Aggregate {
+                group_key: BTreeSet::new(),
+                input: table_scan_1,
+            });
+            let join = query_graph.inner_join(aggregate_1, aggregate_2, Vec::new());
+            let project = query_graph.project(
+                join,
+                (0..3)
+                    .rev()
+                    .map(|col| ScalarExpr::input_ref(col).to_ref())
+                    .collect(),
+            );
+            query_graph.set_entry_node(project);
+            query_graph
+        });
+        queries.insert("join_keys_3".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 10);
+            let aggregate = query_graph.add_node(QueryNode::Aggregate {
+                group_key: (0..3).collect(),
+                input: table_scan_1,
+            });
+            let join = query_graph.inner_join(
+                aggregate,
+                aggregate,
+                (0..3)
+                    .map(|i| {
+                        ScalarExpr::input_ref(i)
+                            .binary(BinaryOp::Eq, ScalarExpr::input_ref(i + 3).to_ref())
+                            .to_ref()
+                    })
+                    .collect(),
+            );
+            let project = query_graph.project(
+                join,
+                (0..3)
+                    .rev()
+                    .map(|col| ScalarExpr::input_ref(col).to_ref())
+                    .collect(),
+            );
+            query_graph.set_entry_node(project);
+            query_graph
+        });
+    }
+
+    pub(crate) fn filter_aggregate_transpose(queries: &mut HashMap<String, QueryGraph>) {
+        queries.insert("filter_aggregate".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 10);
+            let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
+                group_key: (0..3).collect(),
+                input: table_scan_1,
+            });
+            let filter_1 = query_graph.filter(
+                aggregate_1,
+                vec![
+                    ScalarExpr::input_ref(1)
+                        .binary(
+                            BinaryOp::Lt,
+                            ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                        )
+                        .to_ref(),
+                    ScalarExpr::input_ref(0)
+                        .binary(
+                            BinaryOp::Gt,
+                            ScalarExpr::string_literal("world".to_string()).to_ref(),
+                        )
+                        .to_ref(),
+                ],
+            );
+            let filter_2 = query_graph.filter(
+                aggregate_1,
+                vec![ScalarExpr::input_ref(0)
+                    .binary(
+                        BinaryOp::Gt,
+                        ScalarExpr::string_literal("world".to_string()).to_ref(),
+                    )
+                    .to_ref()],
+            );
+            let union_ = query_graph.add_node(QueryNode::Union {
+                inputs: vec![filter_2, filter_1],
+            });
+            query_graph.set_entry_node(union_);
+            query_graph
+        });
+    }
+
+    pub(crate) fn filter_project_transpose(queries: &mut HashMap<String, QueryGraph>) {
+        // filter_project_transpose.test
+        queries.insert("filter_project_transpose_1".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_id = query_graph.table_scan(0, 5);
+            let project_outputs = vec![
+                ScalarExpr::input_ref(4).to_ref(),
+                ScalarExpr::input_ref(2).to_ref(),
+                ScalarExpr::input_ref(3).to_ref(),
+            ];
+            let project_id = query_graph.project(table_scan_id, project_outputs);
+            let filter_2 = ScalarExpr::input_ref(2)
+                .binary(BinaryOp::Gt, ScalarExpr::input_ref(1).to_ref())
+                .to_ref();
+            let filter_id_2 = query_graph.filter(project_id, vec![filter_2]);
+            query_graph.set_entry_node(filter_id_2);
+            query_graph
+        });
+    }
+
+    pub(crate) fn filter_join_transpose(queries: &mut HashMap<String, QueryGraph>) {
+        for (suffix, join_type) in [
+            ("inner", JoinType::Inner),
+            ("left", JoinType::LeftOuter),
+            ("right", JoinType::RightOuter),
+            ("full", JoinType::FullOuter),
+        ] {
+            queries.insert("filter_join_transpose_".to_string() + suffix, {
+                let mut query_graph = QueryGraph::new();
+                let table_scan_1 = query_graph.table_scan(1, 5);
+                let table_scan_2 = query_graph.table_scan(2, 5);
+                let join = query_graph.join(
+                    join_type,
+                    table_scan_1,
+                    table_scan_2,
+                    vec![ScalarExpr::input_ref(0)
+                        .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).to_ref())
+                        .to_ref()],
+                );
+                let filter_1 = query_graph.filter(
+                    join,
+                    vec![
+                        ScalarExpr::input_ref(1)
+                            .binary(
+                                BinaryOp::Lt,
+                                ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                            )
+                            .to_ref(),
+                        ScalarExpr::input_ref(2)
+                            .binary(
+                                BinaryOp::Eq,
+                                ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                            )
+                            .to_ref(),
+                        ScalarExpr::input_ref(6)
+                            .binary(
+                                BinaryOp::Gt,
+                                ScalarExpr::string_literal("world".to_string()).to_ref(),
+                            )
+                            .to_ref(),
+                    ],
+                );
+                let filter_2 = query_graph.filter(
+                    join,
+                    vec![
+                        ScalarExpr::input_ref(6)
+                            .binary(
+                                BinaryOp::Gt,
+                                ScalarExpr::string_literal("world".to_string()).to_ref(),
+                            )
+                            .to_ref(),
+                        ScalarExpr::input_ref(2)
+                            .binary(
+                                BinaryOp::Eq,
+                                ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                            )
+                            .to_ref(),
+                    ],
+                );
+                let union_ = query_graph.add_node(QueryNode::Union {
+                    inputs: vec![filter_2, filter_1],
+                });
+                query_graph.set_entry_node(union_);
+                query_graph
+            });
+        }
+        // TODO(asenac) Add test queries for Semi and Anti
+    }
+
+    pub(crate) fn union_merge(queries: &mut HashMap<String, QueryGraph>) {
+        queries.insert("union_merge".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 10);
+            let union_1 = query_graph.add_node(QueryNode::Union {
+                inputs: vec![table_scan_1, table_scan_1],
+            });
+            let union_2 = query_graph.add_node(QueryNode::Union {
+                inputs: vec![union_1, union_1, table_scan_1],
+            });
+            let union_3 = query_graph.add_node(QueryNode::Union {
+                inputs: vec![union_1, union_2],
+            });
+            query_graph.set_entry_node(union_3);
+            query_graph
+        });
+    }
+
+    pub(crate) fn union_pruning(queries: &mut HashMap<String, QueryGraph>) {
+        queries.insert("union_pruning".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 10);
+            let union_1 = query_graph.add_node(QueryNode::Union {
+                inputs: vec![table_scan_1, table_scan_1],
+            });
+            let project_1 = query_graph.project(
+                union_1,
+                vec![
+                    ScalarExpr::input_ref(0).to_ref(),
+                    ScalarExpr::input_ref(2).to_ref(),
+                ],
+            );
+            let project_2 = query_graph.project(
+                union_1,
+                vec![
+                    ScalarExpr::input_ref(3).to_ref(),
+                    ScalarExpr::input_ref(2).to_ref(),
+                ],
+            );
+            let union_3 = query_graph.add_node(QueryNode::Union {
+                inputs: vec![project_1, project_2],
+            });
+            query_graph.set_entry_node(union_3);
+            query_graph
+        });
+    }
+
+    pub(crate) fn join_pruning(queries: &mut HashMap<String, QueryGraph>) {
+        // join_pruning.test
+        queries.insert("join_pruning_1".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 10);
+            let join = query_graph.inner_join(
+                table_scan_1,
+                table_scan_1,
+                vec![ScalarExpr::input_ref(4)
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(15).to_ref())
+                    .to_ref()],
+            );
+            let project_1 = query_graph.project(
+                join,
+                vec![
+                    ScalarExpr::input_ref(0).to_ref(),
+                    ScalarExpr::input_ref(18).to_ref(),
+                ],
+            );
+            let project_2 = query_graph.project(
+                join,
+                vec![
+                    ScalarExpr::input_ref(3).to_ref(),
+                    ScalarExpr::input_ref(12).to_ref(),
+                ],
+            );
+            let union_1 = query_graph.add_node(QueryNode::Union {
+                inputs: vec![project_1, project_2],
+            });
+            query_graph.set_entry_node(union_1);
+            query_graph
+        });
+        queries.insert("join_pruning_2".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 10);
+            let join = query_graph.inner_join(
+                table_scan_1,
+                table_scan_1,
+                vec![ScalarExpr::input_ref(4)
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(15).to_ref())
+                    .to_ref()],
+            );
+            let filter_1 = query_graph.filter(
+                join,
+                vec![ScalarExpr::input_ref(2)
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(16).to_ref())
+                    .to_ref()],
+            );
+            let project_1 = query_graph.project(
+                filter_1,
+                vec![
+                    ScalarExpr::input_ref(0).to_ref(),
+                    ScalarExpr::input_ref(18).to_ref(),
+                ],
+            );
+            let filter_2 = query_graph.filter(
+                join,
+                vec![ScalarExpr::input_ref(3)
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(15).to_ref())
+                    .to_ref()],
+            );
+            let project_2 = query_graph.project(
+                filter_2,
+                vec![
+                    ScalarExpr::input_ref(3).to_ref(),
+                    ScalarExpr::input_ref(12).to_ref(),
+                ],
+            );
+            let union_1 = query_graph.add_node(QueryNode::Union {
+                inputs: vec![project_1, project_2],
+            });
+            query_graph.set_entry_node(union_1);
+            query_graph
+        });
+        queries.insert("join_pruning_3".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 4);
+            let table_scan_2 = query_graph.table_scan(1, 5);
+            let join = query_graph.inner_join(
+                table_scan_1,
+                table_scan_2,
+                vec![ScalarExpr::input_ref(0)
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(4).to_ref())
+                    .to_ref()],
+            );
+            let filter_1 = query_graph.filter(
+                join,
+                vec![ScalarExpr::input_ref(2)
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(1).to_ref())
+                    .to_ref()],
+            );
+            let agg_1 = query_graph.add_node(QueryNode::Aggregate {
+                group_key: BTreeSet::from([0, 1]),
+                input: filter_1,
+            });
+            let agg_2 = query_graph.add_node(QueryNode::Aggregate {
+                group_key: BTreeSet::from([2, 5]),
+                input: join,
+            });
+            let union_1 = query_graph.add_node(QueryNode::Union {
+                inputs: vec![agg_1, agg_2],
+            });
+            query_graph.set_entry_node(union_1);
+            query_graph
+        });
+    }
+
+    pub(crate) fn project_normalization(queries: &mut HashMap<String, QueryGraph>) {
+        queries.insert("project_normalization_1".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let filter_1 = query_graph.filter(
+                table_scan_1,
+                vec![
+                    ScalarExpr::input_ref(1)
+                        .binary(
+                            BinaryOp::Lt,
+                            ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                        )
+                        .to_ref(),
+                    ScalarExpr::input_ref(2)
+                        .binary(
+                            BinaryOp::Eq,
+                            ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                        )
+                        .to_ref(),
+                ],
+            );
+            let project_1 = query_graph.project(
+                filter_1,
+                vec![
+                    ScalarExpr::input_ref(1).to_ref(),
+                    ScalarExpr::input_ref(2).to_ref(),
+                    ScalarExpr::input_ref(2)
+                        .binary(
+                            BinaryOp::Eq,
+                            ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                        )
+                        .to_ref(),
+                ],
+            );
+            query_graph.set_entry_node(project_1);
+            query_graph
+        });
+    }
+
+    pub(crate) fn filter_normalization(queries: &mut HashMap<String, QueryGraph>) {
+        queries.insert("filter_normalization_1".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let filter_1 = query_graph.filter(
+                table_scan_1,
+                vec![
+                    ScalarExpr::input_ref(1)
+                        .binary(
+                            BinaryOp::Lt,
+                            ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                        )
+                        .to_ref(),
+                    ScalarExpr::input_ref(1)
+                        .binary(
+                            BinaryOp::Lt,
+                            ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                        )
+                        .to_ref(),
+                    ScalarExpr::input_ref(2)
+                        .binary(
+                            BinaryOp::Eq,
+                            ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                        )
+                        .to_ref(),
+                ],
+            );
+            query_graph.set_entry_node(filter_1);
+            query_graph
+        });
+    }
+
+    pub(crate) fn pulled_up_predicates(queries: &mut HashMap<String, QueryGraph>) {
+        queries.insert("union_predicates".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 10);
+            let filter_1 = query_graph.filter(
+                table_scan_1,
+                vec![ScalarExpr::input_ref(0)
+                    .binary(
+                        BinaryOp::Eq,
+                        ScalarExpr::string_literal("world".to_string()).to_ref(),
+                    )
+                    .to_ref()],
+            );
+            let filter_2 = query_graph.filter(
+                table_scan_1,
+                vec![
+                    ScalarExpr::input_ref(1)
+                        .binary(
+                            BinaryOp::Eq,
+                            ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                        )
+                        .to_ref(),
+                    ScalarExpr::input_ref(0)
+                        .binary(
+                            BinaryOp::Eq,
+                            ScalarExpr::string_literal("world".to_string()).to_ref(),
+                        )
+                        .to_ref(),
+                ],
+            );
+            let union_ = query_graph.add_node(QueryNode::Union {
+                inputs: vec![filter_1, filter_2, filter_1],
+            });
+            query_graph.set_entry_node(union_);
+            query_graph
+        });
+    }
+}
+
 fn static_queries() -> HashMap<String, QueryGraph> {
     let mut queries = HashMap::new();
-    queries.insert("join_between_keyless_aggregations".to_string(), {
-        let mut query_graph = QueryGraph::new();
-        let table_scan_1 = query_graph.table_scan(1, 10);
-        let aggregate = query_graph.add_node(QueryNode::Aggregate {
-            group_key: BTreeSet::new(),
-            input: table_scan_1,
-        });
-        let join = query_graph.inner_join(aggregate, aggregate, Vec::new());
-        query_graph.set_entry_node(join);
-        query_graph
-    });
-    queries.insert("join_keys_1".to_string(), {
-        let mut query_graph = QueryGraph::new();
-        let table_scan_1 = query_graph.table_scan(1, 10);
-        let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
-            group_key: (0..3).collect(),
-            input: table_scan_1,
-        });
-        let aggregate_2 = query_graph.add_node(QueryNode::Aggregate {
-            group_key: BTreeSet::new(),
-            input: table_scan_1,
-        });
-        let join = query_graph.inner_join(aggregate_2, aggregate_1, Vec::new());
-        let project = query_graph.project(
-            join,
-            (0..3)
-                .rev()
-                .map(|col| ScalarExpr::input_ref(col).to_ref())
-                .collect(),
-        );
-        query_graph.set_entry_node(project);
-        query_graph
-    });
-    queries.insert("join_keys_2".to_string(), {
-        let mut query_graph = QueryGraph::new();
-        let table_scan_1 = query_graph.table_scan(1, 10);
-        let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
-            group_key: (0..3).collect(),
-            input: table_scan_1,
-        });
-        let aggregate_2 = query_graph.add_node(QueryNode::Aggregate {
-            group_key: BTreeSet::new(),
-            input: table_scan_1,
-        });
-        let join = query_graph.inner_join(aggregate_1, aggregate_2, Vec::new());
-        let project = query_graph.project(
-            join,
-            (0..3)
-                .rev()
-                .map(|col| ScalarExpr::input_ref(col).to_ref())
-                .collect(),
-        );
-        query_graph.set_entry_node(project);
-        query_graph
-    });
-    queries.insert("join_keys_3".to_string(), {
-        let mut query_graph = QueryGraph::new();
-        let table_scan_1 = query_graph.table_scan(1, 10);
-        let aggregate = query_graph.add_node(QueryNode::Aggregate {
-            group_key: (0..3).collect(),
-            input: table_scan_1,
-        });
-        let join = query_graph.inner_join(
-            aggregate,
-            aggregate,
-            (0..3)
-                .map(|i| {
-                    ScalarExpr::input_ref(i)
-                        .binary(BinaryOp::Eq, ScalarExpr::input_ref(i + 3).to_ref())
-                        .to_ref()
-                })
-                .collect(),
-        );
-        let project = query_graph.project(
-            join,
-            (0..3)
-                .rev()
-                .map(|col| ScalarExpr::input_ref(col).to_ref())
-                .collect(),
-        );
-        query_graph.set_entry_node(project);
-        query_graph
-    });
-    queries.insert("mergeable_filters".to_string(), {
-        let mut query_graph = QueryGraph::new();
-        // select col0, col2 from (select col0, col9, col2 || col4 from (select * from table_1 where col0 = 'hello') where col5 = 'world')
-        let table_scan_1 = query_graph.table_scan(1, 10);
-        let filter_1 = query_graph.filter(
-            table_scan_1,
-            vec![ScalarExpr::input_ref(0)
-                .binary(
-                    BinaryOp::Eq,
-                    ScalarExpr::string_literal("hello".to_string()).to_ref(),
-                )
-                .to_ref()],
-        );
-        let filter_2 = query_graph.filter(
-            filter_1,
-            vec![ScalarExpr::input_ref(5)
-                .binary(
-                    BinaryOp::Eq,
-                    ScalarExpr::string_literal("world".to_string()).to_ref(),
-                )
-                .to_ref()],
-        );
-        let project_1 = query_graph.project(
-            filter_2,
-            vec![
-                ScalarExpr::input_ref(0).to_ref(),
-                ScalarExpr::input_ref(9).to_ref(),
-                ScalarExpr::nary(
-                    NaryOp::Concat,
-                    vec![
-                        ScalarExpr::input_ref(2).to_ref(),
-                        ScalarExpr::input_ref(4).to_ref(),
-                    ],
-                )
-                .to_ref(),
-            ],
-        );
-        let project_2 = query_graph.project(
-            project_1,
-            vec![
-                ScalarExpr::input_ref(0).to_ref(),
-                ScalarExpr::input_ref(2).to_ref(),
-            ],
-        );
-        query_graph.set_entry_node(project_2);
-        query_graph
-    });
     queries.insert("two_rows".to_string(), {
         let mut query_graph = QueryGraph::new();
         let table_scan_1 = query_graph.table_scan(1, 10);
@@ -265,20 +718,6 @@ fn static_queries() -> HashMap<String, QueryGraph> {
         query_graph.set_entry_node(aggregate);
         query_graph
     });
-    queries.insert("redundant_aggregate".to_string(), {
-        let mut query_graph = QueryGraph::new();
-        let table_scan_1 = query_graph.table_scan(1, 10);
-        let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
-            group_key: (0..3).collect(),
-            input: table_scan_1,
-        });
-        let aggregate_2 = query_graph.add_node(QueryNode::Aggregate {
-            group_key: (0..3).collect(),
-            input: aggregate_1,
-        });
-        query_graph.set_entry_node(aggregate_2);
-        query_graph
-    });
     queries.insert("recurrent_node".to_string(), {
         let mut query_graph = QueryGraph::new();
         let table_scan_1 = query_graph.table_scan(1, 10);
@@ -305,411 +744,20 @@ fn static_queries() -> HashMap<String, QueryGraph> {
         query_graph.set_entry_node(union_);
         query_graph
     });
-    queries.insert("union_predicates".to_string(), {
-        let mut query_graph = QueryGraph::new();
-        let table_scan_1 = query_graph.table_scan(1, 10);
-        let filter_1 = query_graph.filter(
-            table_scan_1,
-            vec![ScalarExpr::input_ref(0)
-                .binary(
-                    BinaryOp::Eq,
-                    ScalarExpr::string_literal("world".to_string()).to_ref(),
-                )
-                .to_ref()],
-        );
-        let filter_2 = query_graph.filter(
-            table_scan_1,
-            vec![
-                ScalarExpr::input_ref(1)
-                    .binary(
-                        BinaryOp::Eq,
-                        ScalarExpr::string_literal("hello".to_string()).to_ref(),
-                    )
-                    .to_ref(),
-                ScalarExpr::input_ref(0)
-                    .binary(
-                        BinaryOp::Eq,
-                        ScalarExpr::string_literal("world".to_string()).to_ref(),
-                    )
-                    .to_ref(),
-            ],
-        );
-        let union_ = query_graph.add_node(QueryNode::Union {
-            inputs: vec![filter_1, filter_2, filter_1],
-        });
-        query_graph.set_entry_node(union_);
-        query_graph
-    });
-    queries.insert("filter_aggregate".to_string(), {
-        let mut query_graph = QueryGraph::new();
-        let table_scan_1 = query_graph.table_scan(1, 10);
-        let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
-            group_key: (0..3).collect(),
-            input: table_scan_1,
-        });
-        let filter_1 = query_graph.filter(
-            aggregate_1,
-            vec![
-                ScalarExpr::input_ref(1)
-                    .binary(
-                        BinaryOp::Lt,
-                        ScalarExpr::string_literal("hello".to_string()).to_ref(),
-                    )
-                    .to_ref(),
-                ScalarExpr::input_ref(0)
-                    .binary(
-                        BinaryOp::Gt,
-                        ScalarExpr::string_literal("world".to_string()).to_ref(),
-                    )
-                    .to_ref(),
-            ],
-        );
-        let filter_2 = query_graph.filter(
-            aggregate_1,
-            vec![ScalarExpr::input_ref(0)
-                .binary(
-                    BinaryOp::Gt,
-                    ScalarExpr::string_literal("world".to_string()).to_ref(),
-                )
-                .to_ref()],
-        );
-        let union_ = query_graph.add_node(QueryNode::Union {
-            inputs: vec![filter_2, filter_1],
-        });
-        query_graph.set_entry_node(union_);
-        query_graph
-    });
-    // union_merge.test
-    queries.insert("union_merge".to_string(), {
-        let mut query_graph = QueryGraph::new();
-        let table_scan_1 = query_graph.table_scan(1, 10);
-        let union_1 = query_graph.add_node(QueryNode::Union {
-            inputs: vec![table_scan_1, table_scan_1],
-        });
-        let union_2 = query_graph.add_node(QueryNode::Union {
-            inputs: vec![union_1, union_1, table_scan_1],
-        });
-        let union_3 = query_graph.add_node(QueryNode::Union {
-            inputs: vec![union_1, union_2],
-        });
-        query_graph.set_entry_node(union_3);
-        query_graph
-    });
-    // union_pruning.test
-    queries.insert("union_pruning".to_string(), {
-        let mut query_graph = QueryGraph::new();
-        let table_scan_1 = query_graph.table_scan(1, 10);
-        let union_1 = query_graph.add_node(QueryNode::Union {
-            inputs: vec![table_scan_1, table_scan_1],
-        });
-        let project_1 = query_graph.project(
-            union_1,
-            vec![
-                ScalarExpr::input_ref(0).to_ref(),
-                ScalarExpr::input_ref(2).to_ref(),
-            ],
-        );
-        let project_2 = query_graph.project(
-            union_1,
-            vec![
-                ScalarExpr::input_ref(3).to_ref(),
-                ScalarExpr::input_ref(2).to_ref(),
-            ],
-        );
-        let union_3 = query_graph.add_node(QueryNode::Union {
-            inputs: vec![project_1, project_2],
-        });
-        query_graph.set_entry_node(union_3);
-        query_graph
-    });
-    // join_pruning.test
-    queries.insert("join_pruning_1".to_string(), {
-        let mut query_graph = QueryGraph::new();
-        let table_scan_1 = query_graph.table_scan(1, 10);
-        let join = query_graph.inner_join(
-            table_scan_1,
-            table_scan_1,
-            vec![ScalarExpr::input_ref(4)
-                .binary(BinaryOp::Eq, ScalarExpr::input_ref(15).to_ref())
-                .to_ref()],
-        );
-        let project_1 = query_graph.project(
-            join,
-            vec![
-                ScalarExpr::input_ref(0).to_ref(),
-                ScalarExpr::input_ref(18).to_ref(),
-            ],
-        );
-        let project_2 = query_graph.project(
-            join,
-            vec![
-                ScalarExpr::input_ref(3).to_ref(),
-                ScalarExpr::input_ref(12).to_ref(),
-            ],
-        );
-        let union_1 = query_graph.add_node(QueryNode::Union {
-            inputs: vec![project_1, project_2],
-        });
-        query_graph.set_entry_node(union_1);
-        query_graph
-    });
-    queries.insert("join_pruning_2".to_string(), {
-        let mut query_graph = QueryGraph::new();
-        let table_scan_1 = query_graph.table_scan(1, 10);
-        let join = query_graph.inner_join(
-            table_scan_1,
-            table_scan_1,
-            vec![ScalarExpr::input_ref(4)
-                .binary(BinaryOp::Eq, ScalarExpr::input_ref(15).to_ref())
-                .to_ref()],
-        );
-        let filter_1 = query_graph.filter(
-            join,
-            vec![ScalarExpr::input_ref(2)
-                .binary(BinaryOp::Eq, ScalarExpr::input_ref(16).to_ref())
-                .to_ref()],
-        );
-        let project_1 = query_graph.project(
-            filter_1,
-            vec![
-                ScalarExpr::input_ref(0).to_ref(),
-                ScalarExpr::input_ref(18).to_ref(),
-            ],
-        );
-        let filter_2 = query_graph.filter(
-            join,
-            vec![ScalarExpr::input_ref(3)
-                .binary(BinaryOp::Eq, ScalarExpr::input_ref(15).to_ref())
-                .to_ref()],
-        );
-        let project_2 = query_graph.project(
-            filter_2,
-            vec![
-                ScalarExpr::input_ref(3).to_ref(),
-                ScalarExpr::input_ref(12).to_ref(),
-            ],
-        );
-        let union_1 = query_graph.add_node(QueryNode::Union {
-            inputs: vec![project_1, project_2],
-        });
-        query_graph.set_entry_node(union_1);
-        query_graph
-    });
-    queries.insert("join_pruning_3".to_string(), {
-        let mut query_graph = QueryGraph::new();
-        let table_scan_1 = query_graph.table_scan(1, 4);
-        let table_scan_2 = query_graph.table_scan(1, 5);
-        let join = query_graph.inner_join(
-            table_scan_1,
-            table_scan_2,
-            vec![ScalarExpr::input_ref(0)
-                .binary(BinaryOp::Eq, ScalarExpr::input_ref(4).to_ref())
-                .to_ref()],
-        );
-        let filter_1 = query_graph.filter(
-            join,
-            vec![ScalarExpr::input_ref(2)
-                .binary(BinaryOp::Eq, ScalarExpr::input_ref(1).to_ref())
-                .to_ref()],
-        );
-        let agg_1 = query_graph.add_node(QueryNode::Aggregate {
-            group_key: BTreeSet::from([0, 1]),
-            input: filter_1,
-        });
-        let agg_2 = query_graph.add_node(QueryNode::Aggregate {
-            group_key: BTreeSet::from([2, 5]),
-            input: join,
-        });
-        let union_1 = query_graph.add_node(QueryNode::Union {
-            inputs: vec![agg_1, agg_2],
-        });
-        query_graph.set_entry_node(union_1);
-        query_graph
-    });
-    // filter_merge.test
-    queries.insert("filter_merge_1".to_string(), {
-        let mut query_graph = QueryGraph::new();
-        let table_scan_id = query_graph.table_scan(0, 10);
-        let filter_1 = ScalarExpr::input_ref(0)
-            .binary(BinaryOp::Eq, ScalarExpr::input_ref(1).to_ref())
-            .to_ref();
-        let filter_id_1 = query_graph.filter(table_scan_id, vec![filter_1.clone()]);
-        let filter_2 = ScalarExpr::input_ref(2)
-            .binary(BinaryOp::Gt, ScalarExpr::input_ref(3).to_ref())
-            .to_ref();
-        let filter_id_2 = query_graph.filter(filter_id_1, vec![filter_2.clone()]);
-        query_graph.set_entry_node(filter_id_2);
-        query_graph
-    });
-    queries.insert("filter_merge_2".to_string(), {
-        let mut query_graph = QueryGraph::new();
-        let table_scan_id = query_graph.table_scan(0, 10);
-        let filter_1 = ScalarExpr::input_ref(0)
-            .binary(BinaryOp::Eq, ScalarExpr::input_ref(1).to_ref())
-            .to_ref();
-        let filter_id_1 = query_graph.filter(table_scan_id, vec![filter_1]);
-        let filter_2 = ScalarExpr::input_ref(2)
-            .binary(BinaryOp::Gt, ScalarExpr::input_ref(3).to_ref())
-            .to_ref();
-        let filter_id_2 = query_graph.filter(filter_id_1, vec![filter_2]);
-        let filter_3 = ScalarExpr::input_ref(4)
-            .binary(BinaryOp::Lt, ScalarExpr::input_ref(5).to_ref())
-            .to_ref();
-        let filter_id_3 = query_graph.filter(filter_id_2, vec![filter_3]);
-        query_graph.set_entry_node(filter_id_3);
-        query_graph
-    });
-    // filter_project_transpose.test
-    queries.insert("filter_project_transpose_1".to_string(), {
-        let mut query_graph = QueryGraph::new();
-        let table_scan_id = query_graph.table_scan(0, 5);
-        let project_outputs = vec![
-            ScalarExpr::input_ref(4).to_ref(),
-            ScalarExpr::input_ref(2).to_ref(),
-            ScalarExpr::input_ref(3).to_ref(),
-        ];
-        let project_id = query_graph.project(table_scan_id, project_outputs);
-        let filter_2 = ScalarExpr::input_ref(2)
-            .binary(BinaryOp::Gt, ScalarExpr::input_ref(1).to_ref())
-            .to_ref();
-        let filter_id_2 = query_graph.filter(project_id, vec![filter_2]);
-        query_graph.set_entry_node(filter_id_2);
-        query_graph
-    });
-    // filter_join_transpose.test
-    for (suffix, join_type) in [
-        ("inner", JoinType::Inner),
-        ("left", JoinType::LeftOuter),
-        ("right", JoinType::RightOuter),
-        ("full", JoinType::FullOuter),
-    ] {
-        queries.insert("filter_join_transpose_".to_string() + suffix, {
-            let mut query_graph = QueryGraph::new();
-            let table_scan_1 = query_graph.table_scan(1, 5);
-            let table_scan_2 = query_graph.table_scan(2, 5);
-            let join = query_graph.join(
-                join_type,
-                table_scan_1,
-                table_scan_2,
-                vec![ScalarExpr::input_ref(0)
-                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).to_ref())
-                    .to_ref()],
-            );
-            let filter_1 = query_graph.filter(
-                join,
-                vec![
-                    ScalarExpr::input_ref(1)
-                        .binary(
-                            BinaryOp::Lt,
-                            ScalarExpr::string_literal("hello".to_string()).to_ref(),
-                        )
-                        .to_ref(),
-                    ScalarExpr::input_ref(2)
-                        .binary(
-                            BinaryOp::Eq,
-                            ScalarExpr::string_literal("hello".to_string()).to_ref(),
-                        )
-                        .to_ref(),
-                    ScalarExpr::input_ref(6)
-                        .binary(
-                            BinaryOp::Gt,
-                            ScalarExpr::string_literal("world".to_string()).to_ref(),
-                        )
-                        .to_ref(),
-                ],
-            );
-            let filter_2 = query_graph.filter(
-                join,
-                vec![
-                    ScalarExpr::input_ref(6)
-                        .binary(
-                            BinaryOp::Gt,
-                            ScalarExpr::string_literal("world".to_string()).to_ref(),
-                        )
-                        .to_ref(),
-                    ScalarExpr::input_ref(2)
-                        .binary(
-                            BinaryOp::Eq,
-                            ScalarExpr::string_literal("hello".to_string()).to_ref(),
-                        )
-                        .to_ref(),
-                ],
-            );
-            let union_ = query_graph.add_node(QueryNode::Union {
-                inputs: vec![filter_2, filter_1],
-            });
-            query_graph.set_entry_node(union_);
-            query_graph
-        });
-    }
-    // TODO(asenac) Add test queries for Semi and Anti
-    // project_normalization.test
-    queries.insert("project_normalization_1".to_string(), {
-        let mut query_graph = QueryGraph::new();
-        let table_scan_1 = query_graph.table_scan(1, 5);
-        let filter_1 = query_graph.filter(
-            table_scan_1,
-            vec![
-                ScalarExpr::input_ref(1)
-                    .binary(
-                        BinaryOp::Lt,
-                        ScalarExpr::string_literal("hello".to_string()).to_ref(),
-                    )
-                    .to_ref(),
-                ScalarExpr::input_ref(2)
-                    .binary(
-                        BinaryOp::Eq,
-                        ScalarExpr::string_literal("hello".to_string()).to_ref(),
-                    )
-                    .to_ref(),
-            ],
-        );
-        let project_1 = query_graph.project(
-            filter_1,
-            vec![
-                ScalarExpr::input_ref(1).to_ref(),
-                ScalarExpr::input_ref(2).to_ref(),
-                ScalarExpr::input_ref(2)
-                    .binary(
-                        BinaryOp::Eq,
-                        ScalarExpr::string_literal("hello".to_string()).to_ref(),
-                    )
-                    .to_ref(),
-            ],
-        );
-        query_graph.set_entry_node(project_1);
-        query_graph
-    });
-    // project_normalization.test
-    queries.insert("filter_normalization_1".to_string(), {
-        let mut query_graph = QueryGraph::new();
-        let table_scan_1 = query_graph.table_scan(1, 5);
-        let filter_1 = query_graph.filter(
-            table_scan_1,
-            vec![
-                ScalarExpr::input_ref(1)
-                    .binary(
-                        BinaryOp::Lt,
-                        ScalarExpr::string_literal("hello".to_string()).to_ref(),
-                    )
-                    .to_ref(),
-                ScalarExpr::input_ref(1)
-                    .binary(
-                        BinaryOp::Lt,
-                        ScalarExpr::string_literal("hello".to_string()).to_ref(),
-                    )
-                    .to_ref(),
-                ScalarExpr::input_ref(2)
-                    .binary(
-                        BinaryOp::Eq,
-                        ScalarExpr::string_literal("hello".to_string()).to_ref(),
-                    )
-                    .to_ref(),
-            ],
-        );
-        query_graph.set_entry_node(filter_1);
-        query_graph
-    });
+
+    test_queries::aggregate_remove(&mut queries);
+    test_queries::filter_aggregate_transpose(&mut queries);
+    test_queries::filter_join_transpose(&mut queries);
+    test_queries::filter_merge(&mut queries);
+    test_queries::filter_normalization(&mut queries);
+    test_queries::filter_project_transpose(&mut queries);
+    test_queries::join_pruning(&mut queries);
+    test_queries::keys_join(&mut queries);
+    test_queries::project_normalization(&mut queries);
+    test_queries::pulled_up_predicates(&mut queries);
+    test_queries::union_merge(&mut queries);
+    test_queries::union_pruning(&mut queries);
+
     queries
 }
 
