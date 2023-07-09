@@ -5,7 +5,7 @@ join_between_keyless_aggregations
 [2] Inner Join []
     - Num Columns: 0
     - Row Type: 
-    - Keys: [key: [], lower_bound: 1, upper_bound: 1], [key: [], lower_bound: 1, upper_bound: 1]
+    - Keys: [key: [], lower_bound: 1, upper_bound: 1]
   [1] Aggregate key: []
       - Num Columns: 0
       - Row Type: 
@@ -20,7 +20,7 @@ Optimized:
 [2] Inner Join []
     - Num Columns: 0
     - Row Type: 
-    - Keys: [key: [], lower_bound: 1, upper_bound: 1], [key: [], lower_bound: 1, upper_bound: 1]
+    - Keys: [key: [], lower_bound: 1, upper_bound: 1]
   [4] Aggregate key: []
       - Num Columns: 0
       - Row Type: 
@@ -42,11 +42,11 @@ join_keys_1
 [4] Project [ref_2, ref_1, ref_0]
     - Num Columns: 3
     - Row Type: string, string, string
-    - Keys: [key: [], lower_bound: 0, upper_bound: 1], [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+    - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
   [3] Inner Join []
       - Num Columns: 3
       - Row Type: string, string, string
-      - Keys: [key: [], lower_bound: 0, upper_bound: 1], [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+      - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
     [2] Aggregate key: []
         - Num Columns: 0
         - Row Type: 
@@ -65,11 +65,11 @@ Optimized:
 [4] Project [ref_2, ref_1, ref_0]
     - Num Columns: 3
     - Row Type: string, string, string
-    - Keys: [key: [], lower_bound: 0, upper_bound: 1], [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+    - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
   [3] Inner Join []
       - Num Columns: 3
       - Row Type: string, string, string
-      - Keys: [key: [], lower_bound: 0, upper_bound: 1], [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+      - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
     [6] Aggregate key: []
         - Num Columns: 0
         - Row Type: 
@@ -98,11 +98,11 @@ join_keys_2
 [4] Project [ref_2, ref_1, ref_0]
     - Num Columns: 3
     - Row Type: string, string, string
-    - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1], [key: [], lower_bound: 0, upper_bound: 1]
+    - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
   [3] Inner Join []
       - Num Columns: 3
       - Row Type: string, string, string
-      - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1], [key: [], lower_bound: 0, upper_bound: 1]
+      - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
     [1] Aggregate key: [ref_0, ref_1, ref_2]
         - Num Columns: 3
         - Row Type: string, string, string
@@ -121,11 +121,11 @@ Optimized:
 [4] Project [ref_2, ref_1, ref_0]
     - Num Columns: 3
     - Row Type: string, string, string
-    - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1], [key: [], lower_bound: 0, upper_bound: 1]
+    - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
   [3] Inner Join []
       - Num Columns: 3
       - Row Type: string, string, string
-      - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1], [key: [], lower_bound: 0, upper_bound: 1]
+      - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
     [6] Aggregate key: [ref_0, ref_1, ref_2]
         - Num Columns: 3
         - Row Type: string, string, string

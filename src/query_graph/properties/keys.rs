@@ -239,9 +239,11 @@ impl Keys {
                             all_left_keys_joined = false;
                             break;
                         }
+                        // 1. Check the keys are joined
+                        // 2. Preserve keys if the other relation projects a single row at most
                         if (all_left_keys_joined && seen_right.len() == right_key.key.len())
-                            || left_key.key.is_empty()
-                            || right_key.key.is_empty()
+                            || (left_key.key.is_empty() && left_key.upper_bound == Some(1))
+                            || (right_key.key.is_empty() && right_key.upper_bound == Some(1))
                         {
                             let lower_bound = if conditions.is_empty() {
                                 // It's a cross join
@@ -254,14 +256,16 @@ impl Keys {
                                 _ => None,
                             };
 
-                            if preserve_left_keys {
+                            if preserve_left_keys
+                                && (!left_key.key.is_empty() || right_key.key.is_empty())
+                            {
                                 keys.push(KeyBounds {
                                     key: left_key.key.clone(),
                                     lower_bound,
                                     upper_bound,
                                 });
                             }
-                            if preserve_right_keys {
+                            if preserve_right_keys && !right_key.key.is_empty() {
                                 keys.push(KeyBounds {
                                     key: right_key.key.clone(),
                                     lower_bound,
@@ -270,8 +274,6 @@ impl Keys {
                             }
                         }
                     }
-                    // TODO(asenac) preserve unique keys if the other relation projects a single row
-                    // at most
                 }
                 // TODO(asenac) remove duplicated keys
             }
