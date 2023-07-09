@@ -10,6 +10,7 @@ use crate::{
         rewrite::{lift_scalar_expr, shift_right_input_refs},
         ScalarExpr, ScalarExprRef,
     },
+    value::Value,
     visitor_utils::PreOrderVisitationResult,
 };
 
@@ -147,12 +148,23 @@ impl Keys {
                     }
                 }));
             }
-            QueryNode::Filter { input, .. } => {
-                // TODO(asenac) FALSE/NULL predicate should lead to known upper_bound
-                keys.extend(
-                    self.keys_unchecked(query_graph, *input)
-                        .iter()
-                        .map(|key| KeyBounds {
+            QueryNode::Filter { input, conditions } => {
+                if conditions.iter().any(|c| match c.as_ref() {
+                    // FALSE/NULL predicate -> empty relation
+                    ScalarExpr::Literal(literal) => match literal.value {
+                        Value::Null | Value::Bool(false) => true,
+                        _ => false,
+                    },
+                    _ => false,
+                }) {
+                    keys.push(KeyBounds {
+                        key: Rc::new(Vec::new()),
+                        lower_bound: 0,
+                        upper_bound: Some(0),
+                    });
+                } else {
+                    keys.extend(self.keys_unchecked(query_graph, *input).iter().map(|key| {
+                        KeyBounds {
                             key: key.key.clone(),
                             // By definition the filter relation is no longer guaranteed to produce
                             // the same number of rows as its input. All of them may be filtered out,
@@ -160,8 +172,9 @@ impl Keys {
                             lower_bound: 0,
                             // For sure, the filter won't produce any extra rows.
                             upper_bound: key.upper_bound,
-                        }),
-                );
+                        }
+                    }));
+                }
             }
             QueryNode::TableScan { .. } => {
                 // Here we could add the unique keys of the table if we had such information

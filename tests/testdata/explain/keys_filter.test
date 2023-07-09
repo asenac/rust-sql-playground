@@ -1,0 +1,51 @@
+run
+filter_keys_1
+----
+----
+[1] Filter [FALSE]
+    - Num Columns: 5
+    - Row Type: string, string, string, string, string
+    - Pulled Up Predicates: FALSE
+    - Keys: [key: [], lower_bound: 0, upper_bound: 0]
+  [0] TableScan id: 1, num_columns: 5
+      - Num Columns: 5
+      - Row Type: string, string, string, string, string
+
+
+Optimized:
+[1] Filter [FALSE]
+    - Num Columns: 5
+    - Row Type: string, string, string, string, string
+    - Pulled Up Predicates: FALSE
+    - Keys: [key: [], lower_bound: 0, upper_bound: 0]
+  [0] TableScan id: 1, num_columns: 5
+      - Num Columns: 5
+      - Row Type: string, string, string, string, string
+----
+----
+
+run
+filter_keys_2
+----
+----
+[1] Filter [NULL]
+    - Num Columns: 5
+    - Row Type: string, string, string, string, string
+    - Pulled Up Predicates: NULL
+    - Keys: [key: [], lower_bound: 0, upper_bound: 0]
+  [0] TableScan id: 1, num_columns: 5
+      - Num Columns: 5
+      - Row Type: string, string, string, string, string
+
+
+Optimized:
+[1] Filter [NULL]
+    - Num Columns: 5
+    - Row Type: string, string, string, string, string
+    - Pulled Up Predicates: NULL
+    - Keys: [key: [], lower_bound: 0, upper_bound: 0]
+  [0] TableScan id: 1, num_columns: 5
+      - Num Columns: 5
+      - Row Type: string, string, string, string, string
+----
+----

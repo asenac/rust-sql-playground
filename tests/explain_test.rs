@@ -12,6 +12,8 @@ use rust_sql::scalar_expr::NaryOp;
 use rust_sql::scalar_expr::ScalarExpr;
 
 mod test_queries {
+    use rust_sql::data_type::DataType;
+
     use super::*;
 
     pub(crate) fn aggregate_remove(queries: &mut HashMap<String, QueryGraph>) {
@@ -721,6 +723,27 @@ mod test_queries {
             query_graph
         });
     }
+
+    pub(crate) fn keys_filter(queries: &mut HashMap<String, QueryGraph>) {
+        queries.insert("filter_keys_1".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let filter_1 =
+                query_graph.filter(table_scan_1, vec![ScalarExpr::false_literal().to_ref()]);
+            query_graph.set_entry_node(filter_1);
+            query_graph
+        });
+        queries.insert("filter_keys_2".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let filter_1 = query_graph.filter(
+                table_scan_1,
+                vec![ScalarExpr::null_literal(DataType::Bool).to_ref()],
+            );
+            query_graph.set_entry_node(filter_1);
+            query_graph
+        });
+    }
 }
 
 fn static_queries() -> HashMap<String, QueryGraph> {
@@ -881,6 +904,7 @@ fn static_queries() -> HashMap<String, QueryGraph> {
     test_queries::filter_normalization(&mut queries);
     test_queries::filter_project_transpose(&mut queries);
     test_queries::join_pruning(&mut queries);
+    test_queries::keys_filter(&mut queries);
     test_queries::keys_join(&mut queries);
     test_queries::project_normalization(&mut queries);
     test_queries::pulled_up_predicates(&mut queries);
