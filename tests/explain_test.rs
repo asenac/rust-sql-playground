@@ -6,7 +6,7 @@ use rust_sql::query_graph::json::JsonSerializer;
 use rust_sql::query_graph::optimizer::{
     build_rule, Optimizer, OptimizerContext, OptimizerListener, DEFAULT_OPTIMIZER,
 };
-use rust_sql::query_graph::{QueryGraph, QueryNode};
+use rust_sql::query_graph::{JoinType, QueryGraph, QueryNode};
 use rust_sql::scalar_expr::BinaryOp;
 use rust_sql::scalar_expr::NaryOp;
 use rust_sql::scalar_expr::ScalarExpr;
@@ -20,7 +20,7 @@ fn static_queries() -> HashMap<String, QueryGraph> {
             group_key: BTreeSet::new(),
             input: table_scan_1,
         });
-        let join = query_graph.join(aggregate, aggregate, Vec::new());
+        let join = query_graph.inner_join(aggregate, aggregate, Vec::new());
         query_graph.set_entry_node(join);
         query_graph
     });
@@ -35,7 +35,7 @@ fn static_queries() -> HashMap<String, QueryGraph> {
             group_key: BTreeSet::new(),
             input: table_scan_1,
         });
-        let join = query_graph.join(aggregate_2, aggregate_1, Vec::new());
+        let join = query_graph.inner_join(aggregate_2, aggregate_1, Vec::new());
         let project = query_graph.project(
             join,
             (0..3)
@@ -57,7 +57,7 @@ fn static_queries() -> HashMap<String, QueryGraph> {
             group_key: BTreeSet::new(),
             input: table_scan_1,
         });
-        let join = query_graph.join(aggregate_1, aggregate_2, Vec::new());
+        let join = query_graph.inner_join(aggregate_1, aggregate_2, Vec::new());
         let project = query_graph.project(
             join,
             (0..3)
@@ -75,7 +75,7 @@ fn static_queries() -> HashMap<String, QueryGraph> {
             group_key: (0..3).collect(),
             input: table_scan_1,
         });
-        let join = query_graph.join(
+        let join = query_graph.inner_join(
             aggregate,
             aggregate,
             (0..3)
@@ -426,7 +426,7 @@ fn static_queries() -> HashMap<String, QueryGraph> {
     queries.insert("join_pruning_1".to_string(), {
         let mut query_graph = QueryGraph::new();
         let table_scan_1 = query_graph.table_scan(1, 10);
-        let join = query_graph.join(
+        let join = query_graph.inner_join(
             table_scan_1,
             table_scan_1,
             vec![ScalarExpr::input_ref(4)
@@ -456,7 +456,7 @@ fn static_queries() -> HashMap<String, QueryGraph> {
     queries.insert("join_pruning_2".to_string(), {
         let mut query_graph = QueryGraph::new();
         let table_scan_1 = query_graph.table_scan(1, 10);
-        let join = query_graph.join(
+        let join = query_graph.inner_join(
             table_scan_1,
             table_scan_1,
             vec![ScalarExpr::input_ref(4)
@@ -499,7 +499,7 @@ fn static_queries() -> HashMap<String, QueryGraph> {
         let mut query_graph = QueryGraph::new();
         let table_scan_1 = query_graph.table_scan(1, 4);
         let table_scan_2 = query_graph.table_scan(1, 5);
-        let join = query_graph.join(
+        let join = query_graph.inner_join(
             table_scan_1,
             table_scan_2,
             vec![ScalarExpr::input_ref(0)
@@ -577,63 +577,72 @@ fn static_queries() -> HashMap<String, QueryGraph> {
         query_graph
     });
     // filter_join_transpose.test
-    queries.insert("filter_join_transpose_1".to_string(), {
-        let mut query_graph = QueryGraph::new();
-        let table_scan_1 = query_graph.table_scan(1, 5);
-        let table_scan_2 = query_graph.table_scan(2, 5);
-        let join = query_graph.join(
-            table_scan_1,
-            table_scan_2,
-            vec![ScalarExpr::input_ref(0)
-                .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).to_ref())
-                .to_ref()],
-        );
-        let filter_1 = query_graph.filter(
-            join,
-            vec![
-                ScalarExpr::input_ref(1)
-                    .binary(
-                        BinaryOp::Lt,
-                        ScalarExpr::string_literal("hello".to_string()).to_ref(),
-                    )
-                    .to_ref(),
-                ScalarExpr::input_ref(2)
-                    .binary(
-                        BinaryOp::Eq,
-                        ScalarExpr::string_literal("hello".to_string()).to_ref(),
-                    )
-                    .to_ref(),
-                ScalarExpr::input_ref(6)
-                    .binary(
-                        BinaryOp::Gt,
-                        ScalarExpr::string_literal("world".to_string()).to_ref(),
-                    )
-                    .to_ref(),
-            ],
-        );
-        let filter_2 = query_graph.filter(
-            join,
-            vec![
-                ScalarExpr::input_ref(6)
-                    .binary(
-                        BinaryOp::Gt,
-                        ScalarExpr::string_literal("world".to_string()).to_ref(),
-                    )
-                    .to_ref(),
-                ScalarExpr::input_ref(2)
-                    .binary(
-                        BinaryOp::Eq,
-                        ScalarExpr::string_literal("hello".to_string()).to_ref(),
-                    )
-                    .to_ref(),
-            ],
-        );
-        let union_ = query_graph.add_node(QueryNode::Union {
-            inputs: vec![filter_2, filter_1],
+    for (suffix, join_type) in [
+        ("inner", JoinType::Inner),
+        ("left", JoinType::LeftOuter),
+        ("right", JoinType::RightOuter),
+        ("full", JoinType::FullOuter),
+    ] {
+        queries.insert("filter_join_transpose_".to_string() + suffix, {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let table_scan_2 = query_graph.table_scan(2, 5);
+            let join = query_graph.join(
+                join_type,
+                table_scan_1,
+                table_scan_2,
+                vec![ScalarExpr::input_ref(0)
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).to_ref())
+                    .to_ref()],
+            );
+            let filter_1 = query_graph.filter(
+                join,
+                vec![
+                    ScalarExpr::input_ref(1)
+                        .binary(
+                            BinaryOp::Lt,
+                            ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                        )
+                        .to_ref(),
+                    ScalarExpr::input_ref(2)
+                        .binary(
+                            BinaryOp::Eq,
+                            ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                        )
+                        .to_ref(),
+                    ScalarExpr::input_ref(6)
+                        .binary(
+                            BinaryOp::Gt,
+                            ScalarExpr::string_literal("world".to_string()).to_ref(),
+                        )
+                        .to_ref(),
+                ],
+            );
+            let filter_2 = query_graph.filter(
+                join,
+                vec![
+                    ScalarExpr::input_ref(6)
+                        .binary(
+                            BinaryOp::Gt,
+                            ScalarExpr::string_literal("world".to_string()).to_ref(),
+                        )
+                        .to_ref(),
+                    ScalarExpr::input_ref(2)
+                        .binary(
+                            BinaryOp::Eq,
+                            ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                        )
+                        .to_ref(),
+                ],
+            );
+            let union_ = query_graph.add_node(QueryNode::Union {
+                inputs: vec![filter_2, filter_1],
+            });
+            query_graph.set_entry_node(union_);
+            query_graph
         });
-        query_graph.set_entry_node(union_);
-        query_graph
-    });
+    }
+    // TODO(asenac) Add test queries for Semi and Anti
     // project_normalization.test
     queries.insert("project_normalization_1".to_string(), {
         let mut query_graph = QueryGraph::new();

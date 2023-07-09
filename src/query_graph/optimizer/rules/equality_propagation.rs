@@ -4,7 +4,7 @@ use crate::{
     query_graph::{
         optimizer::{OptRuleType, SingleReplacementRule},
         properties::{num_columns, pulled_up_predicates},
-        NodeId, QueryGraph, QueryNode,
+        JoinType, NodeId, QueryGraph, QueryNode,
     },
     scalar_expr::{
         equivalence_class::extract_equivalence_classes,
@@ -28,51 +28,71 @@ impl SingleReplacementRule for EqualityPropagationRule {
 
     fn apply(&self, query_graph: &mut QueryGraph, node_id: NodeId) -> Option<NodeId> {
         if let QueryNode::Join {
+            join_type,
             conditions,
             left,
             right,
         } = query_graph.node(node_id)
         {
-            let left_num_columns = num_columns(&query_graph, *left);
+            let from_left_to_right_allowed = match join_type {
+                JoinType::Semi | JoinType::Inner | JoinType::LeftOuter => true,
+                JoinType::RightOuter | JoinType::FullOuter | JoinType::Anti => false,
+            };
+            let from_right_to_left_allowed = match join_type {
+                JoinType::Semi | JoinType::Inner | JoinType::RightOuter => true,
+                JoinType::LeftOuter | JoinType::FullOuter | JoinType::Anti => false,
+            };
+            if from_left_to_right_allowed || from_right_to_left_allowed {
+                let left_num_columns = num_columns(&query_graph, *left);
 
-            let (left_to_right, right_to_left) =
-                Self::translation_maps(conditions, left_num_columns);
+                let (left_to_right, right_to_left) =
+                    Self::translation_maps(conditions, left_num_columns);
 
-            let left_predicates = pulled_up_predicates(query_graph, *left);
-            let right_predicates =
-                rewrite_scalar_expr_vec(&pulled_up_predicates(query_graph, *right), &mut |e| {
-                    shift_right_input_refs(e, left_num_columns)
-                });
+                let left_predicates = pulled_up_predicates(query_graph, *left);
+                let right_predicates =
+                    rewrite_scalar_expr_vec(&pulled_up_predicates(query_graph, *right), &mut |e| {
+                        shift_right_input_refs(e, left_num_columns)
+                    });
 
-            let new_left_predicates = Self::propagate_predicates(
-                &right_predicates,
-                &right_to_left,
-                &left_predicates,
-                &|c| c < left_num_columns,
-            );
-            let new_right_predicates = Self::propagate_predicates(
-                &left_predicates,
-                &left_to_right,
-                &right_predicates,
-                &|c| c >= left_num_columns,
-            );
-            let new_right_predicates = new_right_predicates
-                .iter()
-                .map(|e| shift_left_input_refs(e, left_num_columns))
-                .collect::<Vec<_>>();
+                let new_left_predicates = if from_left_to_right_allowed {
+                    Self::propagate_predicates(
+                        &right_predicates,
+                        &right_to_left,
+                        &left_predicates,
+                        &|c| c < left_num_columns,
+                    )
+                } else {
+                    Vec::new()
+                };
+                let new_right_predicates = if from_right_to_left_allowed {
+                    Self::propagate_predicates(
+                        &left_predicates,
+                        &left_to_right,
+                        &right_predicates,
+                        &|c| c >= left_num_columns,
+                    )
+                } else {
+                    Vec::new()
+                };
+                let new_right_predicates = new_right_predicates
+                    .iter()
+                    .map(|e| shift_left_input_refs(e, left_num_columns))
+                    .collect::<Vec<_>>();
 
-            if !new_left_predicates.is_empty() || !new_right_predicates.is_empty() {
-                let join_conditions = conditions.clone();
-                let left = *left;
-                let right = *right;
-                return Some(Self::build_new_join(
-                    query_graph,
-                    join_conditions,
-                    left,
-                    new_left_predicates,
-                    right,
-                    new_right_predicates,
-                ));
+                if !new_left_predicates.is_empty() || !new_right_predicates.is_empty() {
+                    let join_conditions = conditions.clone();
+                    let left = *left;
+                    let right = *right;
+                    return Some(Self::build_new_join(
+                        query_graph,
+                        *join_type,
+                        join_conditions,
+                        left,
+                        new_left_predicates,
+                        right,
+                        new_right_predicates,
+                    ));
+                }
             }
         }
         None
@@ -173,6 +193,7 @@ impl EqualityPropagationRule {
 
     fn build_new_join(
         query_graph: &mut QueryGraph,
+        join_type: JoinType,
         join_conditions: Vec<ScalarExprRef>,
         left: NodeId,
         left_predicates: Vec<ScalarExprRef>,
@@ -186,6 +207,6 @@ impl EqualityPropagationRule {
         new_left = query_graph.filter(new_left, left_predicates);
         new_right = query_graph.filter(new_right, right_predicates);
 
-        query_graph.join(new_left, new_right, join_conditions)
+        query_graph.join(join_type, new_left, new_right, join_conditions)
     }
 }

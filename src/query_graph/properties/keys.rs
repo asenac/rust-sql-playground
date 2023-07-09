@@ -4,7 +4,7 @@ use std::{any::TypeId, cmp::min, collections::HashSet, rc::Rc};
 use itertools::Itertools;
 
 use crate::{
-    query_graph::{visitor::QueryGraphPrePostVisitor, NodeId, QueryGraph, QueryNode},
+    query_graph::{visitor::QueryGraphPrePostVisitor, JoinType, NodeId, QueryGraph, QueryNode},
     scalar_expr::{
         equivalence_class::{extract_equivalence_classes, find_class},
         rewrite::{lift_scalar_expr, shift_right_input_refs},
@@ -168,6 +168,7 @@ impl Keys {
                 // in some system catalog.
             }
             QueryNode::Join {
+                join_type,
                 conditions,
                 left,
                 right,
@@ -192,54 +193,85 @@ impl Keys {
                     })
                     .collect::<Vec<_>>();
 
-                // Find pairs of keys from each side joined together.
-                for (left_key, right_key) in left_keys.iter().cartesian_product(right_keys.iter()) {
-                    let mut seen_right = HashSet::new();
-
-                    let mut all_left_keys_joined = true;
-                    for left_key_item in left_key.key.iter() {
-                        if let Some(class_id) = find_class(&classes, left_key_item) {
-                            let class = &classes[class_id];
-                            seen_right.extend(right_key.key.iter().enumerate().filter_map(
-                                |(i, e)| {
-                                    if class.members.contains(e) {
-                                        Some(i)
-                                    } else {
-                                        None
-                                    }
-                                },
-                            ));
-                            continue;
-                        }
-                        all_left_keys_joined = false;
-                        break;
-                    }
-                    if (all_left_keys_joined && seen_right.len() == right_key.key.len())
-                        || left_key.key.is_empty()
-                        || right_key.key.is_empty()
+                if let JoinType::FullOuter = join_type {
+                    // TODO(asenac) the empty key can be known by computing the maximum
+                } else if match join_type {
+                    JoinType::Semi | JoinType::Anti => true,
+                    _ => false,
+                } {
+                    keys.extend(left_keys.iter().map(|k| KeyBounds {
+                        key: k.key.clone(),
+                        lower_bound: 0,
+                        upper_bound: k.upper_bound,
+                    }));
+                } else {
+                    let preserve_left_keys = match join_type {
+                        JoinType::Inner | JoinType::LeftOuter => true,
+                        JoinType::RightOuter => false,
+                        JoinType::Semi | JoinType::Anti | JoinType::FullOuter => unreachable!(),
+                    };
+                    let preserve_right_keys = match join_type {
+                        JoinType::Inner | JoinType::RightOuter => true,
+                        JoinType::LeftOuter => false,
+                        JoinType::Semi | JoinType::Anti | JoinType::FullOuter => unreachable!(),
+                    };
+                    // Find pairs of keys from each side joined together.
+                    for (left_key, right_key) in
+                        left_keys.iter().cartesian_product(right_keys.iter())
                     {
-                        let lower_bound = if conditions.is_empty() {
-                            // It's a cross join
-                            left_key.lower_bound * right_key.lower_bound
-                        } else {
-                            0 // Otherwise, the join may filter all the rows out.
-                        };
-                        let upper_bound = match (left_key.upper_bound, right_key.upper_bound) {
-                            (Some(i), Some(j)) => Some(i * j),
-                            _ => None,
-                        };
+                        let mut seen_right = HashSet::new();
 
-                        keys.push(KeyBounds {
-                            key: left_key.key.clone(),
-                            lower_bound,
-                            upper_bound,
-                        });
-                        keys.push(KeyBounds {
-                            key: right_key.key.clone(),
-                            lower_bound,
-                            upper_bound,
-                        });
+                        let mut all_left_keys_joined = true;
+                        for left_key_item in left_key.key.iter() {
+                            if let Some(class_id) = find_class(&classes, left_key_item) {
+                                let class = &classes[class_id];
+                                seen_right.extend(right_key.key.iter().enumerate().filter_map(
+                                    |(i, e)| {
+                                        if class.members.contains(e) {
+                                            Some(i)
+                                        } else {
+                                            None
+                                        }
+                                    },
+                                ));
+                                continue;
+                            }
+                            all_left_keys_joined = false;
+                            break;
+                        }
+                        if (all_left_keys_joined && seen_right.len() == right_key.key.len())
+                            || left_key.key.is_empty()
+                            || right_key.key.is_empty()
+                        {
+                            let lower_bound = if conditions.is_empty() {
+                                // It's a cross join
+                                left_key.lower_bound * right_key.lower_bound
+                            } else {
+                                0 // Otherwise, the join may filter all the rows out.
+                            };
+                            let upper_bound = match (left_key.upper_bound, right_key.upper_bound) {
+                                (Some(i), Some(j)) => Some(i * j),
+                                _ => None,
+                            };
+
+                            if preserve_left_keys {
+                                keys.push(KeyBounds {
+                                    key: left_key.key.clone(),
+                                    lower_bound,
+                                    upper_bound,
+                                });
+                            }
+                            if preserve_right_keys {
+                                keys.push(KeyBounds {
+                                    key: right_key.key.clone(),
+                                    lower_bound,
+                                    upper_bound,
+                                });
+                            }
+                        }
                     }
+                    // TODO(asenac) preserve unique keys if the other relation projects a single row
+                    // at most
                 }
                 // TODO(asenac) remove duplicated keys
             }

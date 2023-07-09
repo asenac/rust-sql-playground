@@ -8,7 +8,7 @@ join_pruning_1
   [2] Project [ref_0, ref_18]
       - Num Columns: 2
       - Row Type: string, string
-    [1] Join [eq(ref_4, ref_15)]
+    [1] Inner Join [eq(ref_4, ref_15)]
         - Num Columns: 20
         - Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string
         - Pulled Up Predicates: eq(ref_4, ref_15)
@@ -29,7 +29,7 @@ Optimized:
   [11] Project [ref_0, ref_5]
       - Num Columns: 2
       - Row Type: string, string
-    [7] Join [eq(ref_2, ref_4)]
+    [7] Inner Join [eq(ref_2, ref_4)]
         - Num Columns: 6
         - Row Type: string, string, string, string, string, string
         - Pulled Up Predicates: eq(ref_2, ref_4)
@@ -64,7 +64,7 @@ join_pruning_2
         - Num Columns: 20
         - Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string
         - Pulled Up Predicates: eq(ref_2, ref_16), eq(ref_4, ref_15)
-      [1] Join [eq(ref_4, ref_15)]
+      [1] Inner Join [eq(ref_4, ref_15)]
           - Num Columns: 20
           - Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string, string
           - Pulled Up Predicates: eq(ref_4, ref_15)
@@ -93,7 +93,7 @@ Optimized:
         - Num Columns: 8
         - Row Type: string, string, string, string, string, string, string, string
         - Pulled Up Predicates: eq(ref_1, ref_6), eq(ref_3, ref_5)
-      [9] Join [eq(ref_3, ref_5)]
+      [9] Inner Join [eq(ref_3, ref_5)]
           - Num Columns: 8
           - Row Type: string, string, string, string, string, string, string, string
           - Pulled Up Predicates: eq(ref_3, ref_5)
@@ -134,7 +134,7 @@ join_pruning_3
         - Num Columns: 9
         - Row Type: string, string, string, string, string, string, string, string, string
         - Pulled Up Predicates: eq(ref_0, ref_4), eq(ref_2, ref_1)
-      [2] Join [eq(ref_0, ref_4)]
+      [2] Inner Join [eq(ref_0, ref_4)]
           - Num Columns: 9
           - Row Type: string, string, string, string, string, string, string, string, string
           - Pulled Up Predicates: eq(ref_0, ref_4)
@@ -167,7 +167,7 @@ Optimized:
           - Num Columns: 5
           - Row Type: string, string, string, string, string
           - Pulled Up Predicates: eq(ref_0, ref_3), eq(ref_2, ref_1)
-        [11] Join [eq(ref_0, ref_3)]
+        [11] Inner Join [eq(ref_0, ref_3)]
             - Num Columns: 5
             - Row Type: string, string, string, string, string
             - Pulled Up Predicates: eq(ref_0, ref_3)
@@ -210,7 +210,7 @@ join_pruning_3
         - Num Columns: 9
         - Row Type: string, string, string, string, string, string, string, string, string
         - Pulled Up Predicates: eq(ref_0, ref_4), eq(ref_2, ref_1)
-      [2] Join [eq(ref_0, ref_4)]
+      [2] Inner Join [eq(ref_0, ref_4)]
           - Num Columns: 9
           - Row Type: string, string, string, string, string, string, string, string, string
           - Pulled Up Predicates: eq(ref_0, ref_4)
@@ -243,7 +243,7 @@ Optimized:
       [10] Project [ref_0, ref_1, ref_2, ref_4]
           - Num Columns: 4
           - Row Type: string, string, string, string
-        [9] Join [eq(ref_0, ref_3)]
+        [9] Inner Join [eq(ref_0, ref_3)]
             - Num Columns: 5
             - Row Type: string, string, string, string, string
             - Pulled Up Predicates: eq(ref_0, ref_3)

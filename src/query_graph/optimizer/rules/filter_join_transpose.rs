@@ -2,7 +2,7 @@ use crate::{
     query_graph::{
         optimizer::{utils::common_parent_filters, OptRuleType, SingleReplacementRule},
         properties::{num_columns, pulled_up_predicates},
-        NodeId, QueryGraph, QueryNode,
+        JoinType, NodeId, QueryGraph, QueryNode,
     },
     scalar_expr::{rewrite::shift_left_input_refs, visitor::collect_input_dependencies},
 };
@@ -20,6 +20,7 @@ impl SingleReplacementRule for FilterJoinTransposeRule {
 
     fn apply(&self, query_graph: &mut QueryGraph, node_id: NodeId) -> Option<NodeId> {
         if let QueryNode::Join {
+            join_type,
             left,
             right,
             conditions,
@@ -32,6 +33,17 @@ impl SingleReplacementRule for FilterJoinTransposeRule {
 
                 let known_predicates = pulled_up_predicates(query_graph, node_id);
 
+                let allowed_left_pushdown = match join_type {
+                    JoinType::Semi | JoinType::Anti | JoinType::Inner | JoinType::LeftOuter => true,
+                    JoinType::RightOuter | JoinType::FullOuter => false,
+                };
+                let allowed_right_pushdown = match join_type {
+                    JoinType::Inner | JoinType::RightOuter => true,
+                    JoinType::Semi | JoinType::Anti | JoinType::LeftOuter | JoinType::FullOuter => {
+                        false
+                    }
+                };
+
                 for condition in common_conditions.iter() {
                     if known_predicates.contains(condition) {
                         // Skip those already known to be enforced either
@@ -40,9 +52,13 @@ impl SingleReplacementRule for FilterJoinTransposeRule {
                     }
                     let dependencies = collect_input_dependencies(condition);
                     if !dependencies.is_empty() {
-                        if dependencies.iter().all(|x| *x < left_num_columns) {
+                        if allowed_left_pushdown
+                            && dependencies.iter().all(|x| *x < left_num_columns)
+                        {
                             left_predicates.push(condition.clone());
-                        } else if dependencies.iter().all(|x| *x >= left_num_columns) {
+                        } else if allowed_right_pushdown
+                            && dependencies.iter().all(|x| *x >= left_num_columns)
+                        {
                             right_predicates
                                 .push(shift_left_input_refs(condition, left_num_columns));
                         }
@@ -53,10 +69,11 @@ impl SingleReplacementRule for FilterJoinTransposeRule {
                     let conditions = conditions.clone();
                     let left = *left;
                     let right = *right;
+                    let join_type = *join_type;
                     let left = query_graph.filter(left, left_predicates);
                     let right = query_graph.filter(right, right_predicates);
 
-                    return Some(query_graph.join(left, right, conditions));
+                    return Some(query_graph.join(join_type, left, right, conditions));
                 }
             }
         }

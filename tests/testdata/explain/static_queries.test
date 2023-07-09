@@ -2,7 +2,7 @@ run
 join_between_keyless_aggregations
 ----
 ----
-[2] Join []
+[2] Inner Join []
     - Num Columns: 0
     - Row Type: 
     - Keys: [key: [], lower_bound: 1, upper_bound: 1], [key: [], lower_bound: 1, upper_bound: 1]
@@ -17,7 +17,7 @@ join_between_keyless_aggregations
 
 
 Optimized:
-[2] Join []
+[2] Inner Join []
     - Num Columns: 0
     - Row Type: 
     - Keys: [key: [], lower_bound: 1, upper_bound: 1], [key: [], lower_bound: 1, upper_bound: 1]
@@ -43,7 +43,7 @@ join_keys_1
     - Num Columns: 3
     - Row Type: string, string, string
     - Keys: [key: [], lower_bound: 0, upper_bound: 1], [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
-  [3] Join []
+  [3] Inner Join []
       - Num Columns: 3
       - Row Type: string, string, string
       - Keys: [key: [], lower_bound: 0, upper_bound: 1], [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
@@ -66,7 +66,7 @@ Optimized:
     - Num Columns: 3
     - Row Type: string, string, string
     - Keys: [key: [], lower_bound: 0, upper_bound: 1], [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
-  [3] Join []
+  [3] Inner Join []
       - Num Columns: 3
       - Row Type: string, string, string
       - Keys: [key: [], lower_bound: 0, upper_bound: 1], [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
@@ -99,7 +99,7 @@ join_keys_2
     - Num Columns: 3
     - Row Type: string, string, string
     - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1], [key: [], lower_bound: 0, upper_bound: 1]
-  [3] Join []
+  [3] Inner Join []
       - Num Columns: 3
       - Row Type: string, string, string
       - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1], [key: [], lower_bound: 0, upper_bound: 1]
@@ -122,7 +122,7 @@ Optimized:
     - Num Columns: 3
     - Row Type: string, string, string
     - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1], [key: [], lower_bound: 0, upper_bound: 1]
-  [3] Join []
+  [3] Inner Join []
       - Num Columns: 3
       - Row Type: string, string, string
       - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1], [key: [], lower_bound: 0, upper_bound: 1]
@@ -155,7 +155,7 @@ join_keys_3
     - Num Columns: 3
     - Row Type: string, string, string
     - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
-  [2] Join [eq(ref_0, ref_3), eq(ref_1, ref_4), eq(ref_2, ref_5)]
+  [2] Inner Join [eq(ref_0, ref_3), eq(ref_1, ref_4), eq(ref_2, ref_5)]
       - Num Columns: 6
       - Row Type: string, string, string, string, string, string
       - Pulled Up Predicates: eq(ref_0, ref_3), eq(ref_1, ref_4), eq(ref_2, ref_5)
@@ -175,7 +175,7 @@ Optimized:
     - Num Columns: 3
     - Row Type: string, string, string
     - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
-  [2] Join [eq(ref_0, ref_3), eq(ref_1, ref_4), eq(ref_2, ref_5)]
+  [2] Inner Join [eq(ref_0, ref_3), eq(ref_1, ref_4), eq(ref_2, ref_5)]
       - Num Columns: 6
       - Row Type: string, string, string, string, string, string
       - Pulled Up Predicates: eq(ref_0, ref_3), eq(ref_1, ref_4), eq(ref_2, ref_5)

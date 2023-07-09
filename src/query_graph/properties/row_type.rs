@@ -68,13 +68,24 @@ impl RowType {
             QueryNode::TableScan { num_columns, .. } => {
                 Rc::new((0..*num_columns).map(|_| DataType::String).collect())
             }
-            QueryNode::Join { left, right, .. } => Rc::new(
-                self.row_type_unchecked(query_graph, *left)
-                    .iter()
-                    .chain(self.row_type_unchecked(query_graph, *right).iter())
-                    .cloned()
-                    .collect(),
-            ),
+            QueryNode::Join {
+                join_type,
+                left,
+                right,
+                ..
+            } => match join_type {
+                JoinType::Inner
+                | JoinType::LeftOuter
+                | JoinType::RightOuter
+                | JoinType::FullOuter => Rc::new(
+                    self.row_type_unchecked(query_graph, *left)
+                        .iter()
+                        .chain(self.row_type_unchecked(query_graph, *right).iter())
+                        .cloned()
+                        .collect(),
+                ),
+                JoinType::Semi | JoinType::Anti => self.row_type_unchecked(query_graph, *left),
+            },
             QueryNode::Aggregate { group_key, input } => {
                 let input_row_type = self.row_type_unchecked(query_graph, *input);
                 Rc::new(

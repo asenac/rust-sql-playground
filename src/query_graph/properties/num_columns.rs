@@ -49,10 +49,21 @@ impl NumColumns {
             QueryNode::Project { outputs, .. } => outputs.len(),
             QueryNode::Filter { input, .. } => self.num_columns_unchecked(query_graph, *input),
             QueryNode::TableScan { num_columns, .. } => *num_columns,
-            QueryNode::Join { left, right, .. } => {
-                self.num_columns_unchecked(query_graph, *left)
-                    + self.num_columns_unchecked(query_graph, *right)
-            }
+            QueryNode::Join {
+                join_type,
+                left,
+                right,
+                ..
+            } => match join_type {
+                JoinType::Inner
+                | JoinType::LeftOuter
+                | JoinType::RightOuter
+                | JoinType::FullOuter => {
+                    self.num_columns_unchecked(query_graph, *left)
+                        + self.num_columns_unchecked(query_graph, *right)
+                }
+                JoinType::Semi | JoinType::Anti => self.num_columns_unchecked(query_graph, *left),
+            },
             QueryNode::Aggregate { group_key, .. } => group_key.len(),
             QueryNode::Union { inputs } => {
                 if inputs.is_empty() {

@@ -152,22 +152,39 @@ impl PulledUpPredicates {
             }
             QueryNode::TableScan { .. } => {}
             QueryNode::Join {
+                join_type,
                 conditions,
                 left,
                 right,
             } => {
                 let left_size = num_columns(query_graph, *left);
-                predicates.extend(conditions.iter().cloned());
-                predicates.extend(
-                    self.predicates_unchecked(query_graph, *left)
-                        .iter()
-                        .cloned(),
-                );
-                predicates.extend(
-                    self.predicates_unchecked(query_graph, *right)
-                        .iter()
-                        .map(|x| shift_right_input_refs(x, left_size)),
-                );
+                if let JoinType::Inner = join_type {
+                    predicates.extend(conditions.iter().cloned());
+                }
+                let forward_left_predicates = match join_type {
+                    JoinType::Semi | JoinType::Anti | JoinType::LeftOuter | JoinType::Inner => true,
+                    JoinType::RightOuter | JoinType::FullOuter => false,
+                };
+                if forward_left_predicates {
+                    predicates.extend(
+                        self.predicates_unchecked(query_graph, *left)
+                            .iter()
+                            .cloned(),
+                    );
+                }
+                let forward_right_predicates = match join_type {
+                    JoinType::Semi | JoinType::Anti | JoinType::RightOuter | JoinType::Inner => {
+                        true
+                    }
+                    JoinType::LeftOuter | JoinType::FullOuter => false,
+                };
+                if forward_right_predicates {
+                    predicates.extend(
+                        self.predicates_unchecked(query_graph, *right)
+                            .iter()
+                            .map(|x| shift_right_input_refs(x, left_size)),
+                    );
+                }
             }
             QueryNode::Aggregate { group_key, input } => {
                 let column_map = to_column_map_for_expr_lifting(group_key);

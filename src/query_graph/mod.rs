@@ -2,6 +2,7 @@ use crate::scalar_expr::ScalarExprRef;
 use std::{
     cell::RefCell,
     collections::{BTreeSet, HashMap, HashSet},
+    fmt,
 };
 
 use self::properties::PropertyCache;
@@ -13,6 +14,18 @@ pub mod properties;
 pub mod visitor;
 
 pub type NodeId = usize;
+
+#[derive(Clone, PartialEq, Eq, Copy)]
+pub enum JoinType {
+    Inner,
+    LeftOuter,
+    RightOuter,
+    FullOuter,
+    /// Semi-join. Only the columns from the left relation are projected.
+    Semi,
+    /// Anti-join. Only the columns from the left relation are projected.
+    Anti,
+}
 
 #[derive(Clone, PartialEq, Eq)]
 pub enum QueryNode {
@@ -29,6 +42,7 @@ pub enum QueryNode {
         num_columns: usize,
     },
     Join {
+        join_type: JoinType,
         conditions: Vec<ScalarExprRef>,
         left: NodeId,
         right: NodeId,
@@ -249,8 +263,24 @@ impl QueryGraph {
         self.add_node(QueryNode::Project { outputs, input })
     }
 
-    pub fn join(&mut self, left: NodeId, right: NodeId, conditions: Vec<ScalarExprRef>) -> NodeId {
+    pub fn inner_join(
+        &mut self,
+        left: NodeId,
+        right: NodeId,
+        conditions: Vec<ScalarExprRef>,
+    ) -> NodeId {
+        self.join(JoinType::Inner, left, right, conditions)
+    }
+
+    pub fn join(
+        &mut self,
+        join_type: JoinType,
+        left: NodeId,
+        right: NodeId,
+        conditions: Vec<ScalarExprRef>,
+    ) -> NodeId {
         self.add_node(QueryNode::Join {
+            join_type,
             left,
             right,
             conditions,
@@ -320,5 +350,24 @@ impl QueryGraph {
                 self.nodes.remove(&current_id);
             }
         }
+    }
+}
+
+impl JoinType {
+    pub fn name(&self) -> &str {
+        match self {
+            JoinType::Inner => "Inner",
+            JoinType::LeftOuter => "Left Outer",
+            JoinType::RightOuter => "Right Outer",
+            JoinType::FullOuter => "Full Outer",
+            JoinType::Semi => "Semi",
+            JoinType::Anti => "Anti",
+        }
+    }
+}
+
+impl fmt::Display for JoinType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.name())
     }
 }

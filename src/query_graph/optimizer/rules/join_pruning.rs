@@ -38,6 +38,7 @@ impl Rule for JoinPruningRule {
         node_id: NodeId,
     ) -> Option<Vec<(NodeId, NodeId)>> {
         if let QueryNode::Join {
+            join_type,
             left,
             right,
             conditions,
@@ -85,9 +86,10 @@ impl Rule for JoinPruningRule {
                     .collect::<Vec<_>>();
                 let left = *left;
                 let right = *right;
+                let join_type = *join_type;
                 let new_left = query_graph.project(left, left_outputs);
                 let new_right = query_graph.project(right, right_outputs);
-                let new_join = query_graph.join(new_left, new_right, new_conditions);
+                let new_join = query_graph.join(join_type, new_left, new_right, new_conditions);
 
                 // Prune the columns used by the join conditions but not by the parents
                 let pruning_proj_outputs = required_columns_including_join

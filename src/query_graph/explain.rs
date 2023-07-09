@@ -129,8 +129,17 @@ impl<'a> QueryGraphPrePostVisitor for ExplainVisitor<'a> {
                 "{}TableScan id: {}, num_columns: {}\n",
                 prefix, table_id, num_columns
             ),
-            QueryNode::Join { conditions, .. } => {
-                format!("{}Join [{}]\n", prefix, explain_scalar_expr_vec(conditions))
+            QueryNode::Join {
+                join_type,
+                conditions,
+                ..
+            } => {
+                format!(
+                    "{}{} Join [{}]\n",
+                    prefix,
+                    join_type,
+                    explain_scalar_expr_vec(conditions)
+                )
             }
             QueryNode::Aggregate { group_key, .. } => format!(
                 "{}Aggregate key: [{}]\n",
