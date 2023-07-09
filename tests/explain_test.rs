@@ -197,6 +197,90 @@ mod test_queries {
             query_graph.set_entry_node(project);
             query_graph
         });
+        queries.insert("left_outer_join_keys_1".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 10);
+            let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
+                group_key: (0..3).collect(),
+                input: table_scan_1,
+            });
+            let aggregate_2 = query_graph.add_node(QueryNode::Aggregate {
+                group_key: BTreeSet::new(),
+                input: table_scan_1,
+            });
+            let join = query_graph.join(JoinType::LeftOuter, aggregate_1, aggregate_2, Vec::new());
+            let project = query_graph.project(
+                join,
+                (0..3)
+                    .rev()
+                    .map(|col| ScalarExpr::input_ref(col).to_ref())
+                    .collect(),
+            );
+            query_graph.set_entry_node(project);
+            query_graph
+        });
+        queries.insert("left_outer_join_keys_2".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let table_scan_2 = query_graph.table_scan(1, 5);
+            let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
+                group_key: (0..3).collect(),
+                input: table_scan_1,
+            });
+            let aggregate_2 = query_graph.add_node(QueryNode::Aggregate {
+                group_key: (0..2).collect(),
+                input: table_scan_2,
+            });
+            let join = query_graph.join(
+                JoinType::LeftOuter,
+                aggregate_1,
+                aggregate_2,
+                vec![
+                    ScalarExpr::input_ref(0)
+                        .binary(BinaryOp::Eq, ScalarExpr::input_ref(3).to_ref())
+                        .to_ref(),
+                    ScalarExpr::input_ref(1)
+                        .binary(BinaryOp::Eq, ScalarExpr::input_ref(4).to_ref())
+                        .to_ref(),
+                    ScalarExpr::input_ref(2)
+                        .binary(BinaryOp::Eq, ScalarExpr::input_ref(4).to_ref())
+                        .to_ref(),
+                ],
+            );
+            query_graph.set_entry_node(join);
+            query_graph
+        });
+        queries.insert("right_outer_join_keys_1".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let table_scan_2 = query_graph.table_scan(1, 5);
+            let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
+                group_key: (0..3).collect(),
+                input: table_scan_1,
+            });
+            let aggregate_2 = query_graph.add_node(QueryNode::Aggregate {
+                group_key: (0..2).collect(),
+                input: table_scan_2,
+            });
+            let join = query_graph.join(
+                JoinType::RightOuter,
+                aggregate_1,
+                aggregate_2,
+                vec![
+                    ScalarExpr::input_ref(0)
+                        .binary(BinaryOp::Eq, ScalarExpr::input_ref(3).to_ref())
+                        .to_ref(),
+                    ScalarExpr::input_ref(1)
+                        .binary(BinaryOp::Eq, ScalarExpr::input_ref(4).to_ref())
+                        .to_ref(),
+                    ScalarExpr::input_ref(2)
+                        .binary(BinaryOp::Eq, ScalarExpr::input_ref(4).to_ref())
+                        .to_ref(),
+                ],
+            );
+            query_graph.set_entry_node(join);
+            query_graph
+        });
     }
 
     pub(crate) fn filter_aggregate_transpose(queries: &mut HashMap<String, QueryGraph>) {
