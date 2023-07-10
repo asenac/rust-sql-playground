@@ -7,13 +7,13 @@ use rust_sql::query_graph::optimizer::{
     build_rule, Optimizer, OptimizerContext, OptimizerListener, DEFAULT_OPTIMIZER,
 };
 use rust_sql::query_graph::{JoinType, QueryGraph, QueryNode};
-use rust_sql::scalar_expr::BinaryOp;
 use rust_sql::scalar_expr::NaryOp;
 use rust_sql::scalar_expr::ScalarExpr;
+use rust_sql::scalar_expr::{BinaryOp, ToRef};
 
 mod test_queries {
     use itertools::Itertools;
-    use rust_sql::data_type::DataType;
+    use rust_sql::{data_type::DataType, scalar_expr::ToRef};
 
     use super::*;
 

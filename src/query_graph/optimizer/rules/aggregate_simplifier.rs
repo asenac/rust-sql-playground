@@ -9,7 +9,7 @@ use crate::{
     scalar_expr::{
         equivalence_class::{find_class, EquivalenceClasses},
         rewrite::{rewrite_scalar_expr_post, rewrite_scalar_expr_vec},
-        ScalarExpr, ScalarExprRef,
+        ScalarExpr, ScalarExprRef, ToRef,
     },
 };
 

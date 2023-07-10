@@ -37,7 +37,7 @@ mod tests {
     use crate::{
         query_graph::optimizer::SingleReplacementRule,
         query_graph::QueryGraph,
-        scalar_expr::{BinaryOp, ScalarExpr},
+        scalar_expr::{BinaryOp, ScalarExpr, ToRef},
     };
 
     use super::RemovePassthroughProjectRule;

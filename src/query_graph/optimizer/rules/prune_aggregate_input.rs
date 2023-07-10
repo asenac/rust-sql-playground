@@ -11,7 +11,7 @@ use crate::{
         properties::{input_dependencies, num_columns},
         NodeId, QueryGraph, QueryNode,
     },
-    scalar_expr::{AggregateExpr, ScalarExpr},
+    scalar_expr::{AggregateExpr, ScalarExpr, ToRef},
 };
 
 /// Given an aggregate node not using all the columns from its input, it inserts

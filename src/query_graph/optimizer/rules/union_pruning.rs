@@ -11,7 +11,7 @@ use crate::{
         },
         NodeId, QueryGraph, QueryNode,
     },
-    scalar_expr::ScalarExpr,
+    scalar_expr::{ScalarExpr, ToRef},
 };
 
 /// Rule that given a shared union where all its parents are pruning projections, computes

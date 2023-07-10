@@ -8,6 +8,7 @@ use crate::{
     },
     scalar_expr::{
         equivalence_class::to_replacement_map, rewrite::replace_sub_expressions_pre, ScalarExpr,
+        ToRef,
     },
 };
 

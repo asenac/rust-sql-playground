@@ -4,7 +4,7 @@ use crate::{
         properties::unique_key,
         NodeId, QueryGraph, QueryNode,
     },
-    scalar_expr::ScalarExpr,
+    scalar_expr::{ScalarExpr, ToRef},
 };
 
 pub struct AggregateRemoveRule {}

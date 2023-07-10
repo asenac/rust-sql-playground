@@ -8,7 +8,10 @@ use itertools::Itertools;
 use crate::{
     data_type::DataType,
     value::{Literal, Value},
+    visitor_utils::PostOrderVisitationResult,
 };
+
+use self::visitor::{visit_scalar_expr, visit_scalar_expr_post};
 
 pub mod equivalence_class;
 pub mod rewrite;
@@ -165,10 +168,6 @@ impl ScalarExpr {
     pub fn nary(op: NaryOp, operands: Vec<ScalarExprRef>) -> ScalarExpr {
         ScalarExpr::NaryOp { op, operands }
     }
-
-    pub fn to_ref(self) -> ScalarExprRef {
-        Rc::new(self)
-    }
 }
 
 impl ScalarExpr {
@@ -260,5 +259,94 @@ impl AggregateOp {
         match self {
             AggregateOp::Min | AggregateOp::Max => operand_types[0].clone(),
         }
+    }
+}
+
+/// Representation for working with expressions that may contain aggregate expressions
+/// and other expressions that are not allowed in the query graph.
+pub enum ExtendedScalarExpr {
+    Literal(Literal),
+    InputRef {
+        index: usize,
+    },
+    BinaryOp {
+        op: BinaryOp,
+        left: Rc<ExtendedScalarExpr>,
+        right: Rc<ExtendedScalarExpr>,
+    },
+    NaryOp {
+        op: NaryOp,
+        operands: Vec<Rc<ExtendedScalarExpr>>,
+    },
+    Aggregate {
+        op: AggregateOp,
+        operands: Vec<Rc<ExtendedScalarExpr>>,
+    },
+}
+
+pub type ExtendedScalarExprRef = Rc<ExtendedScalarExpr>;
+
+pub trait ToRef: Sized {
+    fn to_ref(self) -> Rc<Self> {
+        Rc::new(self)
+    }
+}
+
+impl ToRef for AggregateExpr {}
+impl ToRef for ExtendedScalarExpr {}
+impl ToRef for ScalarExpr {}
+
+pub trait ToExtendedExpr {
+    fn to_extended_expr(&self) -> ExtendedScalarExprRef;
+}
+
+impl ToExtendedExpr for Rc<ScalarExpr> {
+    fn to_extended_expr(&self) -> ExtendedScalarExprRef {
+        let mut stack: Vec<ExtendedScalarExprRef> = Vec::new();
+        visit_scalar_expr_post(self, &mut |expr: &ScalarExprRef| {
+            let extended_expr = match expr.as_ref() {
+                ScalarExpr::Literal(literal) => ExtendedScalarExpr::Literal(literal.clone()),
+                ScalarExpr::InputRef { index } => ExtendedScalarExpr::InputRef { index: *index },
+                ScalarExpr::BinaryOp {
+                    op,
+                    left: _,
+                    right: _,
+                } => {
+                    let operands = &stack[stack.len() - 2..];
+                    let expr = ExtendedScalarExpr::BinaryOp {
+                        op: op.clone(),
+                        left: operands[0].clone(),
+                        right: operands[1].clone(),
+                    };
+                    stack.truncate(stack.len() - 2);
+                    expr
+                }
+                ScalarExpr::NaryOp { op, operands } => {
+                    let operands = &stack[stack.len() - operands.len()..];
+                    let expr = ExtendedScalarExpr::NaryOp {
+                        op: op.clone(),
+                        operands: operands.iter().cloned().collect_vec(),
+                    };
+                    stack.truncate(stack.len() - operands.len());
+                    expr
+                }
+            };
+            stack.push(Rc::new(extended_expr));
+            PostOrderVisitationResult::Continue
+        });
+        stack.into_iter().next().unwrap()
+    }
+}
+
+impl ToExtendedExpr for Rc<AggregateExpr> {
+    fn to_extended_expr(&self) -> ExtendedScalarExprRef {
+        Rc::new(ExtendedScalarExpr::Aggregate {
+            op: self.op.clone(),
+            operands: self
+                .operands
+                .iter()
+                .map(|i| ExtendedScalarExpr::InputRef { index: *i }.to_ref())
+                .collect_vec(),
+        })
     }
 }

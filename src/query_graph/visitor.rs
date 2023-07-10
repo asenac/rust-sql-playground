@@ -233,7 +233,7 @@ mod tests {
 
     use crate::{
         query_graph::{NodeId, QueryGraph, QueryNode},
-        scalar_expr::ScalarExpr,
+        scalar_expr::{ScalarExpr, ToRef},
         visitor_utils::PreOrderVisitationResult,
     };
 

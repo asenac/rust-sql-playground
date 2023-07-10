@@ -17,7 +17,7 @@ use crate::{
     scalar_expr::{
         rewrite::{apply_column_map, rewrite_scalar_expr_vec},
         visitor::store_input_dependencies,
-        ScalarExpr,
+        ScalarExpr, ToRef,
     },
 };
 

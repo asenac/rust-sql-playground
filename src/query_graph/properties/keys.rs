@@ -8,7 +8,7 @@ use crate::{
     scalar_expr::{
         equivalence_class::{extract_equivalence_classes, find_class},
         rewrite::{lift_scalar_expr, normalize_scalar_expr, shift_right_input_refs},
-        ScalarExpr, ScalarExprRef,
+        ScalarExpr, ScalarExprRef, ToRef,
     },
     value::Value,
     visitor_utils::PreOrderVisitationResult,

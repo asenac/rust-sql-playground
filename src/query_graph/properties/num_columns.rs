@@ -114,7 +114,7 @@ impl QueryGraphPrePostVisitor for NumColumns {
 mod tests {
     use crate::{
         query_graph::QueryGraph,
-        scalar_expr::{BinaryOp, ScalarExpr},
+        scalar_expr::{BinaryOp, ScalarExpr, ToRef},
     };
 
     use super::num_columns;

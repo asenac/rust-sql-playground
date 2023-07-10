@@ -74,6 +74,34 @@ where
     visit_scalar_expr(expr, &mut pre_post_visitor);
 }
 
+struct ScalarExprPostVisitor<'a, F>
+where
+    F: FnMut(&ScalarExprRef) -> PostOrderVisitationResult,
+{
+    visitor: &'a mut F,
+}
+
+impl<F> ScalarExprPrePostVisitor for ScalarExprPostVisitor<'_, F>
+where
+    F: FnMut(&ScalarExprRef) -> PostOrderVisitationResult,
+{
+    fn visit_pre(&mut self, _: &ScalarExprRef) -> PreOrderVisitationResult {
+        PreOrderVisitationResult::VisitInputs
+    }
+    fn visit_post(&mut self, expr: &ScalarExprRef) -> PostOrderVisitationResult {
+        (self.visitor)(expr)
+    }
+}
+
+/// Visits the sub-expressions in the given expression tree in post-order.
+pub fn visit_scalar_expr_post<F>(expr: &ScalarExprRef, visitor: &mut F)
+where
+    F: FnMut(&ScalarExprRef) -> PostOrderVisitationResult,
+{
+    let mut pre_post_visitor = ScalarExprPostVisitor { visitor };
+    visit_scalar_expr(expr, &mut pre_post_visitor);
+}
+
 /// Returns a set with the input columns referenced by the given expression.
 pub fn collect_input_dependencies(expr: &ScalarExprRef) -> HashSet<usize> {
     let mut dependencies = HashSet::new();

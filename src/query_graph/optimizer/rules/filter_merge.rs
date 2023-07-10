@@ -40,7 +40,7 @@ mod tests {
     use crate::{
         query_graph::QueryGraph,
         query_graph::{optimizer::SingleReplacementRule, QueryNode},
-        scalar_expr::{BinaryOp, ScalarExpr},
+        scalar_expr::{BinaryOp, ScalarExpr, ToRef},
     };
 
     use super::FilterMergeRule;

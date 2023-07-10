@@ -2,7 +2,7 @@ use std::{any::TypeId, rc::Rc};
 
 use crate::{
     query_graph::{visitor::QueryGraphPrePostVisitor, *},
-    scalar_expr::{rewrite::*, BinaryOp, ScalarExpr},
+    scalar_expr::{rewrite::*, BinaryOp, ScalarExpr, ToRef},
     visitor_utils::PreOrderVisitationResult,
 };
 
