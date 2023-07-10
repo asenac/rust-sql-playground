@@ -59,6 +59,7 @@ pub type ScalarExprRef = Rc<ScalarExpr>;
 
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub enum AggregateOp {
+    Count,
     Min,
     Max,
 }
@@ -228,6 +229,7 @@ impl fmt::Display for AggregateExpr {
 impl AggregateOp {
     pub fn return_type(&self, operand_types: &[DataType]) -> DataType {
         match self {
+            AggregateOp::Count => DataType::BigInt,
             AggregateOp::Min | AggregateOp::Max => operand_types[0].clone(),
         }
     }
@@ -236,6 +238,7 @@ impl AggregateOp {
         match self {
             AggregateOp::Min => "min",
             AggregateOp::Max => "max",
+            AggregateOp::Count => "count",
         }
     }
 }
