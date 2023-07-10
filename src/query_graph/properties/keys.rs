@@ -356,9 +356,14 @@ impl Keys {
             lower_bound: k.lower_bound,
             upper_bound: k.upper_bound,
         });
-        keys.extend(normalized_keys);
-        keys.sort();
-        keys.dedup();
+        let keys = keys
+            .into_iter()
+            .chain(normalized_keys.into_iter())
+            // Remove keys that carry no information
+            .filter(|k| k.lower_bound != 0 || k.upper_bound != None)
+            .sorted()
+            .dedup()
+            .collect_vec();
         Rc::new(keys)
     }
 }
