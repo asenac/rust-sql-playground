@@ -1,0 +1,167 @@
+run
+union_keys_1
+----
+----
+[2] Union
+    - Num Columns: 2
+    - Row Type: string, string
+    - Keys: [key: [ref_0, ref_1], lower_bound: 0, upper_bound: 2]
+  [1] Aggregate key: [ref_2, ref_4]
+      - Num Columns: 2
+      - Row Type: string, string
+      - Keys: [key: [ref_0, ref_1], lower_bound: 0, upper_bound: 1]
+    [0] TableScan id: 1, num_columns: 5
+        - Num Columns: 5
+        - Row Type: string, string, string, string, string
+  Recurring node 1
+
+
+Optimized:
+[2] Union
+    - Num Columns: 2
+    - Row Type: string, string
+    - Keys: [key: [ref_0, ref_1], lower_bound: 0, upper_bound: 2]
+  [4] Aggregate key: [ref_0, ref_1]
+      - Num Columns: 2
+      - Row Type: string, string
+      - Keys: [key: [ref_0, ref_1], lower_bound: 0, upper_bound: 1]
+    [3] Project [ref_2, ref_4]
+        - Num Columns: 2
+        - Row Type: string, string
+      [0] TableScan id: 1, num_columns: 5
+          - Num Columns: 5
+          - Row Type: string, string, string, string, string
+  Recurring node 4
+----
+----
+
+run
+union_keys_2
+----
+----
+[2] Union
+    - Num Columns: 0
+    - Row Type: 
+    - Keys: [key: [], lower_bound: 2, upper_bound: 2]
+  [1] Aggregate key: []
+      - Num Columns: 0
+      - Row Type: 
+      - Keys: [key: [], lower_bound: 1, upper_bound: 1]
+    [0] TableScan id: 1, num_columns: 5
+        - Num Columns: 5
+        - Row Type: string, string, string, string, string
+  Recurring node 1
+
+
+Optimized:
+[2] Union
+    - Num Columns: 0
+    - Row Type: 
+    - Keys: [key: [], lower_bound: 2, upper_bound: 2]
+  [4] Aggregate key: []
+      - Num Columns: 0
+      - Row Type: 
+      - Keys: [key: [], lower_bound: 1, upper_bound: 1]
+    [3] Project []
+        - Num Columns: 0
+        - Row Type: 
+      [0] TableScan id: 1, num_columns: 5
+          - Num Columns: 5
+          - Row Type: string, string, string, string, string
+  Recurring node 4
+----
+----
+
+run
+union_keys_3
+----
+----
+[3] Union
+    - Num Columns: 2
+    - Row Type: string, string
+  [1] Aggregate key: [ref_2, ref_4]
+      - Num Columns: 2
+      - Row Type: string, string
+      - Keys: [key: [ref_0, ref_1], lower_bound: 0, upper_bound: 1]
+    [0] TableScan id: 1, num_columns: 5
+        - Num Columns: 5
+        - Row Type: string, string, string, string, string
+  [2] Project [ref_2, ref_4]
+      - Num Columns: 2
+      - Row Type: string, string
+    Recurring node 0
+
+
+Optimized:
+[3] Union
+    - Num Columns: 2
+    - Row Type: string, string
+  [4] Aggregate key: [ref_0, ref_1]
+      - Num Columns: 2
+      - Row Type: string, string
+      - Keys: [key: [ref_0, ref_1], lower_bound: 0, upper_bound: 1]
+    [2] Project [ref_2, ref_4]
+        - Num Columns: 2
+        - Row Type: string, string
+      [0] TableScan id: 1, num_columns: 5
+          - Num Columns: 5
+          - Row Type: string, string, string, string, string
+  Recurring node 2
+----
+----
+
+run
+union_keys_4
+----
+----
+[4] Union
+    - Num Columns: 2
+    - Row Type: string, string
+  [1] Aggregate key: [ref_2, ref_4]
+      - Num Columns: 2
+      - Row Type: string, string
+      - Keys: [key: [ref_0, ref_1], lower_bound: 0, upper_bound: 1]
+    [0] TableScan id: 1, num_columns: 5
+        - Num Columns: 5
+        - Row Type: string, string, string, string, string
+  [3] Project ['hello', 'world']
+      - Num Columns: 2
+      - Row Type: string, string
+      - Pulled Up Predicates: raw_eq(ref_0, 'hello'), raw_eq(ref_1, 'world')
+      - Keys: [key: [], lower_bound: 1, upper_bound: 1]
+    [2] Aggregate key: []
+        - Num Columns: 0
+        - Row Type: 
+        - Keys: [key: [], lower_bound: 1, upper_bound: 1]
+      Recurring node 0
+
+
+Optimized:
+[4] Union
+    - Num Columns: 2
+    - Row Type: string, string
+  [6] Aggregate key: [ref_0, ref_1]
+      - Num Columns: 2
+      - Row Type: string, string
+      - Keys: [key: [ref_0, ref_1], lower_bound: 0, upper_bound: 1]
+    [5] Project [ref_2, ref_4]
+        - Num Columns: 2
+        - Row Type: string, string
+      [0] TableScan id: 1, num_columns: 5
+          - Num Columns: 5
+          - Row Type: string, string, string, string, string
+  [3] Project ['hello', 'world']
+      - Num Columns: 2
+      - Row Type: string, string
+      - Pulled Up Predicates: raw_eq(ref_0, 'hello'), raw_eq(ref_1, 'world')
+      - Keys: [key: [], lower_bound: 1, upper_bound: 1]
+    [8] Aggregate key: []
+        - Num Columns: 0
+        - Row Type: 
+        - Keys: [key: [], lower_bound: 1, upper_bound: 1]
+      [7] Project []
+          - Num Columns: 0
+          - Row Type: 
+        Recurring node 0
+----
+----

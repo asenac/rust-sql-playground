@@ -12,6 +12,7 @@ use rust_sql::scalar_expr::NaryOp;
 use rust_sql::scalar_expr::ScalarExpr;
 
 mod test_queries {
+    use itertools::Itertools;
     use rust_sql::data_type::DataType;
 
     use super::*;
@@ -744,23 +745,84 @@ mod test_queries {
             query_graph
         });
     }
+
+    pub(crate) fn keys_union(queries: &mut HashMap<String, QueryGraph>) {
+        queries.insert("union_keys_1".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
+                group_key: BTreeSet::from([2, 4]),
+                input: table_scan_1,
+            });
+            let union_1 = query_graph.add_node(QueryNode::Union {
+                inputs: vec![aggregate_1, aggregate_1],
+            });
+            query_graph.set_entry_node(union_1);
+            query_graph
+        });
+        queries.insert("union_keys_2".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
+                group_key: BTreeSet::new(),
+                input: table_scan_1,
+            });
+            let union_1 = query_graph.add_node(QueryNode::Union {
+                inputs: vec![aggregate_1, aggregate_1],
+            });
+            query_graph.set_entry_node(union_1);
+            query_graph
+        });
+        queries.insert("union_keys_3".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
+                group_key: BTreeSet::from([2, 4]),
+                input: table_scan_1,
+            });
+            let project_1 = query_graph.project(
+                table_scan_1,
+                [2, 4]
+                    .iter()
+                    .map(|i| ScalarExpr::input_ref(*i).to_ref())
+                    .collect_vec(),
+            );
+            let union_1 = query_graph.add_node(QueryNode::Union {
+                inputs: vec![aggregate_1, project_1],
+            });
+            query_graph.set_entry_node(union_1);
+            query_graph
+        });
+        // TODO(asenac) the lower bound for the empty key is known: 1
+        queries.insert("union_keys_4".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
+                group_key: BTreeSet::from([2, 4]),
+                input: table_scan_1,
+            });
+            let aggregate_2 = query_graph.add_node(QueryNode::Aggregate {
+                group_key: BTreeSet::new(),
+                input: table_scan_1,
+            });
+            let project_1 = query_graph.project(
+                aggregate_2,
+                vec![
+                    ScalarExpr::string_literal("hello".to_owned()).to_ref(),
+                    ScalarExpr::string_literal("world".to_owned()).to_ref(),
+                ],
+            );
+            let union_1 = query_graph.add_node(QueryNode::Union {
+                inputs: vec![aggregate_1, project_1],
+            });
+            query_graph.set_entry_node(union_1);
+            query_graph
+        });
+    }
 }
 
 fn static_queries() -> HashMap<String, QueryGraph> {
     let mut queries = HashMap::new();
-    queries.insert("two_rows".to_string(), {
-        let mut query_graph = QueryGraph::new();
-        let table_scan_1 = query_graph.table_scan(1, 10);
-        let aggregate = query_graph.add_node(QueryNode::Aggregate {
-            group_key: BTreeSet::new(),
-            input: table_scan_1,
-        });
-        let union_ = query_graph.add_node(QueryNode::Union {
-            inputs: vec![aggregate, aggregate],
-        });
-        query_graph.set_entry_node(union_);
-        query_graph
-    });
     queries.insert("redundant_key".to_string(), {
         let mut query_graph = QueryGraph::new();
         let table_scan_1 = query_graph.table_scan(1, 10);
@@ -906,6 +968,7 @@ fn static_queries() -> HashMap<String, QueryGraph> {
     test_queries::join_pruning(&mut queries);
     test_queries::keys_filter(&mut queries);
     test_queries::keys_join(&mut queries);
+    test_queries::keys_union(&mut queries);
     test_queries::project_normalization(&mut queries);
     test_queries::pulled_up_predicates(&mut queries);
     test_queries::union_merge(&mut queries);
