@@ -295,6 +295,41 @@ pub enum ExtendedScalarExpr {
 
 pub type ExtendedScalarExprRef = Rc<ExtendedScalarExpr>;
 
+impl ExtendedScalarExpr {
+    pub fn data_type(&self, row_type: &[DataType]) -> DataType {
+        let operand_types = (0..self.num_inputs())
+            .map(|i| {
+                let mut stack = Vec::new();
+                visit_expr_post(&self.get_input(i), &mut |expr: &ExtendedScalarExprRef| {
+                    let num_inputs = expr.num_inputs();
+                    let typ = expr
+                        .data_type_with_operand_types(row_type, &stack[stack.len() - num_inputs..]);
+                    stack.truncate(stack.len() - num_inputs);
+                    stack.push(typ);
+                    PostOrderVisitationResult::Continue
+                });
+                stack.into_iter().next().unwrap()
+            })
+            .collect_vec();
+
+        self.data_type_with_operand_types(row_type, &operand_types)
+    }
+
+    fn data_type_with_operand_types(
+        &self,
+        row_type: &[DataType],
+        operand_types: &[DataType],
+    ) -> DataType {
+        match self {
+            ExtendedScalarExpr::Literal(literal) => literal.data_type.clone(),
+            ExtendedScalarExpr::InputRef { index } => row_type[*index].clone(),
+            ExtendedScalarExpr::BinaryOp { op, .. } => op.return_type(operand_types),
+            ExtendedScalarExpr::NaryOp { op, .. } => op.return_type(operand_types),
+            ExtendedScalarExpr::Aggregate { op, .. } => op.return_type(operand_types),
+        }
+    }
+}
+
 pub trait ToRef: Sized {
     fn to_ref(self) -> Rc<Self> {
         Rc::new(self)
