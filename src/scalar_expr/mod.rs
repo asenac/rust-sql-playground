@@ -11,11 +11,12 @@ use crate::{
     visitor_utils::PostOrderVisitationResult,
 };
 
-use self::visitor::{visit_scalar_expr, visit_scalar_expr_post};
+use self::visitor::visit_expr_post;
 
 pub mod equivalence_class;
 pub mod rewrite;
 pub mod visitor;
+pub use visitor::VisitableExpr;
 
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub enum BinaryOp {
@@ -181,30 +182,6 @@ impl ScalarExpr {
         }
     }
 
-    pub fn num_inputs(&self) -> usize {
-        match self {
-            ScalarExpr::Literal { .. } => 0,
-            ScalarExpr::InputRef { .. } => 0,
-            ScalarExpr::BinaryOp { .. } => 2,
-            ScalarExpr::NaryOp { operands, .. } => operands.len(),
-        }
-    }
-
-    pub fn get_input(&self, input_idx: usize) -> ScalarExprRef {
-        assert!(input_idx < self.num_inputs());
-        match self {
-            ScalarExpr::BinaryOp { left, right, .. } => {
-                if input_idx == 0 {
-                    left.clone()
-                } else {
-                    right.clone()
-                }
-            }
-            ScalarExpr::NaryOp { operands, .. } => operands[input_idx].clone(),
-            ScalarExpr::Literal { .. } | ScalarExpr::InputRef { .. } => panic!(),
-        }
-    }
-
     /// Creates a clone of the given expression but whose inputs will be
     /// the given ones. Used for doing copy-on-write when rewritting expressions.
     pub fn clone_with_new_inputs(&self, inputs: &[ScalarExprRef]) -> ScalarExpr {
@@ -303,7 +280,7 @@ pub trait ToExtendedExpr {
 impl ToExtendedExpr for Rc<ScalarExpr> {
     fn to_extended_expr(&self) -> ExtendedScalarExprRef {
         let mut stack: Vec<ExtendedScalarExprRef> = Vec::new();
-        visit_scalar_expr_post(self, &mut |expr: &ScalarExprRef| {
+        visit_expr_post(self, &mut |expr: &ScalarExprRef| {
             let extended_expr = match expr.as_ref() {
                 ScalarExpr::Literal(literal) => ExtendedScalarExpr::Literal(literal.clone()),
                 ScalarExpr::InputRef { index } => ExtendedScalarExpr::InputRef { index: *index },

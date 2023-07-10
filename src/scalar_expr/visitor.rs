@@ -1,16 +1,24 @@
 use std::collections::HashSet;
+use std::marker::PhantomData;
 
 use crate::scalar_expr::*;
 use crate::visitor_utils::*;
 
-pub trait ScalarExprPrePostVisitor {
-    fn visit_pre(&mut self, expr: &ScalarExprRef) -> PreOrderVisitationResult;
-    fn visit_post(&mut self, expr: &ScalarExprRef) -> PostOrderVisitationResult;
+pub trait VisitableExpr {
+    fn num_inputs(&self) -> usize;
+
+    fn get_input(&self, input_idx: usize) -> Rc<Self>;
 }
 
-pub fn visit_scalar_expr<V>(expr: &ScalarExprRef, visitor: &mut V)
+pub trait ExprPrePostVisitor<E: VisitableExpr> {
+    fn visit_pre(&mut self, expr: &Rc<E>) -> PreOrderVisitationResult;
+    fn visit_post(&mut self, expr: &Rc<E>) -> PostOrderVisitationResult;
+}
+
+pub fn visit_expr<E, V>(expr: &Rc<E>, visitor: &mut V)
 where
-    V: ScalarExprPrePostVisitor,
+    E: VisitableExpr,
+    V: ExprPrePostVisitor<E>,
 {
     let mut stack = vec![VisitationStep::new(expr.clone())];
     while let Some(step) = stack.last_mut() {
@@ -46,60 +54,74 @@ where
         }
     }
 }
-struct ScalarExprPreVisitor<'a, F>
+struct ExprPreVisitor<'a, F, E>
 where
-    F: FnMut(&ScalarExprRef) -> PreOrderVisitationResult,
+    E: VisitableExpr,
+    F: FnMut(&Rc<E>) -> PreOrderVisitationResult,
 {
     visitor: &'a mut F,
+    phantom: PhantomData<E>,
 }
 
-impl<F> ScalarExprPrePostVisitor for ScalarExprPreVisitor<'_, F>
+impl<F, E> ExprPrePostVisitor<E> for ExprPreVisitor<'_, F, E>
 where
-    F: FnMut(&ScalarExprRef) -> PreOrderVisitationResult,
+    E: VisitableExpr,
+    F: FnMut(&Rc<E>) -> PreOrderVisitationResult,
 {
-    fn visit_pre(&mut self, expr: &ScalarExprRef) -> PreOrderVisitationResult {
+    fn visit_pre(&mut self, expr: &Rc<E>) -> PreOrderVisitationResult {
         (self.visitor)(expr)
     }
-    fn visit_post(&mut self, _: &ScalarExprRef) -> PostOrderVisitationResult {
+    fn visit_post(&mut self, _: &Rc<E>) -> PostOrderVisitationResult {
         PostOrderVisitationResult::Continue
     }
 }
 
 /// Visits the sub-expressions in the given expression tree in pre-order.
-pub fn visit_scalar_expr_pre<F>(expr: &ScalarExprRef, visitor: &mut F)
+pub fn visit_expr_pre<F, E>(expr: &Rc<E>, visitor: &mut F)
 where
-    F: FnMut(&ScalarExprRef) -> PreOrderVisitationResult,
+    E: VisitableExpr,
+    F: FnMut(&Rc<E>) -> PreOrderVisitationResult,
 {
-    let mut pre_post_visitor = ScalarExprPreVisitor { visitor };
-    visit_scalar_expr(expr, &mut pre_post_visitor);
+    let mut pre_post_visitor = ExprPreVisitor {
+        visitor,
+        phantom: PhantomData,
+    };
+    visit_expr(expr, &mut pre_post_visitor);
 }
 
-struct ScalarExprPostVisitor<'a, F>
+struct ExprPostVisitor<'a, F, E>
 where
-    F: FnMut(&ScalarExprRef) -> PostOrderVisitationResult,
+    E: VisitableExpr,
+    F: FnMut(&Rc<E>) -> PostOrderVisitationResult,
 {
     visitor: &'a mut F,
+    phantom: PhantomData<E>,
 }
 
-impl<F> ScalarExprPrePostVisitor for ScalarExprPostVisitor<'_, F>
+impl<F, E> ExprPrePostVisitor<E> for ExprPostVisitor<'_, F, E>
 where
-    F: FnMut(&ScalarExprRef) -> PostOrderVisitationResult,
+    E: VisitableExpr,
+    F: FnMut(&Rc<E>) -> PostOrderVisitationResult,
 {
-    fn visit_pre(&mut self, _: &ScalarExprRef) -> PreOrderVisitationResult {
+    fn visit_pre(&mut self, _: &Rc<E>) -> PreOrderVisitationResult {
         PreOrderVisitationResult::VisitInputs
     }
-    fn visit_post(&mut self, expr: &ScalarExprRef) -> PostOrderVisitationResult {
+    fn visit_post(&mut self, expr: &Rc<E>) -> PostOrderVisitationResult {
         (self.visitor)(expr)
     }
 }
 
 /// Visits the sub-expressions in the given expression tree in post-order.
-pub fn visit_scalar_expr_post<F>(expr: &ScalarExprRef, visitor: &mut F)
+pub fn visit_expr_post<F, E>(expr: &Rc<E>, visitor: &mut F)
 where
-    F: FnMut(&ScalarExprRef) -> PostOrderVisitationResult,
+    E: VisitableExpr,
+    F: FnMut(&Rc<E>) -> PostOrderVisitationResult,
 {
-    let mut pre_post_visitor = ScalarExprPostVisitor { visitor };
-    visit_scalar_expr(expr, &mut pre_post_visitor);
+    let mut pre_post_visitor = ExprPostVisitor {
+        visitor,
+        phantom: PhantomData,
+    };
+    visit_expr(expr, &mut pre_post_visitor);
 }
 
 /// Returns a set with the input columns referenced by the given expression.
@@ -110,10 +132,64 @@ pub fn collect_input_dependencies(expr: &ScalarExprRef) -> HashSet<usize> {
 }
 
 pub fn store_input_dependencies(expr: &ScalarExprRef, dependencies: &mut HashSet<usize>) {
-    visit_scalar_expr_pre(expr, &mut |curr_expr: &ScalarExprRef| {
+    visit_expr_pre(expr, &mut |curr_expr: &ScalarExprRef| {
         if let ScalarExpr::InputRef { index } = **curr_expr {
             dependencies.insert(index);
         }
         PreOrderVisitationResult::VisitInputs
     });
+}
+
+impl VisitableExpr for ScalarExpr {
+    fn num_inputs(&self) -> usize {
+        match self {
+            ScalarExpr::Literal { .. } => 0,
+            ScalarExpr::InputRef { .. } => 0,
+            ScalarExpr::BinaryOp { .. } => 2,
+            ScalarExpr::NaryOp { operands, .. } => operands.len(),
+        }
+    }
+
+    fn get_input(&self, input_idx: usize) -> ScalarExprRef {
+        assert!(input_idx < self.num_inputs());
+        match self {
+            ScalarExpr::BinaryOp { left, right, .. } => {
+                if input_idx == 0 {
+                    left.clone()
+                } else {
+                    right.clone()
+                }
+            }
+            ScalarExpr::NaryOp { operands, .. } => operands[input_idx].clone(),
+            ScalarExpr::Literal { .. } | ScalarExpr::InputRef { .. } => panic!(),
+        }
+    }
+}
+
+impl VisitableExpr for ExtendedScalarExpr {
+    fn num_inputs(&self) -> usize {
+        match self {
+            ExtendedScalarExpr::Literal { .. } => 0,
+            ExtendedScalarExpr::InputRef { .. } => 0,
+            ExtendedScalarExpr::BinaryOp { .. } => 2,
+            ExtendedScalarExpr::Aggregate { operands, .. }
+            | ExtendedScalarExpr::NaryOp { operands, .. } => operands.len(),
+        }
+    }
+
+    fn get_input(&self, input_idx: usize) -> ExtendedScalarExprRef {
+        assert!(input_idx < self.num_inputs());
+        match self {
+            ExtendedScalarExpr::BinaryOp { left, right, .. } => {
+                if input_idx == 0 {
+                    left.clone()
+                } else {
+                    right.clone()
+                }
+            }
+            ExtendedScalarExpr::Aggregate { operands, .. }
+            | ExtendedScalarExpr::NaryOp { operands, .. } => operands[input_idx].clone(),
+            ExtendedScalarExpr::Literal { .. } | ExtendedScalarExpr::InputRef { .. } => panic!(),
+        }
+    }
 }

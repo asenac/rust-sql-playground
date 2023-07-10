@@ -54,7 +54,7 @@ where
     }
 }
 
-impl<F> ScalarExprPrePostVisitor for ScalarExprRewriterPost<'_, F>
+impl<F> ExprPrePostVisitor<ScalarExpr> for ScalarExprRewriterPost<'_, F>
 where
     F: FnMut(&ScalarExprRef) -> Option<ScalarExprRef>,
 {
@@ -81,7 +81,7 @@ where
     F: FnMut(&ScalarExprRef) -> Option<ScalarExprRef>,
 {
     let mut visitor = ScalarExprRewriterPost::new(rewrite);
-    visit_scalar_expr(expr, &mut visitor);
+    visit_expr(expr, &mut visitor);
     assert!(visitor.stack.len() == 1);
     visitor.stack.into_iter().next().unwrap()
 }
@@ -156,7 +156,7 @@ where
     }
 }
 
-impl<F> ScalarExprPrePostVisitor for ScalarExprRewriterPre<'_, F>
+impl<F> ExprPrePostVisitor<ScalarExpr> for ScalarExprRewriterPre<'_, F>
 where
     F: FnMut(&ScalarExprRef) -> Result<Option<ScalarExprRef>, ()>,
 {
@@ -197,7 +197,7 @@ where
     F: FnMut(&ScalarExprRef) -> Result<Option<ScalarExprRef>, ()>,
 {
     let mut visitor = ScalarExprRewriterPre::new(rewrite);
-    visit_scalar_expr(expr, &mut visitor);
+    visit_expr(expr, &mut visitor);
     visitor.stack.into_iter().next()
 }
 
