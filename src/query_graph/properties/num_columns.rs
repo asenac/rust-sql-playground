@@ -64,7 +64,11 @@ impl NumColumns {
                 }
                 JoinType::Semi | JoinType::Anti => self.num_columns_unchecked(query_graph, *left),
             },
-            QueryNode::Aggregate { group_key, .. } => group_key.len(),
+            QueryNode::Aggregate {
+                group_key,
+                aggregates,
+                ..
+            } => group_key.len() + aggregates.len(),
             QueryNode::Union { inputs } => {
                 if inputs.is_empty() {
                     0

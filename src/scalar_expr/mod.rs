@@ -3,6 +3,8 @@
 use core::fmt;
 use std::rc::Rc;
 
+use itertools::Itertools;
+
 use crate::{
     data_type::DataType,
     value::{Literal, Value},
@@ -50,6 +52,20 @@ pub enum ScalarExpr {
 }
 
 pub type ScalarExprRef = Rc<ScalarExpr>;
+
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
+pub enum AggregateOp {
+    Min,
+    Max,
+}
+
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
+pub struct AggregateExpr {
+    pub op: AggregateOp,
+    pub operands: Vec<usize>,
+}
+
+pub type AggregateExprRef = Rc<AggregateExpr>;
 
 impl BinaryOp {
     pub fn function_name(&self) -> &str {
@@ -224,6 +240,25 @@ impl fmt::Display for ScalarExpr {
                 }
                 write!(f, ")")
             }
+        }
+    }
+}
+
+impl AggregateExpr {
+    pub fn data_type(&self, row_type: &[DataType]) -> DataType {
+        let operand_types = self
+            .operands
+            .iter()
+            .map(|o| row_type[*o].clone())
+            .collect_vec();
+        self.op.return_type(&operand_types)
+    }
+}
+
+impl AggregateOp {
+    pub fn return_type(&self, operand_types: &[DataType]) -> DataType {
+        match self {
+            AggregateOp::Min | AggregateOp::Max => operand_types[0].clone(),
         }
     }
 }

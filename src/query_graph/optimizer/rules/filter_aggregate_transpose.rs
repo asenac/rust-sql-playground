@@ -19,6 +19,7 @@ impl SingleReplacementRule for FilterAggregateTransposeRule {
     fn apply(&self, query_graph: &mut QueryGraph, node_id: NodeId) -> Option<NodeId> {
         if let QueryNode::Aggregate {
             group_key,
+            aggregates,
             input: agg_input,
         } = query_graph.node(node_id)
         {
@@ -40,6 +41,7 @@ impl SingleReplacementRule for FilterAggregateTransposeRule {
 
                 if !pushable_conditions.is_empty() {
                     let new_group_key = group_key.clone();
+                    let new_aggregates = aggregates.clone();
                     let new_filter = query_graph.filter(
                         *agg_input,
                         pushable_conditions
@@ -49,6 +51,7 @@ impl SingleReplacementRule for FilterAggregateTransposeRule {
                     );
                     let new_aggregate = query_graph.add_node(QueryNode::Aggregate {
                         group_key: new_group_key,
+                        aggregates: new_aggregates,
                         input: new_filter,
                     });
 

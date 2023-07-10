@@ -186,7 +186,12 @@ impl PulledUpPredicates {
                     );
                 }
             }
-            QueryNode::Aggregate { group_key, input } => {
+            QueryNode::Aggregate {
+                group_key,
+                aggregates: _,
+                input,
+            } => {
+                // TODO(asenac) we could infer some predicates from the aggregate expressions
                 let column_map = to_column_map_for_expr_lifting(group_key);
                 predicates.extend(
                     self.predicates_unchecked(query_graph, *input)

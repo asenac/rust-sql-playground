@@ -142,6 +142,7 @@ impl<'a> QueryGraphPrePostVisitor for ExplainVisitor<'a> {
                 )
             }
             QueryNode::Aggregate { group_key, .. } => format!(
+                // TODO(asenac) print aggregate expressions
                 "{}Aggregate key: [{}]\n",
                 prefix,
                 group_key

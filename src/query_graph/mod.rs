@@ -1,4 +1,4 @@
-use crate::scalar_expr::ScalarExprRef;
+use crate::scalar_expr::{AggregateExprRef, ScalarExprRef};
 use std::{
     cell::RefCell,
     collections::{BTreeSet, HashMap, HashSet},
@@ -49,6 +49,7 @@ pub enum QueryNode {
     },
     Aggregate {
         group_key: BTreeSet<usize>,
+        aggregates: Vec<AggregateExprRef>,
         input: NodeId,
     },
     Union {

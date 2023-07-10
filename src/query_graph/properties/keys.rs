@@ -290,7 +290,11 @@ impl Keys {
                 }
                 // TODO(asenac) remove duplicated keys
             }
-            QueryNode::Aggregate { group_key, input } => keys.push(KeyBounds {
+            QueryNode::Aggregate {
+                group_key,
+                aggregates: _,
+                input: _,
+            } => keys.push(KeyBounds {
                 // TODO(asenac) use input keys
                 key: Rc::new(
                     group_key

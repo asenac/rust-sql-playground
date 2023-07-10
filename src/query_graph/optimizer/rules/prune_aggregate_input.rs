@@ -1,4 +1,7 @@
-use std::collections::{BTreeSet, HashMap};
+use std::{
+    collections::{BTreeSet, HashMap},
+    rc::Rc,
+};
 
 use itertools::Itertools;
 
@@ -8,7 +11,7 @@ use crate::{
         properties::{input_dependencies, num_columns},
         NodeId, QueryGraph, QueryNode,
     },
-    scalar_expr::ScalarExpr,
+    scalar_expr::{AggregateExpr, ScalarExpr},
 };
 
 /// Given an aggregate node not using all the columns from its input, it inserts
@@ -22,7 +25,12 @@ impl SingleReplacementRule for PruneAggregateInputRule {
     }
 
     fn apply(&self, query_graph: &mut QueryGraph, node_id: NodeId) -> Option<NodeId> {
-        if let QueryNode::Aggregate { group_key, input } = query_graph.node(node_id) {
+        if let QueryNode::Aggregate {
+            group_key,
+            aggregates,
+            input,
+        } = query_graph.node(node_id)
+        {
             let num_columns = num_columns(query_graph, *input);
             let input_dependencies = input_dependencies(query_graph, node_id);
             if num_columns != input_dependencies.len() {
@@ -36,6 +44,19 @@ impl SingleReplacementRule for PruneAggregateInputRule {
                     .iter()
                     .map(|k| *column_map.get(k).unwrap())
                     .collect::<BTreeSet<_>>();
+                let new_aggregates = aggregates
+                    .iter()
+                    .map(|k| {
+                        Rc::new(AggregateExpr {
+                            op: k.op.clone(),
+                            operands: k
+                                .operands
+                                .iter()
+                                .map(|e| *column_map.get(e).unwrap())
+                                .collect_vec(),
+                        })
+                    })
+                    .collect_vec();
                 let project_outputs = input_dependencies
                     .iter()
                     .sorted()
@@ -45,6 +66,7 @@ impl SingleReplacementRule for PruneAggregateInputRule {
                 let pruning_project = query_graph.project(*input, project_outputs);
                 return Some(query_graph.add_node(QueryNode::Aggregate {
                     group_key: new_group_key,
+                    aggregates: new_aggregates,
                     input: pruning_project,
                 }));
             }

@@ -23,10 +23,12 @@ mod test_queries {
             let table_scan_1 = query_graph.table_scan(1, 10);
             let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
                 group_key: (0..3).collect(),
+                aggregates: Vec::new(),
                 input: table_scan_1,
             });
             let aggregate_2 = query_graph.add_node(QueryNode::Aggregate {
                 group_key: (0..3).collect(),
+                aggregates: Vec::new(),
                 input: aggregate_1,
             });
             query_graph.set_entry_node(aggregate_2);
@@ -122,6 +124,7 @@ mod test_queries {
             let table_scan_1 = query_graph.table_scan(1, 10);
             let aggregate = query_graph.add_node(QueryNode::Aggregate {
                 group_key: BTreeSet::new(),
+                aggregates: Vec::new(),
                 input: table_scan_1,
             });
             let join = query_graph.inner_join(aggregate, aggregate, Vec::new());
@@ -133,10 +136,12 @@ mod test_queries {
             let table_scan_1 = query_graph.table_scan(1, 10);
             let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
                 group_key: (0..3).collect(),
+                aggregates: Vec::new(),
                 input: table_scan_1,
             });
             let aggregate_2 = query_graph.add_node(QueryNode::Aggregate {
                 group_key: BTreeSet::new(),
+                aggregates: Vec::new(),
                 input: table_scan_1,
             });
             let join = query_graph.inner_join(aggregate_2, aggregate_1, Vec::new());
@@ -155,10 +160,12 @@ mod test_queries {
             let table_scan_1 = query_graph.table_scan(1, 10);
             let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
                 group_key: (0..3).collect(),
+                aggregates: Vec::new(),
                 input: table_scan_1,
             });
             let aggregate_2 = query_graph.add_node(QueryNode::Aggregate {
                 group_key: BTreeSet::new(),
+                aggregates: Vec::new(),
                 input: table_scan_1,
             });
             let join = query_graph.inner_join(aggregate_1, aggregate_2, Vec::new());
@@ -177,6 +184,7 @@ mod test_queries {
             let table_scan_1 = query_graph.table_scan(1, 10);
             let aggregate = query_graph.add_node(QueryNode::Aggregate {
                 group_key: (0..3).collect(),
+                aggregates: Vec::new(),
                 input: table_scan_1,
             });
             let join = query_graph.inner_join(
@@ -205,10 +213,12 @@ mod test_queries {
             let table_scan_1 = query_graph.table_scan(1, 10);
             let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
                 group_key: (0..3).collect(),
+                aggregates: Vec::new(),
                 input: table_scan_1,
             });
             let aggregate_2 = query_graph.add_node(QueryNode::Aggregate {
                 group_key: BTreeSet::new(),
+                aggregates: Vec::new(),
                 input: table_scan_1,
             });
             let join = query_graph.join(JoinType::LeftOuter, aggregate_1, aggregate_2, Vec::new());
@@ -228,10 +238,12 @@ mod test_queries {
             let table_scan_2 = query_graph.table_scan(1, 5);
             let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
                 group_key: (0..3).collect(),
+                aggregates: Vec::new(),
                 input: table_scan_1,
             });
             let aggregate_2 = query_graph.add_node(QueryNode::Aggregate {
                 group_key: (0..2).collect(),
+                aggregates: Vec::new(),
                 input: table_scan_2,
             });
             let join = query_graph.join(
@@ -259,10 +271,12 @@ mod test_queries {
             let table_scan_2 = query_graph.table_scan(1, 5);
             let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
                 group_key: (0..3).collect(),
+                aggregates: Vec::new(),
                 input: table_scan_1,
             });
             let aggregate_2 = query_graph.add_node(QueryNode::Aggregate {
                 group_key: (0..2).collect(),
+                aggregates: Vec::new(),
                 input: table_scan_2,
             });
             let join = query_graph.join(
@@ -292,6 +306,7 @@ mod test_queries {
             let table_scan_1 = query_graph.table_scan(1, 10);
             let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
                 group_key: (0..3).collect(),
+                aggregates: Vec::new(),
                 input: table_scan_1,
             });
             let filter_1 = query_graph.filter(
@@ -602,10 +617,12 @@ mod test_queries {
             );
             let agg_1 = query_graph.add_node(QueryNode::Aggregate {
                 group_key: BTreeSet::from([0, 1]),
+                aggregates: Vec::new(),
                 input: filter_1,
             });
             let agg_2 = query_graph.add_node(QueryNode::Aggregate {
                 group_key: BTreeSet::from([2, 5]),
+                aggregates: Vec::new(),
                 input: join,
             });
             let union_1 = query_graph.add_node(QueryNode::Union {
@@ -752,6 +769,7 @@ mod test_queries {
             let table_scan_1 = query_graph.table_scan(1, 5);
             let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
                 group_key: BTreeSet::from([2, 4]),
+                aggregates: Vec::new(),
                 input: table_scan_1,
             });
             let union_1 = query_graph.add_node(QueryNode::Union {
@@ -765,6 +783,7 @@ mod test_queries {
             let table_scan_1 = query_graph.table_scan(1, 5);
             let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
                 group_key: BTreeSet::new(),
+                aggregates: Vec::new(),
                 input: table_scan_1,
             });
             let union_1 = query_graph.add_node(QueryNode::Union {
@@ -778,6 +797,7 @@ mod test_queries {
             let table_scan_1 = query_graph.table_scan(1, 5);
             let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
                 group_key: BTreeSet::from([2, 4]),
+                aggregates: Vec::new(),
                 input: table_scan_1,
             });
             let project_1 = query_graph.project(
@@ -799,10 +819,12 @@ mod test_queries {
             let table_scan_1 = query_graph.table_scan(1, 5);
             let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
                 group_key: BTreeSet::from([2, 4]),
+                aggregates: Vec::new(),
                 input: table_scan_1,
             });
             let aggregate_2 = query_graph.add_node(QueryNode::Aggregate {
                 group_key: BTreeSet::new(),
+                aggregates: Vec::new(),
                 input: table_scan_1,
             });
             let project_1 = query_graph.project(
@@ -843,6 +865,7 @@ fn static_queries() -> HashMap<String, QueryGraph> {
         );
         let aggregate = query_graph.add_node(QueryNode::Aggregate {
             group_key: (0..3).collect(),
+            aggregates: Vec::new(),
             input: project,
         });
         query_graph.set_entry_node(aggregate);
@@ -876,6 +899,7 @@ fn static_queries() -> HashMap<String, QueryGraph> {
         );
         let aggregate = query_graph.add_node(QueryNode::Aggregate {
             group_key: (0..3).collect(),
+            aggregates: Vec::new(),
             input: project,
         });
         query_graph.set_entry_node(aggregate);
@@ -909,6 +933,7 @@ fn static_queries() -> HashMap<String, QueryGraph> {
         );
         let aggregate = query_graph.add_node(QueryNode::Aggregate {
             group_key: (0..4).collect(),
+            aggregates: Vec::new(),
             input: project,
         });
         query_graph.set_entry_node(aggregate);
@@ -927,6 +952,7 @@ fn static_queries() -> HashMap<String, QueryGraph> {
         );
         let aggregate = query_graph.add_node(QueryNode::Aggregate {
             group_key: (0..3).collect(),
+            aggregates: Vec::new(),
             input: project,
         });
         query_graph.set_entry_node(aggregate);
@@ -937,10 +963,12 @@ fn static_queries() -> HashMap<String, QueryGraph> {
         let table_scan_1 = query_graph.table_scan(1, 10);
         let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
             group_key: (0..3).collect(),
+            aggregates: Vec::new(),
             input: table_scan_1,
         });
         let aggregate_2 = query_graph.add_node(QueryNode::Aggregate {
             group_key: (0..3).collect(),
+            aggregates: Vec::new(),
             input: table_scan_1,
         });
         let filter_1 = query_graph.filter(

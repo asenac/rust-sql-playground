@@ -26,7 +26,12 @@ impl SingleReplacementRule for AggregateSimplifierRule {
     }
 
     fn apply(&self, query_graph: &mut QueryGraph, node_id: NodeId) -> Option<NodeId> {
-        if let QueryNode::Aggregate { group_key, input } = query_graph.node(node_id) {
+        if let QueryNode::Aggregate {
+            group_key,
+            aggregates,
+            input,
+        } = query_graph.node(node_id)
+        {
             if group_key.len() < 2 {
                 return None;
             }
@@ -42,6 +47,7 @@ impl SingleReplacementRule for AggregateSimplifierRule {
                         .filter(|i| **i != in_col)
                         .cloned()
                         .collect(),
+                    aggregates: aggregates.clone(),
                     input: *input,
                 });
                 let project = (0..num_columns)

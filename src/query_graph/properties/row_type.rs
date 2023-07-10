@@ -86,12 +86,17 @@ impl RowType {
                 ),
                 JoinType::Semi | JoinType::Anti => self.row_type_unchecked(query_graph, *left),
             },
-            QueryNode::Aggregate { group_key, input } => {
+            QueryNode::Aggregate {
+                group_key,
+                aggregates,
+                input,
+            } => {
                 let input_row_type = self.row_type_unchecked(query_graph, *input);
                 Rc::new(
                     group_key
                         .iter()
                         .map(|e| input_row_type[*e].clone())
+                        .chain(aggregates.iter().map(|agg| agg.data_type(&*input_row_type)))
                         .collect(),
                 )
             }
