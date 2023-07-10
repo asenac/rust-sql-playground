@@ -9,7 +9,7 @@ use crate::{
     scalar_expr::{
         equivalence_class::extract_equivalence_classes,
         rewrite::{
-            rewrite_scalar_expr_pre, rewrite_scalar_expr_vec, shift_left_input_refs,
+            rewrite_expr_pre, rewrite_scalar_expr_vec, shift_left_input_refs,
             shift_right_input_refs,
         },
         visitor::collect_input_dependencies,
@@ -168,7 +168,7 @@ impl EqualityPropagationRule {
     {
         let mut propagated_predicates = Vec::new();
         for predicate in predicates.iter() {
-            let rewritten_predicate = rewrite_scalar_expr_pre(
+            let rewritten_predicate = rewrite_expr_pre(
                 &mut |e| {
                     if let Some(other_side_expr) = translation_map.get(e) {
                         Ok(Some(other_side_expr.clone()))

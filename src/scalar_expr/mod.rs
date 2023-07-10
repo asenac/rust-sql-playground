@@ -181,24 +181,6 @@ impl ScalarExpr {
             ScalarExpr::NaryOp { op, .. } => op.return_type(),
         }
     }
-
-    /// Creates a clone of the given expression but whose inputs will be
-    /// the given ones. Used for doing copy-on-write when rewritting expressions.
-    pub fn clone_with_new_inputs(&self, inputs: &[ScalarExprRef]) -> ScalarExpr {
-        assert!(inputs.len() == self.num_inputs());
-        match self {
-            ScalarExpr::BinaryOp { op, .. } => ScalarExpr::BinaryOp {
-                op: op.clone(),
-                left: inputs[0].clone(),
-                right: inputs[1].clone(),
-            },
-            ScalarExpr::NaryOp { op, .. } => ScalarExpr::NaryOp {
-                op: op.clone(),
-                operands: inputs.to_vec(),
-            },
-            ScalarExpr::Literal { .. } | ScalarExpr::InputRef { .. } => panic!(),
-        }
-    }
 }
 
 impl fmt::Display for ScalarExpr {
