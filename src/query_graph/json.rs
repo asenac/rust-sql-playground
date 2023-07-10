@@ -76,12 +76,21 @@ impl<'a> QueryGraphPrePostVisitor for JsonSerializer<'a> {
             QueryNode::Join { conditions, .. } => {
                 format!("{}Join [{}]", prefix, explain_scalar_expr_vec(conditions))
             }
-            QueryNode::Aggregate { group_key, .. } => format!(
-                "{}Aggregate key: [{}]",
+            QueryNode::Aggregate {
+                group_key,
+                aggregates,
+                ..
+            } => format!(
+                "{}Aggregate key: [{}], aggregates: [{}]",
                 prefix,
                 group_key
                     .iter()
                     .map(|e| format!("{}", ScalarExpr::input_ref(*e)))
+                    .collect::<Vec<_>>()
+                    .join(", "),
+                aggregates
+                    .iter()
+                    .map(|e| format!("{}", e))
                     .collect::<Vec<_>>()
                     .join(", "),
             ),
