@@ -84,7 +84,7 @@ impl BinaryOp {
         }
     }
 
-    pub fn return_type(&self) -> DataType {
+    pub fn return_type(&self, operand_types: &[DataType]) -> DataType {
         match self {
             BinaryOp::RawEq
             | BinaryOp::Eq
@@ -111,7 +111,7 @@ impl NaryOp {
         }
     }
 
-    pub fn return_type(&self) -> DataType {
+    pub fn return_type(&self, operand_types: &[DataType]) -> DataType {
         match self {
             NaryOp::And | NaryOp::Or => DataType::Bool,
             NaryOp::Concat => DataType::String,
@@ -174,12 +174,34 @@ impl ScalarExpr {
 
 impl ScalarExpr {
     pub fn data_type(&self, row_type: &[DataType]) -> DataType {
-        // TODO(asenac) compute types recursively
+        let operand_types = (0..self.num_inputs())
+            .map(|i| {
+                let mut stack = Vec::new();
+                visit_expr_post(&self.get_input(i), &mut |expr: &ScalarExprRef| {
+                    let num_inputs = expr.num_inputs();
+                    let typ = expr
+                        .data_type_with_operand_types(row_type, &stack[stack.len() - num_inputs..]);
+                    stack.truncate(stack.len() - num_inputs);
+                    stack.push(typ);
+                    PostOrderVisitationResult::Continue
+                });
+                stack.into_iter().next().unwrap()
+            })
+            .collect_vec();
+
+        self.data_type_with_operand_types(row_type, &operand_types)
+    }
+
+    fn data_type_with_operand_types(
+        &self,
+        row_type: &[DataType],
+        operand_types: &[DataType],
+    ) -> DataType {
         match self {
             ScalarExpr::Literal(literal) => literal.data_type.clone(),
             ScalarExpr::InputRef { index } => row_type[*index].clone(),
-            ScalarExpr::BinaryOp { op, .. } => op.return_type(),
-            ScalarExpr::NaryOp { op, .. } => op.return_type(),
+            ScalarExpr::BinaryOp { op, .. } => op.return_type(operand_types),
+            ScalarExpr::NaryOp { op, .. } => op.return_type(operand_types),
         }
     }
 }
