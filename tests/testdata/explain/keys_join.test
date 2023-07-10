@@ -6,7 +6,7 @@ join_between_keyless_aggregations
     - Num Columns: 0
     - Row Type: 
     - Keys: [key: [], lower_bound: 1, upper_bound: 1]
-  [1] Aggregate key: []
+  [1] Aggregate key: [], aggregates: []
       - Num Columns: 0
       - Row Type: 
       - Keys: [key: [], lower_bound: 1, upper_bound: 1]
@@ -21,7 +21,7 @@ Optimized:
     - Num Columns: 0
     - Row Type: 
     - Keys: [key: [], lower_bound: 1, upper_bound: 1]
-  [4] Aggregate key: []
+  [4] Aggregate key: [], aggregates: []
       - Num Columns: 0
       - Row Type: 
       - Keys: [key: [], lower_bound: 1, upper_bound: 1]
@@ -47,14 +47,14 @@ join_keys_1
       - Num Columns: 3
       - Row Type: string, string, string
       - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
-    [2] Aggregate key: []
+    [2] Aggregate key: [], aggregates: []
         - Num Columns: 0
         - Row Type: 
         - Keys: [key: [], lower_bound: 1, upper_bound: 1]
       [0] TableScan id: 1, num_columns: 10
           - Num Columns: 10
           - Row Type: string, string, string, string, string, string, string, string, string, string
-    [1] Aggregate key: [ref_0, ref_1, ref_2]
+    [1] Aggregate key: [ref_0, ref_1, ref_2], aggregates: []
         - Num Columns: 3
         - Row Type: string, string, string
         - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
@@ -70,7 +70,7 @@ Optimized:
       - Num Columns: 3
       - Row Type: string, string, string
       - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
-    [6] Aggregate key: []
+    [6] Aggregate key: [], aggregates: []
         - Num Columns: 0
         - Row Type: 
         - Keys: [key: [], lower_bound: 1, upper_bound: 1]
@@ -80,7 +80,7 @@ Optimized:
         [0] TableScan id: 1, num_columns: 10
             - Num Columns: 10
             - Row Type: string, string, string, string, string, string, string, string, string, string
-    [8] Aggregate key: [ref_0, ref_1, ref_2]
+    [8] Aggregate key: [ref_0, ref_1, ref_2], aggregates: []
         - Num Columns: 3
         - Row Type: string, string, string
         - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
@@ -103,14 +103,14 @@ join_keys_2
       - Num Columns: 3
       - Row Type: string, string, string
       - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
-    [1] Aggregate key: [ref_0, ref_1, ref_2]
+    [1] Aggregate key: [ref_0, ref_1, ref_2], aggregates: []
         - Num Columns: 3
         - Row Type: string, string, string
         - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
       [0] TableScan id: 1, num_columns: 10
           - Num Columns: 10
           - Row Type: string, string, string, string, string, string, string, string, string, string
-    [2] Aggregate key: []
+    [2] Aggregate key: [], aggregates: []
         - Num Columns: 0
         - Row Type: 
         - Keys: [key: [], lower_bound: 1, upper_bound: 1]
@@ -126,7 +126,7 @@ Optimized:
       - Num Columns: 3
       - Row Type: string, string, string
       - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
-    [6] Aggregate key: [ref_0, ref_1, ref_2]
+    [6] Aggregate key: [ref_0, ref_1, ref_2], aggregates: []
         - Num Columns: 3
         - Row Type: string, string, string
         - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
@@ -136,7 +136,7 @@ Optimized:
         [0] TableScan id: 1, num_columns: 10
             - Num Columns: 10
             - Row Type: string, string, string, string, string, string, string, string, string, string
-    [8] Aggregate key: []
+    [8] Aggregate key: [], aggregates: []
         - Num Columns: 0
         - Row Type: 
         - Keys: [key: [], lower_bound: 1, upper_bound: 1]
@@ -160,7 +160,7 @@ join_keys_3
       - Row Type: string, string, string, string, string, string
       - Pulled Up Predicates: eq(ref_0, ref_3), eq(ref_1, ref_4), eq(ref_2, ref_5)
       - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1], [key: [ref_3, ref_4, ref_5], lower_bound: 0, upper_bound: 1]
-    [1] Aggregate key: [ref_0, ref_1, ref_2]
+    [1] Aggregate key: [ref_0, ref_1, ref_2], aggregates: []
         - Num Columns: 3
         - Row Type: string, string, string
         - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
@@ -180,7 +180,7 @@ Optimized:
       - Row Type: string, string, string, string, string, string
       - Pulled Up Predicates: eq(ref_0, ref_3), eq(ref_1, ref_4), eq(ref_2, ref_5)
       - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1], [key: [ref_3, ref_4, ref_5], lower_bound: 0, upper_bound: 1]
-    [5] Aggregate key: [ref_0, ref_1, ref_2]
+    [5] Aggregate key: [ref_0, ref_1, ref_2], aggregates: []
         - Num Columns: 3
         - Row Type: string, string, string
         - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
@@ -206,14 +206,14 @@ left_outer_join_keys_1
       - Num Columns: 3
       - Row Type: string, string, string
       - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
-    [1] Aggregate key: [ref_0, ref_1, ref_2]
+    [1] Aggregate key: [ref_0, ref_1, ref_2], aggregates: []
         - Num Columns: 3
         - Row Type: string, string, string
         - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
       [0] TableScan id: 1, num_columns: 10
           - Num Columns: 10
           - Row Type: string, string, string, string, string, string, string, string, string, string
-    [2] Aggregate key: []
+    [2] Aggregate key: [], aggregates: []
         - Num Columns: 0
         - Row Type: 
         - Keys: [key: [], lower_bound: 1, upper_bound: 1]
@@ -229,7 +229,7 @@ Optimized:
       - Num Columns: 3
       - Row Type: string, string, string
       - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
-    [6] Aggregate key: [ref_0, ref_1, ref_2]
+    [6] Aggregate key: [ref_0, ref_1, ref_2], aggregates: []
         - Num Columns: 3
         - Row Type: string, string, string
         - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
@@ -239,7 +239,7 @@ Optimized:
         [0] TableScan id: 1, num_columns: 10
             - Num Columns: 10
             - Row Type: string, string, string, string, string, string, string, string, string, string
-    [8] Aggregate key: []
+    [8] Aggregate key: [], aggregates: []
         - Num Columns: 0
         - Row Type: 
         - Keys: [key: [], lower_bound: 1, upper_bound: 1]
@@ -258,14 +258,14 @@ left_outer_join_keys_2
     - Num Columns: 5
     - Row Type: string, string, string, string, string
     - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
-  [1] Aggregate key: [ref_0, ref_1, ref_2]
+  [1] Aggregate key: [ref_0, ref_1, ref_2], aggregates: []
       - Num Columns: 3
       - Row Type: string, string, string
       - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
     [0] TableScan id: 1, num_columns: 5
         - Num Columns: 5
         - Row Type: string, string, string, string, string
-  [2] Aggregate key: [ref_0, ref_1]
+  [2] Aggregate key: [ref_0, ref_1], aggregates: []
       - Num Columns: 2
       - Row Type: string, string
       - Keys: [key: [ref_0, ref_1], lower_bound: 0, upper_bound: 1]
@@ -277,7 +277,7 @@ Optimized:
     - Num Columns: 5
     - Row Type: string, string, string, string, string
     - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
-  [5] Aggregate key: [ref_0, ref_1, ref_2]
+  [5] Aggregate key: [ref_0, ref_1, ref_2], aggregates: []
       - Num Columns: 3
       - Row Type: string, string, string
       - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
@@ -287,7 +287,7 @@ Optimized:
       [0] TableScan id: 1, num_columns: 5
           - Num Columns: 5
           - Row Type: string, string, string, string, string
-  [7] Aggregate key: [ref_0, ref_1]
+  [7] Aggregate key: [ref_0, ref_1], aggregates: []
       - Num Columns: 2
       - Row Type: string, string
       - Keys: [key: [ref_0, ref_1], lower_bound: 0, upper_bound: 1]
@@ -306,14 +306,14 @@ right_outer_join_keys_1
     - Num Columns: 5
     - Row Type: string, string, string, string, string
     - Keys: [key: [ref_3, ref_4], lower_bound: 0, upper_bound: 1]
-  [1] Aggregate key: [ref_0, ref_1, ref_2]
+  [1] Aggregate key: [ref_0, ref_1, ref_2], aggregates: []
       - Num Columns: 3
       - Row Type: string, string, string
       - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
     [0] TableScan id: 1, num_columns: 5
         - Num Columns: 5
         - Row Type: string, string, string, string, string
-  [2] Aggregate key: [ref_0, ref_1]
+  [2] Aggregate key: [ref_0, ref_1], aggregates: []
       - Num Columns: 2
       - Row Type: string, string
       - Keys: [key: [ref_0, ref_1], lower_bound: 0, upper_bound: 1]
@@ -325,7 +325,7 @@ Optimized:
     - Num Columns: 5
     - Row Type: string, string, string, string, string
     - Keys: [key: [ref_3, ref_4], lower_bound: 0, upper_bound: 1]
-  [5] Aggregate key: [ref_0, ref_1, ref_2]
+  [5] Aggregate key: [ref_0, ref_1, ref_2], aggregates: []
       - Num Columns: 3
       - Row Type: string, string, string
       - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
@@ -335,7 +335,7 @@ Optimized:
       [0] TableScan id: 1, num_columns: 5
           - Num Columns: 5
           - Row Type: string, string, string, string, string
-  [7] Aggregate key: [ref_0, ref_1]
+  [7] Aggregate key: [ref_0, ref_1], aggregates: []
       - Num Columns: 2
       - Row Type: string, string
       - Keys: [key: [ref_0, ref_1], lower_bound: 0, upper_bound: 1]

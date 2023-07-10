@@ -213,11 +213,36 @@ impl AggregateExpr {
     }
 }
 
+impl fmt::Display for AggregateExpr {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}(", self.op)?;
+        let mut sep = "";
+        for operand in self.operands.iter() {
+            write!(f, "{}ref_{}", sep, operand)?;
+            sep = ", ";
+        }
+        write!(f, ")")
+    }
+}
+
 impl AggregateOp {
     pub fn return_type(&self, operand_types: &[DataType]) -> DataType {
         match self {
             AggregateOp::Min | AggregateOp::Max => operand_types[0].clone(),
         }
+    }
+
+    pub fn function_name(&self) -> &str {
+        match self {
+            AggregateOp::Min => "min",
+            AggregateOp::Max => "max",
+        }
+    }
+}
+
+impl fmt::Display for AggregateOp {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.function_name())
     }
 }
 

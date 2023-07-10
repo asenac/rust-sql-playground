@@ -141,13 +141,21 @@ impl<'a> QueryGraphPrePostVisitor for ExplainVisitor<'a> {
                     explain_scalar_expr_vec(conditions)
                 )
             }
-            QueryNode::Aggregate { group_key, .. } => format!(
-                // TODO(asenac) print aggregate expressions
-                "{}Aggregate key: [{}]\n",
+            QueryNode::Aggregate {
+                group_key,
+                aggregates,
+                ..
+            } => format!(
+                "{}Aggregate key: [{}], aggregates: [{}]\n",
                 prefix,
                 group_key
                     .iter()
                     .map(|e| format!("{}", ScalarExpr::input_ref(*e)))
+                    .collect::<Vec<_>>()
+                    .join(", "),
+                aggregates
+                    .iter()
+                    .map(|e| format!("{}", e))
                     .collect::<Vec<_>>()
                     .join(", "),
             ),

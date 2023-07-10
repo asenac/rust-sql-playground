@@ -6,7 +6,7 @@ union_keys_1
     - Num Columns: 2
     - Row Type: string, string
     - Keys: [key: [ref_0, ref_1], lower_bound: 0, upper_bound: 2]
-  [1] Aggregate key: [ref_2, ref_4]
+  [1] Aggregate key: [ref_2, ref_4], aggregates: []
       - Num Columns: 2
       - Row Type: string, string
       - Keys: [key: [ref_0, ref_1], lower_bound: 0, upper_bound: 1]
@@ -21,7 +21,7 @@ Optimized:
     - Num Columns: 2
     - Row Type: string, string
     - Keys: [key: [ref_0, ref_1], lower_bound: 0, upper_bound: 2]
-  [4] Aggregate key: [ref_0, ref_1]
+  [4] Aggregate key: [ref_0, ref_1], aggregates: []
       - Num Columns: 2
       - Row Type: string, string
       - Keys: [key: [ref_0, ref_1], lower_bound: 0, upper_bound: 1]
@@ -43,7 +43,7 @@ union_keys_2
     - Num Columns: 0
     - Row Type: 
     - Keys: [key: [], lower_bound: 2, upper_bound: 2]
-  [1] Aggregate key: []
+  [1] Aggregate key: [], aggregates: []
       - Num Columns: 0
       - Row Type: 
       - Keys: [key: [], lower_bound: 1, upper_bound: 1]
@@ -58,7 +58,7 @@ Optimized:
     - Num Columns: 0
     - Row Type: 
     - Keys: [key: [], lower_bound: 2, upper_bound: 2]
-  [4] Aggregate key: []
+  [4] Aggregate key: [], aggregates: []
       - Num Columns: 0
       - Row Type: 
       - Keys: [key: [], lower_bound: 1, upper_bound: 1]
@@ -79,7 +79,7 @@ union_keys_3
 [3] Union
     - Num Columns: 2
     - Row Type: string, string
-  [1] Aggregate key: [ref_2, ref_4]
+  [1] Aggregate key: [ref_2, ref_4], aggregates: []
       - Num Columns: 2
       - Row Type: string, string
       - Keys: [key: [ref_0, ref_1], lower_bound: 0, upper_bound: 1]
@@ -96,7 +96,7 @@ Optimized:
 [3] Union
     - Num Columns: 2
     - Row Type: string, string
-  [4] Aggregate key: [ref_0, ref_1]
+  [4] Aggregate key: [ref_0, ref_1], aggregates: []
       - Num Columns: 2
       - Row Type: string, string
       - Keys: [key: [ref_0, ref_1], lower_bound: 0, upper_bound: 1]
@@ -117,7 +117,7 @@ union_keys_4
 [4] Union
     - Num Columns: 2
     - Row Type: string, string
-  [1] Aggregate key: [ref_2, ref_4]
+  [1] Aggregate key: [ref_2, ref_4], aggregates: []
       - Num Columns: 2
       - Row Type: string, string
       - Keys: [key: [ref_0, ref_1], lower_bound: 0, upper_bound: 1]
@@ -129,7 +129,7 @@ union_keys_4
       - Row Type: string, string
       - Pulled Up Predicates: raw_eq(ref_0, 'hello'), raw_eq(ref_1, 'world')
       - Keys: [key: [], lower_bound: 1, upper_bound: 1]
-    [2] Aggregate key: []
+    [2] Aggregate key: [], aggregates: []
         - Num Columns: 0
         - Row Type: 
         - Keys: [key: [], lower_bound: 1, upper_bound: 1]
@@ -140,7 +140,7 @@ Optimized:
 [4] Union
     - Num Columns: 2
     - Row Type: string, string
-  [6] Aggregate key: [ref_0, ref_1]
+  [6] Aggregate key: [ref_0, ref_1], aggregates: []
       - Num Columns: 2
       - Row Type: string, string
       - Keys: [key: [ref_0, ref_1], lower_bound: 0, upper_bound: 1]
@@ -155,7 +155,7 @@ Optimized:
       - Row Type: string, string
       - Pulled Up Predicates: raw_eq(ref_0, 'hello'), raw_eq(ref_1, 'world')
       - Keys: [key: [], lower_bound: 1, upper_bound: 1]
-    [8] Aggregate key: []
+    [8] Aggregate key: [], aggregates: []
         - Num Columns: 0
         - Row Type: 
         - Keys: [key: [], lower_bound: 1, upper_bound: 1]
