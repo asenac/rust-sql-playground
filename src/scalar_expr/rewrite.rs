@@ -113,9 +113,10 @@ pub fn shift_left_input_refs(expr: &ScalarExprRef, offset: usize) -> ScalarExprR
 }
 
 /// Applies a rewrite to all expression within the given vector.
-pub fn rewrite_scalar_expr_vec<F>(exprs: &Vec<ScalarExprRef>, rewrite: &mut F) -> Vec<ScalarExprRef>
+pub fn rewrite_expr_vec<F, E>(exprs: &Vec<Rc<E>>, rewrite: &mut F) -> Vec<Rc<E>>
 where
-    F: FnMut(&ScalarExprRef) -> ScalarExprRef,
+    E: VisitableExpr,
+    F: FnMut(&Rc<E>) -> Rc<E>,
 {
     exprs.iter().map(|e| rewrite(e)).collect()
 }

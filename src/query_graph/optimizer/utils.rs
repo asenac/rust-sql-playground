@@ -11,7 +11,7 @@ use super::*;
 use crate::{
     query_graph::{properties::num_columns, visitor::QueryGraphPrePostVisitor, QueryNode},
     scalar_expr::{
-        rewrite::{apply_column_map, rewrite_scalar_expr_vec},
+        rewrite::{apply_column_map, rewrite_expr_vec},
         visitor::store_input_dependencies,
         AggregateExpr, ScalarExprRef,
     },
@@ -225,7 +225,7 @@ pub(crate) fn apply_map_to_parent_projections_and_replace_input(
                         let new_input = *replacements.get(input).unwrap();
                         let new_proj = query_graph.project(
                             new_input,
-                            rewrite_scalar_expr_vec(outputs, &mut |e| {
+                            rewrite_expr_vec(outputs, &mut |e| {
                                 apply_column_map(e, column_map).unwrap()
                             }),
                         );
@@ -235,7 +235,7 @@ pub(crate) fn apply_map_to_parent_projections_and_replace_input(
                         let new_input = *replacements.get(input).unwrap();
                         let new_filter = query_graph.filter(
                             new_input,
-                            rewrite_scalar_expr_vec(conditions, &mut |e| {
+                            rewrite_expr_vec(conditions, &mut |e| {
                                 apply_column_map(e, column_map).unwrap()
                             }),
                         );

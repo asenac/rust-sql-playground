@@ -8,7 +8,7 @@ use crate::{
     },
     scalar_expr::{
         equivalence_class::{find_class, EquivalenceClasses},
-        rewrite::{rewrite_expr_post, rewrite_scalar_expr_vec},
+        rewrite::{rewrite_expr_post, rewrite_expr_vec},
         ScalarExpr, ScalarExprRef, ToRef,
     },
 };
@@ -95,7 +95,7 @@ fn update_project_after_pruning_column(
     project: Vec<ScalarExprRef>,
     pruned_col: usize,
 ) -> Vec<ScalarExprRef> {
-    rewrite_scalar_expr_vec(&project, &mut |expr| {
+    rewrite_expr_vec(&project, &mut |expr| {
         rewrite_expr_post(
             &mut |e: &ScalarExprRef| {
                 if let ScalarExpr::InputRef { index } = e.as_ref() {

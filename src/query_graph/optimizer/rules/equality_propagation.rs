@@ -9,8 +9,7 @@ use crate::{
     scalar_expr::{
         equivalence_class::extract_equivalence_classes,
         rewrite::{
-            rewrite_expr_pre, rewrite_scalar_expr_vec, shift_left_input_refs,
-            shift_right_input_refs,
+            rewrite_expr_pre, rewrite_expr_vec, shift_left_input_refs, shift_right_input_refs,
         },
         visitor::collect_input_dependencies,
         ScalarExprRef,
@@ -50,7 +49,7 @@ impl SingleReplacementRule for EqualityPropagationRule {
 
                 let left_predicates = pulled_up_predicates(query_graph, *left);
                 let right_predicates =
-                    rewrite_scalar_expr_vec(&pulled_up_predicates(query_graph, *right), &mut |e| {
+                    rewrite_expr_vec(&pulled_up_predicates(query_graph, *right), &mut |e| {
                         shift_right_input_refs(e, left_num_columns)
                     });
 

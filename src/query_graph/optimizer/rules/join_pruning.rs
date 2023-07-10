@@ -15,7 +15,7 @@ use crate::{
         NodeId, QueryGraph, QueryNode,
     },
     scalar_expr::{
-        rewrite::{apply_column_map, rewrite_scalar_expr_vec},
+        rewrite::{apply_column_map, rewrite_expr_vec},
         visitor::store_input_dependencies,
         ScalarExpr, ToRef,
     },
@@ -60,7 +60,7 @@ impl Rule for JoinPruningRule {
                 }
                 let join_column_map =
                     required_columns_to_column_map(&required_columns_including_join);
-                let new_conditions = rewrite_scalar_expr_vec(conditions, &mut |e| {
+                let new_conditions = rewrite_expr_vec(conditions, &mut |e| {
                     apply_column_map(e, &join_column_map).unwrap()
                 });
 
