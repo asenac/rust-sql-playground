@@ -245,6 +245,7 @@ where
 pub fn build_rule(rule_name: &str) -> Result<Box<dyn Rule>, ()> {
     use self::rules::*;
     match rule_name {
+        "AggregatePruningRule" => Ok(Box::new(AggregatePruningRule {})),
         "AggregateRemoveRule" => Ok(wrap(AggregateRemoveRule {})),
         "AggregateSimplifierRule" => Ok(wrap(AggregateSimplifierRule {})),
         "EqualityPropagationRule" => Ok(wrap(EqualityPropagationRule {})),
@@ -281,6 +282,7 @@ lazy_static! {
             wrap(PruneAggregateInputRule {}),
             wrap(RemovePassthroughProjectRule {}),
             wrap(UnionMergeRule {}),
+            Box::new(AggregatePruningRule {}),
             Box::new(UnionPruningRule {}),
             Box::new(JoinPruningRule {}),
         ]);

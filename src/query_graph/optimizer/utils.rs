@@ -57,7 +57,7 @@ pub(crate) fn common_parent_filters(
 pub(crate) fn required_columns_from_parent_projections(
     query_graph: &QueryGraph,
     node_id: NodeId,
-) -> Option<HashMap<usize, usize>> {
+) -> Option<HashSet<usize>> {
     let mut required_columns = HashSet::new();
     if let Some(Ok(())) = query_graph.get_parents(node_id).map(|parents| {
         // Check that every parent is a chain of 0 or more filters leading to a projection
@@ -104,7 +104,7 @@ pub(crate) fn required_columns_from_parent_projections(
     }) {
         let num_columns = num_columns(query_graph, node_id);
         if num_columns != required_columns.len() {
-            return Some(required_columns_to_column_map(&required_columns));
+            return Some(required_columns);
         }
     }
     None

@@ -1,3 +1,4 @@
+mod aggregate_pruning;
 mod aggregate_remove;
 mod aggregate_simplifier;
 mod equality_propagation;
@@ -14,6 +15,7 @@ mod remove_passthrough_project;
 mod union_merge;
 mod union_pruning;
 
+pub use aggregate_pruning::AggregatePruningRule;
 pub use aggregate_remove::AggregateRemoveRule;
 pub use aggregate_simplifier::AggregateSimplifierRule;
 pub use equality_propagation::EqualityPropagationRule;

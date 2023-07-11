@@ -5,7 +5,7 @@ use crate::{
         optimizer::{
             utils::{
                 apply_map_to_parent_projections_and_replace_input,
-                required_columns_from_parent_projections,
+                required_columns_from_parent_projections, required_columns_to_column_map,
             },
             OptRuleType, Rule,
         },
@@ -35,7 +35,8 @@ impl Rule for UnionPruningRule {
                 required_columns_from_parent_projections(query_graph, node_id)
             {
                 // Prune the branches
-                let proj = required_columns
+                let column_map = required_columns_to_column_map(&required_columns);
+                let proj = column_map
                     .iter()
                     .map(|(i, _)| *i)
                     .sorted()
@@ -52,7 +53,7 @@ impl Rule for UnionPruningRule {
                 return Some(apply_map_to_parent_projections_and_replace_input(
                     query_graph,
                     node_id,
-                    &required_columns,
+                    &column_map,
                     new_union,
                 ));
             }

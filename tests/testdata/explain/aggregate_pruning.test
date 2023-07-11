@@ -1,0 +1,143 @@
+run
+aggregate_pruning_1
+----
+----
+[4] Union
+    - Num Columns: 2
+    - Row Type: string, string
+  [2] Project [ref_0, ref_4]
+      - Num Columns: 2
+      - Row Type: string, string
+    [1] Aggregate key: [ref_0, ref_1, ref_2], aggregates: [max(ref_3), min(ref_3), max(ref_5)]
+        - Num Columns: 6
+        - Row Type: string, string, string, string, string, string
+        - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+      [0] TableScan id: 1, num_columns: 6
+          - Num Columns: 6
+          - Row Type: string, string, string, string, string, string
+  [3] Project [ref_1, ref_5]
+      - Num Columns: 2
+      - Row Type: string, string
+    Recurring node 1
+
+
+Optimized:
+[4] Union
+    - Num Columns: 2
+    - Row Type: string, string
+  [8] Project [ref_0, ref_3]
+      - Num Columns: 2
+      - Row Type: string, string
+    [7] Aggregate key: [ref_0, ref_1, ref_2], aggregates: [min(ref_3), max(ref_4)]
+        - Num Columns: 5
+        - Row Type: string, string, string, string, string
+        - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+      [5] Project [ref_0, ref_1, ref_2, ref_3, ref_5]
+          - Num Columns: 5
+          - Row Type: string, string, string, string, string
+        [0] TableScan id: 1, num_columns: 6
+            - Num Columns: 6
+            - Row Type: string, string, string, string, string, string
+  [9] Project [ref_1, ref_4]
+      - Num Columns: 2
+      - Row Type: string, string
+    Recurring node 7
+----
+----
+
+run
+aggregate_pruning_2
+----
+----
+[4] Union
+    - Num Columns: 2
+    - Row Type: string, string
+  [2] Project [ref_3, ref_4]
+      - Num Columns: 2
+      - Row Type: string, string
+    [1] Aggregate key: [ref_0, ref_1, ref_2], aggregates: [max(ref_3), min(ref_3), max(ref_5)]
+        - Num Columns: 6
+        - Row Type: string, string, string, string, string, string
+        - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+      [0] TableScan id: 1, num_columns: 6
+          - Num Columns: 6
+          - Row Type: string, string, string, string, string, string
+  [3] Project [ref_3, ref_5]
+      - Num Columns: 2
+      - Row Type: string, string
+    Recurring node 1
+
+
+Optimized:
+[4] Union
+    - Num Columns: 2
+    - Row Type: string, string
+  [2] Project [ref_3, ref_4]
+      - Num Columns: 2
+      - Row Type: string, string
+    [6] Aggregate key: [ref_0, ref_1, ref_2], aggregates: [max(ref_3), min(ref_3), max(ref_4)]
+        - Num Columns: 6
+        - Row Type: string, string, string, string, string, string
+        - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+      [5] Project [ref_0, ref_1, ref_2, ref_3, ref_5]
+          - Num Columns: 5
+          - Row Type: string, string, string, string, string
+        [0] TableScan id: 1, num_columns: 6
+            - Num Columns: 6
+            - Row Type: string, string, string, string, string, string
+  [3] Project [ref_3, ref_5]
+      - Num Columns: 2
+      - Row Type: string, string
+    Recurring node 6
+----
+----
+
+run
+aggregate_pruning_3
+----
+----
+[4] Union
+    - Num Columns: 2
+    - Row Type: string, string
+  [2] Project [ref_3, ref_4]
+      - Num Columns: 2
+      - Row Type: string, string
+    [1] Aggregate key: [ref_0, ref_1, ref_2], aggregates: [max(ref_3), min(ref_3), max(ref_3)]
+        - Num Columns: 6
+        - Row Type: string, string, string, string, string, string
+        - Pulled Up Predicates: raw_eq(ref_3, ref_5)
+        - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+      [0] TableScan id: 1, num_columns: 6
+          - Num Columns: 6
+          - Row Type: string, string, string, string, string, string
+  [3] Project [ref_3, ref_5]
+      - Num Columns: 2
+      - Row Type: string, string
+      - Pulled Up Predicates: raw_eq(ref_0, ref_1)
+    Recurring node 1
+
+
+Optimized:
+[4] Union
+    - Num Columns: 2
+    - Row Type: string, string
+  [9] Project [ref_3, ref_4]
+      - Num Columns: 2
+      - Row Type: string, string
+    [8] Aggregate key: [ref_0, ref_1, ref_2], aggregates: [max(ref_3), min(ref_3)]
+        - Num Columns: 5
+        - Row Type: string, string, string, string, string
+        - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+      [5] Project [ref_0, ref_1, ref_2, ref_3]
+          - Num Columns: 4
+          - Row Type: string, string, string, string
+        [0] TableScan id: 1, num_columns: 6
+            - Num Columns: 6
+            - Row Type: string, string, string, string, string, string
+  [10] Project [ref_3, ref_3]
+      - Num Columns: 2
+      - Row Type: string, string
+      - Pulled Up Predicates: raw_eq(ref_0, ref_1), raw_eq(ref_1, ref_0)
+    Recurring node 8
+----
+----

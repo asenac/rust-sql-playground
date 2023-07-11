@@ -48,7 +48,8 @@ impl Rule for JoinPruningRule {
                 required_columns_from_parent_projections(query_graph, node_id)
             {
                 // Rewrite conditions
-                let mut required_columns_including_join = required_columns
+                let column_map = required_columns_to_column_map(&required_columns);
+                let mut required_columns_including_join = column_map
                     .iter()
                     .map(|(col, _)| *col)
                     .collect::<HashSet<_>>();
@@ -96,7 +97,7 @@ impl Rule for JoinPruningRule {
                     .iter()
                     .sorted()
                     .enumerate()
-                    .filter(|(_, orig_col)| required_columns.contains_key(&orig_col))
+                    .filter(|(_, orig_col)| required_columns.contains(&orig_col))
                     .map(|(i, _)| ScalarExpr::input_ref(i).to_ref())
                     .collect();
                 let pruning_proj = query_graph.project(new_join, pruning_proj_outputs);
@@ -105,7 +106,7 @@ impl Rule for JoinPruningRule {
                 return Some(apply_map_to_parent_projections_and_replace_input(
                     query_graph,
                     node_id,
-                    &required_columns,
+                    &column_map,
                     pruning_proj,
                 ));
             }

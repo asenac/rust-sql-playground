@@ -188,7 +188,7 @@ impl PulledUpPredicates {
             }
             QueryNode::Aggregate {
                 group_key,
-                aggregates: _,
+                aggregates,
                 input,
             } => {
                 // TODO(asenac) we could infer some predicates from the aggregate expressions
@@ -197,7 +197,32 @@ impl PulledUpPredicates {
                     self.predicates_unchecked(query_graph, *input)
                         .iter()
                         .filter_map(|expr| apply_column_map(expr, &column_map)),
-                )
+                );
+                // Equivalent aggregates
+                let group_key_len = group_key.len();
+                for (i, j) in aggregates
+                    .iter()
+                    .enumerate()
+                    .map(|(i, a)| {
+                        (0..i).filter_map(move |j| {
+                            if *a == aggregates[j] {
+                                Some((i, j))
+                            } else {
+                                None
+                            }
+                        })
+                    })
+                    .flatten()
+                {
+                    predicates.push(
+                        ScalarExpr::input_ref(group_key_len + j)
+                            .binary(
+                                BinaryOp::RawEq,
+                                ScalarExpr::input_ref(group_key_len + i).to_ref(),
+                            )
+                            .to_ref(),
+                    );
+                }
             }
             QueryNode::Union { inputs } => {
                 predicates.extend(
