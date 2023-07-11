@@ -47,3 +47,63 @@ Optimized:
     Recurring node 9
 ----
 ----
+
+run
+common_aggregate_discovery_2
+----
+----
+[4] Union
+    - Num Columns: 5
+    - Row Type: string, string, string, string, string
+    - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 3]
+  [1] Aggregate key: [ref_0, ref_1, ref_2], aggregates: [min(ref_4), max(ref_3)]
+      - Num Columns: 5
+      - Row Type: string, string, string, string, string
+      - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+    [0] TableScan id: 1, num_columns: 5
+        - Num Columns: 5
+        - Row Type: string, string, string, string, string
+  [2] Aggregate key: [ref_0, ref_1, ref_2], aggregates: [max(ref_4), max(ref_3)]
+      - Num Columns: 5
+      - Row Type: string, string, string, string, string
+      - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+    Recurring node 0
+  [3] Aggregate key: [ref_0, ref_1, ref_2], aggregates: [min(ref_4), min(ref_3)]
+      - Num Columns: 5
+      - Row Type: string, string, string, string, string
+      - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+    Recurring node 0
+
+
+Optimized:
+[4] Union
+    - Num Columns: 5
+    - Row Type: string, string, string, string, string
+    - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 3]
+  [7] Project [ref_0, ref_1, ref_2, ref_4, ref_5]
+      - Num Columns: 5
+      - Row Type: string, string, string, string, string
+      - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+    [11] Aggregate key: [ref_0, ref_1, ref_2], aggregates: [min(ref_3), min(ref_5), max(ref_4), max(ref_6)]
+        - Num Columns: 7
+        - Row Type: string, string, string, string, string, string, string
+        - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+      [10] Project [ref_0, ref_1, ref_2, ref_3, ref_3, ref_4, ref_4]
+          - Num Columns: 7
+          - Row Type: string, string, string, string, string, string, string
+          - Pulled Up Predicates: raw_eq(ref_3, ref_4), raw_eq(ref_4, ref_3), raw_eq(ref_5, ref_6), raw_eq(ref_6, ref_5)
+        [0] TableScan id: 1, num_columns: 5
+            - Num Columns: 5
+            - Row Type: string, string, string, string, string
+  [8] Project [ref_0, ref_1, ref_2, ref_6, ref_5]
+      - Num Columns: 5
+      - Row Type: string, string, string, string, string
+      - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+    Recurring node 11
+  [9] Project [ref_0, ref_1, ref_2, ref_4, ref_3]
+      - Num Columns: 5
+      - Row Type: string, string, string, string, string
+      - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+    Recurring node 11
+----
+----
