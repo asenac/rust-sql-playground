@@ -3,6 +3,7 @@
 //! All rewrites here tend to return the original expression if nothing changed.
 
 use std::collections::{BTreeSet, HashMap};
+use std::hash::Hash;
 
 use crate::scalar_expr::equivalence_class::*;
 use crate::scalar_expr::visitor::*;
@@ -10,7 +11,7 @@ use crate::scalar_expr::*;
 use crate::visitor_utils::PostOrderVisitationResult;
 use crate::visitor_utils::PreOrderVisitationResult;
 
-pub trait RewritableExpr: Sized + VisitableExpr {
+pub trait RewritableExpr: Sized + VisitableExpr + Eq + Hash {
     /// Creates a clone of the given expression but whose inputs will be
     /// the given ones. Used for doing copy-on-write when rewriting expressions.
     fn clone_with_new_inputs(&self, inputs: &[Rc<Self>]) -> Rc<Self>;
@@ -199,9 +200,10 @@ where
 /// Applies pre-order a rewrite to the given expression.
 ///
 /// Returns None if the rewrite failed.
-pub fn rewrite_expr_pre<F>(rewrite: &mut F, expr: &ScalarExprRef) -> Option<ScalarExprRef>
+pub fn rewrite_expr_pre<F, E>(rewrite: &mut F, expr: &Rc<E>) -> Option<Rc<E>>
 where
-    F: FnMut(&ScalarExprRef) -> Result<Option<ScalarExprRef>, ()>,
+    E: RewritableExpr,
+    F: FnMut(&Rc<E>) -> Result<Option<Rc<E>>, ()>,
 {
     let mut visitor = ExprRewriterPre::new(rewrite);
     visit_expr(expr, &mut visitor);
@@ -305,12 +307,12 @@ pub fn normalize_scalar_expr(expr: &ScalarExprRef, classes: &EquivalenceClasses)
 }
 
 /// Applies the replacements in the given map in pre-order.
-pub fn replace_sub_expressions_pre(
-    expr: &ScalarExprRef,
-    replacement_map: &HashMap<ScalarExprRef, ScalarExprRef>,
-) -> ScalarExprRef {
+pub fn replace_sub_expressions_pre<E: RewritableExpr>(
+    expr: &Rc<E>,
+    replacement_map: &HashMap<Rc<E>, Rc<E>>,
+) -> Rc<E> {
     rewrite_expr_pre(
-        &mut |expr: &ScalarExprRef| {
+        &mut |expr: &Rc<E>| {
             if let Some(replacement) = replacement_map.get(expr) {
                 return Ok(Some(replacement.clone()));
             }
