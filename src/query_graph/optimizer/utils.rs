@@ -258,3 +258,19 @@ pub(crate) fn apply_map_to_parent_projections_and_replace_input(
         .map(|proj_id| (*proj_id, *replacements.get(proj_id).unwrap()))
         .collect::<Vec<_>>()
 }
+
+pub(crate) fn sort_projection(
+    project: &Vec<ScalarExprRef>,
+) -> Option<(Vec<usize>, Vec<ScalarExprRef>)> {
+    let (reorder_map, sorted_project): (Vec<usize>, Vec<ScalarExprRef>) = project
+        .iter()
+        .cloned()
+        .enumerate()
+        .sorted_by_key(|(_, e)| e.clone())
+        .unzip();
+    if reorder_map.iter().enumerate().any(|(i, j)| i != *j) {
+        Some((reorder_map, sorted_project))
+    } else {
+        None
+    }
+}

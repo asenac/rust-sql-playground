@@ -1,0 +1,30 @@
+run
+aggregate_project_transpose_1
+----
+----
+[2] Aggregate key: [ref_0, ref_1, ref_2], aggregates: [min(ref_4), max(ref_3)]
+    - Num Columns: 5
+    - Row Type: string, string, string, string, string
+    - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+  [1] Project [ref_4, ref_3, ref_2, ref_1, ref_0]
+      - Num Columns: 5
+      - Row Type: string, string, string, string, string
+    [0] TableScan id: 1, num_columns: 5
+        - Num Columns: 5
+        - Row Type: string, string, string, string, string
+
+
+Optimized:
+[5] Project [ref_2, ref_1, ref_0, ref_3, ref_4]
+    - Num Columns: 5
+    - Row Type: string, string, string, string, string
+    - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+  [4] Aggregate key: [ref_2, ref_3, ref_4], aggregates: [min(ref_0), max(ref_1)]
+      - Num Columns: 5
+      - Row Type: string, string, string, string, string
+      - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+    [0] TableScan id: 1, num_columns: 5
+        - Num Columns: 5
+        - Row Type: string, string, string, string, string
+----
+----

@@ -20,6 +20,38 @@ mod test_queries {
 
     use super::*;
 
+    pub(crate) fn aggregate_project_transpose(queries: &mut HashMap<String, QueryGraph>) {
+        queries.insert("aggregate_project_transpose_1".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let project_1 = query_graph.project(
+                table_scan_1,
+                (0..5)
+                    .rev()
+                    .map(|i| ScalarExpr::input_ref(i).to_ref())
+                    .collect_vec(),
+            );
+            let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
+                group_key: (0..3).collect(),
+                aggregates: vec![
+                    AggregateExpr {
+                        op: AggregateOp::Min,
+                        operands: vec![4],
+                    }
+                    .to_ref(),
+                    AggregateExpr {
+                        op: AggregateOp::Max,
+                        operands: vec![3],
+                    }
+                    .to_ref(),
+                ],
+                input: project_1,
+            });
+            query_graph.set_entry_node(aggregate_1);
+            query_graph
+        });
+    }
+
     pub(crate) fn aggregate_remove(queries: &mut HashMap<String, QueryGraph>) {
         queries.insert("redundant_aggregate".to_string(), {
             let mut query_graph = QueryGraph::new();
@@ -1127,6 +1159,7 @@ fn static_queries() -> HashMap<String, QueryGraph> {
         query_graph
     });
 
+    test_queries::aggregate_project_transpose(&mut queries);
     test_queries::aggregate_pruning(&mut queries);
     test_queries::aggregate_remove(&mut queries);
     test_queries::filter_aggregate_transpose(&mut queries);

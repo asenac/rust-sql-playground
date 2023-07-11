@@ -245,6 +245,7 @@ where
 pub fn build_rule(rule_name: &str) -> Result<Box<dyn Rule>, ()> {
     use self::rules::*;
     match rule_name {
+        "AggregateProjectTransposeRule" => Ok(wrap(AggregateProjectTransposeRule {})),
         "AggregatePruningRule" => Ok(Box::new(AggregatePruningRule {})),
         "AggregateRemoveRule" => Ok(wrap(AggregateRemoveRule {})),
         "AggregateSimplifierRule" => Ok(wrap(AggregateSimplifierRule {})),
@@ -269,6 +270,7 @@ lazy_static! {
     pub static ref DEFAULT_OPTIMIZER: Optimizer = {
         use self::rules::*;
         let optimizer = Optimizer::new(vec![
+            wrap(AggregateProjectTransposeRule {}),
             wrap(AggregateRemoveRule {}),
             wrap(AggregateSimplifierRule {}),
             wrap(EqualityPropagationRule {}),
