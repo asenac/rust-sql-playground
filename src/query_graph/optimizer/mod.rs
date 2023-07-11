@@ -6,6 +6,7 @@ pub mod rules;
 pub(crate) mod utils;
 
 pub enum OptRuleType {
+    RootOnly,
     Always,
     TopDown,
     BottomUp,
@@ -44,6 +45,7 @@ pub trait Rule: Sync {
 /// goal.
 pub struct Optimizer {
     rules: Vec<Box<dyn Rule>>,
+    root_only_rules: Vec<usize>,
     top_down_rules: Vec<usize>,
     bottom_up_rules: Vec<usize>,
 }
@@ -86,6 +88,7 @@ impl<'a> OptimizerContext<'a> {
 impl Optimizer {
     /// Builds an optimizer instance given a list of rules.
     pub fn new(rules: Vec<Box<dyn Rule>>) -> Self {
+        let mut root_only_rules = Vec::new();
         let mut top_down_rules = Vec::new();
         let mut bottom_up_rules = Vec::new();
         for (id, rule) in rules.iter().enumerate() {
@@ -96,10 +99,12 @@ impl Optimizer {
                 }
                 OptRuleType::TopDown => top_down_rules.push(id),
                 OptRuleType::BottomUp => bottom_up_rules.push(id),
+                OptRuleType::RootOnly => root_only_rules.push(id),
             }
         }
         Self {
             rules,
+            root_only_rules,
             top_down_rules,
             bottom_up_rules,
         }
@@ -107,20 +112,55 @@ impl Optimizer {
 
     /// Optimize the given query graph by applying the rules in this optimizer instance.
     pub fn optimize(&self, context: &mut OptimizerContext, query_graph: &mut QueryGraph) {
-        let mut visitor = OptimizationVisitor {
-            optimizer: self,
-            context,
-        };
         // TODO(asenac) add mechanism to detect infinite loops due to bugs
         loop {
             let last_gen_number = query_graph.gen_number;
 
+            self.apply_root_only_rules(context, query_graph);
+
+            let mut visitor = OptimizationVisitor {
+                optimizer: self,
+                context,
+            };
             query_graph.visit_mut(&mut visitor);
 
             if last_gen_number == query_graph.gen_number {
                 // Fix-point was reached. A full plan traversal without modifications.
                 break;
             }
+        }
+    }
+
+    fn apply_root_only_rules(&self, context: &mut OptimizerContext, query_graph: &mut QueryGraph) {
+        for rule in self
+            .root_only_rules
+            .iter()
+            .map(|id| self.rules.get(*id).unwrap())
+        {
+            if let Some(replacements) = rule.apply(query_graph, query_graph.entry_node) {
+                for (original_node, replacement_node) in replacements {
+                    Self::notify_replacement(
+                        context,
+                        &**rule,
+                        query_graph,
+                        original_node,
+                        replacement_node,
+                    );
+                    query_graph.replace_node(original_node, replacement_node);
+                }
+            }
+        }
+    }
+
+    fn notify_replacement(
+        context: &mut OptimizerContext,
+        rule: &dyn Rule,
+        query_graph: &QueryGraph,
+        original_node: NodeId,
+        replacement_node: NodeId,
+    ) {
+        for listener in context.listeners.iter_mut() {
+            listener.node_replacement(rule, query_graph, original_node, replacement_node);
         }
     }
 }
@@ -147,14 +187,13 @@ impl OptimizationVisitor<'_, '_, '_> {
         {
             if let Some(replacements) = rule.apply(query_graph, *node_id) {
                 for (original_node, replacement_node) in replacements {
-                    for listener in self.context.listeners.iter_mut() {
-                        listener.node_replacement(
-                            &**rule,
-                            query_graph,
-                            original_node,
-                            replacement_node,
-                        );
-                    }
+                    Optimizer::notify_replacement(
+                        self.context,
+                        &**rule,
+                        query_graph,
+                        original_node,
+                        replacement_node,
+                    );
                     // Replace the node in the graph and apply the remaining rules to the
                     // returned one.
                     query_graph.replace_node(original_node, replacement_node);
