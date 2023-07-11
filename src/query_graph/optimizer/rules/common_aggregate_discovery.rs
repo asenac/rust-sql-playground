@@ -128,10 +128,10 @@ impl Rule for CommonAggregateDiscoveryRule {
                         let operands = operands
                             .iter()
                             .map(|o| {
-                                // TODO(asenac) avoid adding duplicated expressions
-                                let id = input_project.len();
-                                input_project.push(o.to_scalar_expr().unwrap());
-                                id
+                                append_to_vector_if_not_present(
+                                    &mut input_project,
+                                    o.to_scalar_expr().unwrap(),
+                                )
                             })
                             .collect_vec();
                         AggregateExpr {
@@ -169,5 +169,18 @@ impl Rule for CommonAggregateDiscoveryRule {
             }
         }
         result
+    }
+}
+
+fn append_to_vector_if_not_present<E: Eq>(vec: &mut Vec<E>, e: E) -> usize {
+    if let Some(index) = vec
+        .iter()
+        .enumerate()
+        .find_map(|(i, o)| if e == *o { Some(i) } else { None })
+    {
+        index
+    } else {
+        vec.push(e);
+        vec.len() - 1
     }
 }
