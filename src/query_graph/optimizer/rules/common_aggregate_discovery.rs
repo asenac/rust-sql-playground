@@ -111,7 +111,6 @@ impl Rule for CommonAggregateDiscoveryRule {
         let mut result: Option<Vec<(NodeId, NodeId)>> = None;
         let mut it = classified_aggregates.iter().filter(|(_, v)| v.len() > 1);
         while let Some((key, values)) = it.next() {
-            println!("found");
             let new_group_key = (0..key.group_key.len()).collect::<BTreeSet<_>>();
             let mut input_project = key.group_key.clone();
             let all_aggregates = values
