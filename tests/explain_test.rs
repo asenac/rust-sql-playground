@@ -1156,6 +1156,49 @@ mod test_queries {
             query_graph.set_entry_node(union_1);
             query_graph
         });
+        queries.insert("common_aggregate_discovery_3".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let project_1 = query_graph.project(
+                table_scan_1,
+                vec![
+                    ScalarExpr::input_ref(0).to_ref(),
+                    ScalarExpr::input_ref(1).to_ref(),
+                    ScalarExpr::input_ref(2).to_ref(),
+                    ScalarExpr::nary(
+                        NaryOp::Concat,
+                        vec![
+                            ScalarExpr::input_ref(3).to_ref(),
+                            ScalarExpr::input_ref(4).to_ref(),
+                        ],
+                    )
+                    .to_ref(),
+                ],
+            );
+            let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
+                group_key: (0..3).collect(),
+                aggregates: vec![AggregateExpr {
+                    op: AggregateOp::Min,
+                    operands: vec![3],
+                }
+                .to_ref()],
+                input: project_1,
+            });
+            let aggregate_2 = query_graph.add_node(QueryNode::Aggregate {
+                group_key: (0..3).collect(),
+                aggregates: vec![AggregateExpr {
+                    op: AggregateOp::Max,
+                    operands: vec![4],
+                }
+                .to_ref()],
+                input: table_scan_1,
+            });
+            let union_1 = query_graph.add_node(QueryNode::Union {
+                inputs: vec![aggregate_1, aggregate_2],
+            });
+            query_graph.set_entry_node(union_1);
+            query_graph
+        });
     }
 }
 

@@ -99,3 +99,55 @@ Optimized:
     Recurring node 6
 ----
 ----
+
+run
+common_aggregate_discovery_3
+----
+----
+[4] Union
+    - Num Columns: 4
+    - Row Type: string, string, string, string
+    - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 2]
+  [2] Aggregate key: [ref_0, ref_1, ref_2], aggregates: [min(ref_3)]
+      - Num Columns: 4
+      - Row Type: string, string, string, string
+      - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+    [1] Project [ref_0, ref_1, ref_2, concat(ref_3, ref_4)]
+        - Num Columns: 4
+        - Row Type: string, string, string, string
+      [0] TableScan id: 1, num_columns: 5
+          - Num Columns: 5
+          - Row Type: string, string, string, string, string
+  [3] Aggregate key: [ref_0, ref_1, ref_2], aggregates: [max(ref_4)]
+      - Num Columns: 4
+      - Row Type: string, string, string, string
+      - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+    Recurring node 0
+
+
+Optimized:
+[4] Union
+    - Num Columns: 4
+    - Row Type: string, string, string, string
+    - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 2]
+  [7] Project [ref_0, ref_1, ref_2, ref_3]
+      - Num Columns: 4
+      - Row Type: string, string, string, string
+      - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+    [10] Aggregate key: [ref_0, ref_1, ref_2], aggregates: [min(ref_4), max(ref_3)]
+        - Num Columns: 5
+        - Row Type: string, string, string, string, string
+        - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+      [9] Project [ref_0, ref_1, ref_2, ref_4, concat(ref_3, ref_4)]
+          - Num Columns: 5
+          - Row Type: string, string, string, string, string
+        [0] TableScan id: 1, num_columns: 5
+            - Num Columns: 5
+            - Row Type: string, string, string, string, string
+  [8] Project [ref_0, ref_1, ref_2, ref_4]
+      - Num Columns: 4
+      - Row Type: string, string, string, string
+      - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
+    Recurring node 10
+----
+----
