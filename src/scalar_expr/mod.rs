@@ -273,6 +273,7 @@ impl fmt::Display for AggregateOp {
 
 /// Representation for working with expressions that may contain aggregate expressions
 /// and other expressions that are not allowed in the query graph.
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub enum ExtendedScalarExpr {
     Literal(Literal),
     InputRef {
@@ -327,6 +328,52 @@ impl ExtendedScalarExpr {
             ExtendedScalarExpr::NaryOp { op, .. } => op.return_type(operand_types),
             ExtendedScalarExpr::Aggregate { op, .. } => op.return_type(operand_types),
         }
+    }
+}
+
+pub trait ToScalarExpr {
+    fn to_scalar_expr(&self) -> Option<ScalarExprRef>;
+}
+
+impl ToScalarExpr for Rc<ExtendedScalarExpr> {
+    fn to_scalar_expr(&self) -> Option<ScalarExprRef> {
+        let mut stack: Vec<ScalarExprRef> = Vec::new();
+        visit_expr_post(&self, &mut |expr: &ExtendedScalarExprRef| {
+            let extended_expr = match expr.as_ref() {
+                ExtendedScalarExpr::Literal(literal) => ScalarExpr::Literal(literal.clone()),
+                ExtendedScalarExpr::InputRef { index } => ScalarExpr::InputRef { index: *index },
+                ExtendedScalarExpr::BinaryOp {
+                    op,
+                    left: _,
+                    right: _,
+                } => {
+                    let operands = &stack[stack.len() - 2..];
+                    let expr = ScalarExpr::BinaryOp {
+                        op: op.clone(),
+                        left: operands[0].clone(),
+                        right: operands[1].clone(),
+                    };
+                    stack.truncate(stack.len() - 2);
+                    expr
+                }
+                ExtendedScalarExpr::NaryOp { op, operands } => {
+                    let operands = &stack[stack.len() - operands.len()..];
+                    let expr = ScalarExpr::NaryOp {
+                        op: op.clone(),
+                        operands: operands.iter().cloned().collect_vec(),
+                    };
+                    stack.truncate(stack.len() - operands.len());
+                    expr
+                }
+                ExtendedScalarExpr::Aggregate { op, operands } => {
+                    stack.clear();
+                    return PostOrderVisitationResult::Abort;
+                }
+            };
+            stack.push(Rc::new(extended_expr));
+            PostOrderVisitationResult::Continue
+        });
+        stack.into_iter().next()
     }
 }
 

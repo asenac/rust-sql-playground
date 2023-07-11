@@ -288,6 +288,7 @@ pub fn build_rule(rule_name: &str) -> Result<Box<dyn Rule>, ()> {
         "AggregatePruningRule" => Ok(Box::new(AggregatePruningRule {})),
         "AggregateRemoveRule" => Ok(wrap(AggregateRemoveRule {})),
         "AggregateSimplifierRule" => Ok(wrap(AggregateSimplifierRule {})),
+        "CommonAggregateDiscoveryRule" => Ok(Box::new(CommonAggregateDiscoveryRule {})),
         "EqualityPropagationRule" => Ok(wrap(EqualityPropagationRule {})),
         "FilterAggregateTransposeRule" => Ok(wrap(FilterAggregateTransposeRule {})),
         "FilterJoinTransposeRule" => Ok(wrap(FilterJoinTransposeRule {})),
@@ -326,6 +327,7 @@ lazy_static! {
             wrap(RemovePassthroughProjectRule {}),
             wrap(UnionMergeRule {}),
             Box::new(AggregatePruningRule {}),
+            Box::new(CommonAggregateDiscoveryRule {}),
             Box::new(UnionPruningRule {}),
             Box::new(JoinPruningRule {}),
         ]);

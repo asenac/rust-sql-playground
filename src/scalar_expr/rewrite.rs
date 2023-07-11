@@ -88,6 +88,21 @@ pub fn dereference_scalar_expr(expr: &ScalarExprRef, map: &Vec<ScalarExprRef>) -
     )
 }
 
+pub fn dereference_extended_scalar_expr(
+    expr: &ExtendedScalarExprRef,
+    map: &Vec<ExtendedScalarExprRef>,
+) -> ExtendedScalarExprRef {
+    rewrite_expr_post(
+        &mut |expr: &ExtendedScalarExprRef| {
+            if let ExtendedScalarExpr::InputRef { index } = expr.as_ref() {
+                return Some(map[*index].clone());
+            }
+            None
+        },
+        expr,
+    )
+}
+
 pub fn shift_right_input_refs(expr: &ScalarExprRef, offset: usize) -> ScalarExprRef {
     rewrite_expr_post(
         &mut |expr: &ScalarExprRef| {
