@@ -696,6 +696,49 @@ mod test_queries {
         });
     }
 
+    pub(crate) fn join_project_transpose(queries: &mut HashMap<String, QueryGraph>) {
+        queries.insert("join_project_transpose_left".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let project_1 = query_graph.project(
+                table_scan_1,
+                (0..5)
+                    .rev()
+                    .map(|col| ScalarExpr::input_ref(col).to_ref())
+                    .collect(),
+            );
+            let join = query_graph.inner_join(
+                project_1,
+                table_scan_1,
+                vec![ScalarExpr::input_ref(3)
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).to_ref())
+                    .to_ref()],
+            );
+            query_graph.set_entry_node(join);
+            query_graph
+        });
+        queries.insert("join_project_transpose_right".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let project_1 = query_graph.project(
+                table_scan_1,
+                (0..5)
+                    .rev()
+                    .map(|col| ScalarExpr::input_ref(col).to_ref())
+                    .collect(),
+            );
+            let join = query_graph.inner_join(
+                table_scan_1,
+                project_1,
+                vec![ScalarExpr::input_ref(3)
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).to_ref())
+                    .to_ref()],
+            );
+            query_graph.set_entry_node(join);
+            query_graph
+        });
+    }
+
     pub(crate) fn join_pruning(queries: &mut HashMap<String, QueryGraph>) {
         // join_pruning.test
         queries.insert("join_pruning_1".to_string(), {
@@ -1167,6 +1210,7 @@ fn static_queries() -> HashMap<String, QueryGraph> {
     test_queries::filter_merge(&mut queries);
     test_queries::filter_normalization(&mut queries);
     test_queries::filter_project_transpose(&mut queries);
+    test_queries::join_project_transpose(&mut queries);
     test_queries::join_pruning(&mut queries);
     test_queries::keys_filter(&mut queries);
     test_queries::keys_join(&mut queries);

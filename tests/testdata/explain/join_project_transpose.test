@@ -1,0 +1,65 @@
+run
+join_project_transpose_left
+----
+----
+[2] Inner Join [eq(ref_3, ref_5)]
+    - Num Columns: 10
+    - Row Type: string, string, string, string, string, string, string, string, string, string
+    - Pulled Up Predicates: eq(ref_3, ref_5)
+  [1] Project [ref_4, ref_3, ref_2, ref_1, ref_0]
+      - Num Columns: 5
+      - Row Type: string, string, string, string, string
+    [0] TableScan id: 1, num_columns: 5
+        - Num Columns: 5
+        - Row Type: string, string, string, string, string
+  Recurring node 0
+
+
+Optimized:
+[6] Project [ref_4, ref_3, ref_2, ref_1, ref_0, ref_1, ref_6, ref_7, ref_8, ref_9]
+    - Num Columns: 10
+    - Row Type: string, string, string, string, string, string, string, string, string, string
+    - Pulled Up Predicates: raw_eq(ref_3, ref_5), raw_eq(ref_5, ref_3)
+  [4] Inner Join [eq(ref_1, ref_5)]
+      - Num Columns: 10
+      - Row Type: string, string, string, string, string, string, string, string, string, string
+      - Pulled Up Predicates: eq(ref_1, ref_5)
+    [0] TableScan id: 1, num_columns: 5
+        - Num Columns: 5
+        - Row Type: string, string, string, string, string
+    Recurring node 0
+----
+----
+
+run
+join_project_transpose_right
+----
+----
+[2] Inner Join [eq(ref_3, ref_5)]
+    - Num Columns: 10
+    - Row Type: string, string, string, string, string, string, string, string, string, string
+    - Pulled Up Predicates: eq(ref_3, ref_5)
+  [0] TableScan id: 1, num_columns: 5
+      - Num Columns: 5
+      - Row Type: string, string, string, string, string
+  [1] Project [ref_4, ref_3, ref_2, ref_1, ref_0]
+      - Num Columns: 5
+      - Row Type: string, string, string, string, string
+    Recurring node 0
+
+
+Optimized:
+[6] Project [ref_0, ref_1, ref_2, ref_3, ref_4, ref_3, ref_8, ref_7, ref_6, ref_5]
+    - Num Columns: 10
+    - Row Type: string, string, string, string, string, string, string, string, string, string
+    - Pulled Up Predicates: raw_eq(ref_3, ref_5), raw_eq(ref_5, ref_3)
+  [4] Inner Join [eq(ref_3, ref_9)]
+      - Num Columns: 10
+      - Row Type: string, string, string, string, string, string, string, string, string, string
+      - Pulled Up Predicates: eq(ref_3, ref_9)
+    [0] TableScan id: 1, num_columns: 5
+        - Num Columns: 5
+        - Row Type: string, string, string, string, string
+    Recurring node 0
+----
+----
