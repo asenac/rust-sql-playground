@@ -4,6 +4,8 @@ use crate::query_graph::{
     JoinType, NodeId, QueryGraph, QueryNode,
 };
 
+/// Removes joins where one of the inputs is a relation always projecting a single
+/// row and has no columns.
 pub struct IdentityJoinRule;
 
 impl SingleReplacementRule for IdentityJoinRule {

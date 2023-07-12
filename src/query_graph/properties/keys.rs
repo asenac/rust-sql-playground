@@ -88,6 +88,7 @@ pub fn unique_key(query_graph: &QueryGraph, node_id: NodeId) -> Option<Rc<Vec<Sc
     })
 }
 
+/// Extract the bounds of the entire relation if known.
 pub fn empty_key(query_graph: &QueryGraph, node_id: NodeId) -> Option<KeyBounds> {
     keys(query_graph, node_id).iter().find_map(|key| {
         if key.key.is_empty() {
