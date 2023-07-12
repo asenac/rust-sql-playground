@@ -10,6 +10,7 @@ use std::{
 
 use crate::query_graph::NodeId;
 
+mod column_provenance;
 mod equivalence_classes;
 mod input_dependencies;
 mod keys;
@@ -17,6 +18,8 @@ mod num_columns;
 mod pulled_up_predicates;
 mod row_type;
 
+pub use column_provenance::column_provenance;
+pub use column_provenance::ColumnProvenanceInfo;
 pub use equivalence_classes::equivalence_classes;
 pub use input_dependencies::input_dependencies;
 pub use keys::empty_key;

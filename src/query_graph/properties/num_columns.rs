@@ -54,16 +54,19 @@ impl NumColumns {
                 left,
                 right,
                 ..
-            } => match join_type {
-                JoinType::Inner
-                | JoinType::LeftOuter
-                | JoinType::RightOuter
-                | JoinType::FullOuter => {
+            } => {
+                let left_columns = if join_type.projects_columns_from_left() {
                     self.num_columns_unchecked(query_graph, *left)
-                        + self.num_columns_unchecked(query_graph, *right)
-                }
-                JoinType::Semi | JoinType::Anti => self.num_columns_unchecked(query_graph, *left),
-            },
+                } else {
+                    0
+                };
+                let right_columns = if join_type.projects_columns_from_right() {
+                    self.num_columns_unchecked(query_graph, *right)
+                } else {
+                    0
+                };
+                left_columns + right_columns
+            }
             QueryNode::Aggregate {
                 group_key,
                 aggregates,

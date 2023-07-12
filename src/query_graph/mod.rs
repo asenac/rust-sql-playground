@@ -365,6 +365,26 @@ impl JoinType {
             JoinType::Anti => "Anti",
         }
     }
+
+    pub fn projects_columns_from_left(&self) -> bool {
+        match self {
+            JoinType::RightOuter
+            | JoinType::Inner
+            | JoinType::LeftOuter
+            | JoinType::FullOuter
+            | JoinType::Semi
+            | JoinType::Anti => true,
+        }
+    }
+
+    pub fn projects_columns_from_right(&self) -> bool {
+        match self {
+            JoinType::RightOuter | JoinType::Inner | JoinType::LeftOuter | JoinType::FullOuter => {
+                true
+            }
+            JoinType::Semi | JoinType::Anti => false,
+        }
+    }
 }
 
 impl fmt::Display for JoinType {
