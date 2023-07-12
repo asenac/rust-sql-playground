@@ -73,7 +73,9 @@
 
           for (let edge_idx in graph.edges) {
             var edge = graph.edges[edge_idx];
-            g.setEdge(edge.from, edge.to, { label: edge.label });
+            var existing_edge = g.edge(edge.from, edge.to);
+            var existing_label = existing_edge? existing_edge.label + ", " : "";
+            g.setEdge(edge.from, edge.to, { label: existing_label + edge.label });
           }
 
           // Create the renderer
