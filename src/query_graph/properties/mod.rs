@@ -10,12 +10,12 @@ use std::{
 
 use crate::query_graph::NodeId;
 
-pub mod equivalence_classes;
-pub mod input_dependencies;
-pub mod keys;
-pub mod num_columns;
-pub mod pulled_up_predicates;
-pub mod row_type;
+mod equivalence_classes;
+mod input_dependencies;
+mod keys;
+mod num_columns;
+mod pulled_up_predicates;
+mod row_type;
 
 pub use equivalence_classes::equivalence_classes;
 pub use input_dependencies::input_dependencies;
