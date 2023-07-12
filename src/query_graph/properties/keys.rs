@@ -160,14 +160,8 @@ impl Keys {
                 }));
             }
             QueryNode::Filter { input, conditions } => {
-                if conditions.iter().any(|c| match c.as_ref() {
-                    // FALSE/NULL predicate -> empty relation
-                    ScalarExpr::Literal(literal) => match literal.value {
-                        Value::Null | Value::Bool(false) => true,
-                        _ => false,
-                    },
-                    _ => false,
-                }) {
+                // FALSE/NULL predicate -> empty relation
+                if has_false_or_null_predicate(conditions) {
                     keys.push(KeyBounds {
                         key: Rc::new(Vec::new()),
                         lower_bound: 0,
@@ -216,6 +210,17 @@ impl Keys {
                         upper_bound: key.upper_bound,
                     })
                     .collect::<Vec<_>>();
+
+                if let JoinType::Inner = join_type {
+                    // FALSE/NULL predicate -> empty relation
+                    if has_false_or_null_predicate(conditions) {
+                        keys.push(KeyBounds {
+                            key: Rc::new(Vec::new()),
+                            lower_bound: 0,
+                            upper_bound: Some(0),
+                        });
+                    }
+                }
 
                 if let JoinType::FullOuter = join_type {
                     // TODO(asenac) the empty key can be known by computing the maximum
@@ -412,4 +417,14 @@ impl QueryGraphPrePostVisitor for Keys {
                 .insert(Self::metadata_type_id(), Box::new(keys));
         }
     }
+}
+
+fn has_false_or_null_predicate(conditions: &Vec<ScalarExprRef>) -> bool {
+    conditions.iter().any(|c| match c.as_ref() {
+        ScalarExpr::Literal(literal) => match literal.value {
+            Value::Null | Value::Bool(false) => true,
+            _ => false,
+        },
+        _ => false,
+    })
 }
