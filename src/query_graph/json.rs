@@ -73,8 +73,17 @@ impl<'a> QueryGraphPrePostVisitor for JsonSerializer<'a> {
                 "{}TableScan id: {}, num_columns: {}",
                 prefix, table_id, num_columns
             ),
-            QueryNode::Join { conditions, .. } => {
-                format!("{}Join [{}]", prefix, explain_scalar_expr_vec(conditions))
+            QueryNode::Join {
+                join_type,
+                conditions,
+                ..
+            } => {
+                format!(
+                    "{}{} Join [{}]",
+                    prefix,
+                    join_type,
+                    explain_scalar_expr_vec(conditions)
+                )
             }
             QueryNode::Aggregate {
                 group_key,

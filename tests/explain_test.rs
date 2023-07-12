@@ -1200,6 +1200,122 @@ mod test_queries {
             query_graph
         });
     }
+
+    pub(crate) fn outer_to_inner_join(queries: &mut HashMap<String, QueryGraph>) {
+        queries.insert("outer_to_inner_negative_1".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let join = query_graph.join(
+                JoinType::LeftOuter,
+                table_scan_1,
+                table_scan_1,
+                vec![ScalarExpr::input_ref(0)
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).to_ref())
+                    .to_ref()],
+            );
+            let filter_1 = query_graph.filter(
+                join,
+                vec![ScalarExpr::input_ref(0)
+                    .binary(BinaryOp::Lt, ScalarExpr::input_ref(1).to_ref())
+                    .to_ref()],
+            );
+            query_graph.set_entry_node(filter_1);
+            query_graph
+        });
+        // Still one path not rejecting nulls
+        queries.insert("outer_to_inner_negative_2".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let join = query_graph.join(
+                JoinType::LeftOuter,
+                table_scan_1,
+                table_scan_1,
+                vec![ScalarExpr::input_ref(0)
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).to_ref())
+                    .to_ref()],
+            );
+            let filter_1 = query_graph.filter(
+                join,
+                vec![ScalarExpr::input_ref(5)
+                    .binary(BinaryOp::Lt, ScalarExpr::input_ref(1).to_ref())
+                    .to_ref()],
+            );
+            let union_1 = query_graph.add_node(QueryNode::Union {
+                inputs: vec![join, filter_1],
+            });
+            query_graph.set_entry_node(union_1);
+            query_graph
+        });
+        queries.insert("outer_to_inner_1".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let join = query_graph.join(
+                JoinType::LeftOuter,
+                table_scan_1,
+                table_scan_1,
+                vec![ScalarExpr::input_ref(0)
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).to_ref())
+                    .to_ref()],
+            );
+            let filter_1 = query_graph.filter(
+                join,
+                vec![ScalarExpr::input_ref(5)
+                    .binary(BinaryOp::Lt, ScalarExpr::input_ref(1).to_ref())
+                    .to_ref()],
+            );
+            query_graph.set_entry_node(filter_1);
+            query_graph
+        });
+        queries.insert("outer_to_inner_2".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let join = query_graph.join(
+                JoinType::RightOuter,
+                table_scan_1,
+                table_scan_1,
+                vec![ScalarExpr::input_ref(0)
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).to_ref())
+                    .to_ref()],
+            );
+            let filter_1 = query_graph.filter(
+                join,
+                vec![ScalarExpr::input_ref(5)
+                    .binary(BinaryOp::Lt, ScalarExpr::input_ref(1).to_ref())
+                    .to_ref()],
+            );
+            query_graph.set_entry_node(filter_1);
+            query_graph
+        });
+        queries.insert("outer_to_inner_3".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let join = query_graph.join(
+                JoinType::LeftOuter,
+                table_scan_1,
+                table_scan_1,
+                vec![ScalarExpr::input_ref(0)
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).to_ref())
+                    .to_ref()],
+            );
+            let filter_1 = query_graph.filter(
+                join,
+                vec![ScalarExpr::input_ref(5)
+                    .binary(BinaryOp::Lt, ScalarExpr::input_ref(1).to_ref())
+                    .to_ref()],
+            );
+            let filter_2 = query_graph.filter(
+                join,
+                vec![ScalarExpr::input_ref(5)
+                    .binary(BinaryOp::Lt, ScalarExpr::input_ref(2).to_ref())
+                    .to_ref()],
+            );
+            let union_1 = query_graph.add_node(QueryNode::Union {
+                inputs: vec![filter_1, filter_2],
+            });
+            query_graph.set_entry_node(union_1);
+            query_graph
+        });
+    }
 }
 
 fn static_queries() -> HashMap<String, QueryGraph> {
@@ -1374,6 +1490,7 @@ fn static_queries() -> HashMap<String, QueryGraph> {
     test_queries::keys_filter(&mut queries);
     test_queries::keys_join(&mut queries);
     test_queries::keys_union(&mut queries);
+    test_queries::outer_to_inner_join(&mut queries);
     test_queries::project_normalization(&mut queries);
     test_queries::pulled_up_predicates(&mut queries);
     test_queries::union_merge(&mut queries);

@@ -323,6 +323,76 @@ pub fn replace_sub_expressions_pre<E: RewritableExpr>(
     .unwrap()
 }
 
+struct ExprRewriterPrePost<'a, F, E>
+where
+    E: RewritableExpr,
+    F: FnMut(&Rc<E>) -> Option<Rc<E>>,
+{
+    stack: Vec<Rc<E>>,
+    skip_post: bool,
+    rewrite: &'a mut F,
+}
+
+impl<'a, F, E> ExprRewriterPrePost<'a, F, E>
+where
+    E: RewritableExpr,
+    F: FnMut(&Rc<E>) -> Option<Rc<E>>,
+{
+    fn new(rewrite: &'a mut F) -> Self {
+        Self {
+            stack: Vec::new(),
+            skip_post: false,
+            rewrite,
+        }
+    }
+}
+
+impl<F, E> ExprPrePostVisitor<E> for ExprRewriterPrePost<'_, F, E>
+where
+    E: RewritableExpr,
+    F: FnMut(&Rc<E>) -> Option<Rc<E>>,
+{
+    fn visit_pre(&mut self, expr: &Rc<E>) -> PreOrderVisitationResult {
+        match (self.rewrite)(expr) {
+            Some(rewritten_expr) => {
+                self.stack.push(rewritten_expr);
+                self.skip_post = true;
+                PreOrderVisitationResult::DoNotVisitInputs
+            }
+            None => PreOrderVisitationResult::VisitInputs,
+        }
+    }
+
+    fn visit_post(&mut self, expr: &Rc<E>) -> PostOrderVisitationResult {
+        if !self.skip_post {
+            let num_inputs = expr.num_inputs();
+            let new_inputs = &self.stack[self.stack.len() - num_inputs..];
+            let mut curr_expr = clone_expr_if_needed(expr.clone(), new_inputs);
+            self.stack.truncate(self.stack.len() - num_inputs);
+            if let Some(rewritten_expr) = (self.rewrite)(&curr_expr) {
+                curr_expr = rewritten_expr;
+            }
+            self.stack.push(curr_expr);
+        } else {
+            self.skip_post = false;
+        }
+        PostOrderVisitationResult::Continue
+    }
+}
+
+/// Applies a rewrite during both the pre-order and the post-order part of the
+/// expression traversal.
+pub fn rewrite_expr_pre_post<F, E>(rewrite: &mut F, expr: &Rc<E>) -> Rc<E>
+where
+    E: RewritableExpr,
+    F: FnMut(&Rc<E>) -> Option<Rc<E>>,
+{
+    let mut visitor = ExprRewriterPost::new(rewrite);
+    visit_expr(expr, &mut visitor);
+    assert!(visitor.stack.len() == 1);
+    visitor.stack.into_iter().next().unwrap()
+}
+
 /// Clones the given expression with the given inputs unless they are the same
 /// inputs it already has. In such case, it just returns the original expression.
 fn clone_expr_if_needed<E: RewritableExpr>(mut expr: Rc<E>, new_inputs: &[Rc<E>]) -> Rc<E> {

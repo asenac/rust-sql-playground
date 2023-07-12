@@ -14,6 +14,7 @@ use crate::{
 use self::visitor::visit_expr_post;
 
 pub mod equivalence_class;
+pub mod reduction;
 pub mod rewrite;
 pub mod visitor;
 pub use visitor::VisitableExpr;
@@ -92,6 +93,14 @@ impl BinaryOp {
             | BinaryOp::Gt
             | BinaryOp::Le
             | BinaryOp::Lt => DataType::Bool,
+        }
+    }
+
+    /// Whether the result of the operation is null if any of their operands is null.
+    pub fn propagates_null(&self) -> bool {
+        match self {
+            BinaryOp::RawEq => false,
+            BinaryOp::Eq | BinaryOp::Ge | BinaryOp::Gt | BinaryOp::Le | BinaryOp::Lt => true,
         }
     }
 }
@@ -173,6 +182,23 @@ impl ScalarExpr {
 }
 
 impl ScalarExpr {
+    pub fn is_null(&self) -> bool {
+        match self {
+            Self::Literal(Literal {
+                value: Value::Null,
+                data_type: _,
+            }) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_literal(&self) -> bool {
+        match self {
+            Self::Literal(_) => true,
+            _ => false,
+        }
+    }
+
     pub fn data_type(&self, row_type: &[DataType]) -> DataType {
         let operand_types = (0..self.num_inputs())
             .map(|i| {

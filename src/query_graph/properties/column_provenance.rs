@@ -12,6 +12,7 @@ use super::num_columns;
 
 /// Information about how the node it is associated with relates to some source
 /// node.
+#[derive(Clone)]
 pub struct ColumnProvenanceInfo {
     pub source_node: NodeId,
     /// The column expressions projected by the current node written in terms of the
@@ -32,7 +33,7 @@ pub struct ColumnProvenanceInfo {
 pub fn column_provenance(
     query_graph: &QueryGraph,
     node_id: NodeId,
-) -> Rc<Vec<ColumnProvenanceInfo>> {
+) -> Rc<Vec<Rc<ColumnProvenanceInfo>>> {
     ColumnProvenance::column_provenance(query_graph, node_id)
 }
 
@@ -42,7 +43,7 @@ impl ColumnProvenance {
     fn column_provenance(
         query_graph: &QueryGraph,
         node_id: NodeId,
-    ) -> Rc<Vec<ColumnProvenanceInfo>> {
+    ) -> Rc<Vec<Rc<ColumnProvenanceInfo>>> {
         let mut visitor = ColumnProvenance {};
         query_graph.visit_subgraph(&mut visitor, node_id);
         visitor.column_provenance_unchecked(query_graph, node_id)
@@ -52,14 +53,14 @@ impl ColumnProvenance {
         &self,
         query_graph: &QueryGraph,
         node_id: NodeId,
-    ) -> Rc<Vec<ColumnProvenanceInfo>> {
+    ) -> Rc<Vec<Rc<ColumnProvenanceInfo>>> {
         query_graph
             .property_cache
             .borrow_mut()
             .node_bottom_up_properties(node_id)
             .get(&Self::metadata_type_id())
             .unwrap()
-            .downcast_ref::<Rc<Vec<ColumnProvenanceInfo>>>()
+            .downcast_ref::<Rc<Vec<Rc<ColumnProvenanceInfo>>>>()
             .unwrap()
             .clone()
     }
@@ -72,8 +73,8 @@ impl ColumnProvenance {
         &self,
         query_graph: &QueryGraph,
         node_id: NodeId,
-    ) -> Rc<Vec<ColumnProvenanceInfo>> {
-        let mut prov = Vec::new();
+    ) -> Rc<Vec<Rc<ColumnProvenanceInfo>>> {
+        let mut prov: Vec<Rc<ColumnProvenanceInfo>> = Vec::new();
 
         // Default provenance
         let default_prov = ColumnProvenanceInfo {
@@ -86,7 +87,7 @@ impl ColumnProvenance {
             filtered: false,
             inverse_path: Vec::new(),
         };
-        prov.push(default_prov);
+        prov.push(default_prov.into());
 
         match query_graph.node(node_id) {
             QueryNode::Filter {
@@ -106,6 +107,7 @@ impl ColumnProvenance {
                             .chain(std::iter::once(0))
                             .collect_vec(),
                     }
+                    .into()
                 }));
             }
             QueryNode::Project { input, outputs } => {
@@ -139,6 +141,7 @@ impl ColumnProvenance {
                             .chain(std::iter::once(0))
                             .collect_vec(),
                     }
+                    .into()
                 }));
             }
             QueryNode::Aggregate {
@@ -168,6 +171,7 @@ impl ColumnProvenance {
                             .chain(std::iter::once(0))
                             .collect_vec(),
                     }
+                    .into()
                 }));
             }
             QueryNode::Join {
@@ -207,6 +211,7 @@ impl ColumnProvenance {
                                 .chain(std::iter::once(0))
                                 .collect_vec(),
                         }
+                        .into()
                     }));
                 }
                 if join_type.projects_columns_from_right() {
@@ -228,6 +233,7 @@ impl ColumnProvenance {
                                 .chain(std::iter::once(1))
                                 .collect_vec(),
                         }
+                        .into()
                     }));
                 }
             }
