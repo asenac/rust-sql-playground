@@ -1345,6 +1345,20 @@ fn static_queries() -> HashMap<String, QueryGraph> {
         query_graph.set_entry_node(union_);
         query_graph
     });
+    queries.insert("identity_join".to_string(), {
+        let mut query_graph = QueryGraph::new();
+        let table_scan_1 = query_graph.table_scan(1, 5);
+        let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
+            group_key: BTreeSet::new(),
+            aggregates: Vec::new(),
+            input: table_scan_1,
+        });
+        let project_1 = query_graph.project(aggregate_1, vec![ScalarExpr::true_literal().to_ref()]);
+        let join = query_graph.join(JoinType::Inner, table_scan_1, project_1, Vec::new());
+        let project_2 = query_graph.project(join, vec![ScalarExpr::input_ref(0).to_ref()]);
+        query_graph.set_entry_node(project_2);
+        query_graph
+    });
 
     test_queries::aggregate_project_transpose(&mut queries);
     test_queries::aggregate_pruning(&mut queries);
@@ -1368,7 +1382,10 @@ fn static_queries() -> HashMap<String, QueryGraph> {
     queries
 }
 
-struct DebugOptimizerListener {}
+#[derive(Default)]
+struct DebugOptimizerListener {
+    graphs: Vec<String>,
+}
 
 impl OptimizerListener for DebugOptimizerListener {
     fn node_replacements(
@@ -1403,7 +1420,9 @@ impl OptimizerListener for DebugOptimizerListener {
                 rule.name().to_string(),
             );
         }
-        println!("{}", serializer.serialize().unwrap());
+        let graph = format!("step {} {}", rule.name(), serializer.serialize().unwrap());
+        println!("{}", graph);
+        self.graphs.push(graph);
     }
 }
 
@@ -1456,14 +1475,15 @@ fn test_explain_properties() {
 
             let mut serializer = JsonSerializer::new_with_all_annotators();
             serializer.add_subgraph(query_graph, query_graph.entry_node);
-            println!("{}", serializer.serialize().unwrap());
+            let initial_graph = format!("initial {}", serializer.serialize().unwrap());
+            println!("{}", initial_graph);
 
             let mut cloned_query_graph = query_graph.clone();
             let mut listener2 = FullGraphCollector::new();
             listener2
                 .serializer
                 .add_subgraph(&cloned_query_graph, cloned_query_graph.entry_node);
-            let mut listener = DebugOptimizerListener {};
+            let mut listener = DebugOptimizerListener::default();
             let mut opt_context = OptimizerContext::new();
             opt_context.append_listener(&mut listener);
             opt_context.append_listener(&mut listener2);
@@ -1478,15 +1498,19 @@ fn test_explain_properties() {
 
             let mut serializer = JsonSerializer::new_with_all_annotators();
             serializer.add_subgraph(&cloned_query_graph, cloned_query_graph.entry_node);
-            println!("{}", serializer.serialize().unwrap());
+            let final_graph = format!("final {}", serializer.serialize().unwrap());
+            println!("{}", final_graph);
 
             // Use the tools in `tools` folder to visualize this graphs.
             println!("full:\n{}", listener2.serializer.serialize().unwrap());
 
             format!(
-                "{}\n\nOptimized:\n{}",
+                "{}\n\nOptimized:\n{}\n{}\n{}\n{}\n",
                 query_graph.fully_annotated_explain(),
-                cloned_query_graph.fully_annotated_explain()
+                cloned_query_graph.fully_annotated_explain(),
+                initial_graph,
+                listener.graphs.join("\n"),
+                final_graph,
             )
         })
     });

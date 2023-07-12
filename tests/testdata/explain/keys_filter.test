@@ -21,6 +21,10 @@ Optimized:
   [0] TableScan id: 1, num_columns: 5
       - Num Columns: 5
       - Row Type: string, string, string, string, string
+
+initial {"nodes":[{"id":"1","label":"[1] Filter [FALSE]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: FALSE","Keys: [key: [], lower_bound: 0, upper_bound: 0]"]},{"id":"0","label":"[0] TableScan id: 1, num_columns: 5","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"1","to":"0","label":"input 0"}]}
+
+final {"nodes":[{"id":"1","label":"[1] Filter [FALSE]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: FALSE","Keys: [key: [], lower_bound: 0, upper_bound: 0]"]},{"id":"0","label":"[0] TableScan id: 1, num_columns: 5","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"1","to":"0","label":"input 0"}]}
 ----
 ----
 
@@ -47,5 +51,9 @@ Optimized:
   [0] TableScan id: 1, num_columns: 5
       - Num Columns: 5
       - Row Type: string, string, string, string, string
+
+initial {"nodes":[{"id":"1","label":"[1] Filter [NULL]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: NULL","Keys: [key: [], lower_bound: 0, upper_bound: 0]"]},{"id":"0","label":"[0] TableScan id: 1, num_columns: 5","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"1","to":"0","label":"input 0"}]}
+
+final {"nodes":[{"id":"1","label":"[1] Filter [NULL]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: NULL","Keys: [key: [], lower_bound: 0, upper_bound: 0]"]},{"id":"0","label":"[0] TableScan id: 1, num_columns: 5","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"1","to":"0","label":"input 0"}]}
 ----
 ----

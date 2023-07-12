@@ -19,5 +19,9 @@ Optimized:
   [0] TableScan id: 1, num_columns: 5
       - Num Columns: 5
       - Row Type: string, string, string, string, string
+
+initial {"nodes":[{"id":"1","label":"[1] Filter [lt(ref_1, 'hello'), lt(ref_1, 'hello'), eq(ref_2, 'hello')]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_2, 'hello'), lt(ref_1, 'hello')"]},{"id":"0","label":"[0] TableScan id: 1, num_columns: 5","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"1","to":"0","label":"input 0"}]}
+step FilterNormalizationRule {"nodes":[{"id":"1","label":"[1] Filter [lt(ref_1, 'hello'), lt(ref_1, 'hello'), eq(ref_2, 'hello')]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_2, 'hello'), lt(ref_1, 'hello')"]},{"id":"0","label":"[0] TableScan id: 1, num_columns: 5","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"2","label":"[2] Filter [lt(ref_1, 'hello'), eq(ref_2, 'hello')]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_2, 'hello'), lt(ref_1, 'hello')"]}],"edges":[{"from":"1","to":"0","label":"input 0"},{"from":"2","to":"0","label":"input 0"},{"from":"1","to":"2","label":"FilterNormalizationRule"}]}
+final {"nodes":[{"id":"2","label":"[2] Filter [lt(ref_1, 'hello'), eq(ref_2, 'hello')]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_2, 'hello'), lt(ref_1, 'hello')"]},{"id":"0","label":"[0] TableScan id: 1, num_columns: 5","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"2","to":"0","label":"input 0"}]}
 ----
 ----
