@@ -1,6 +1,6 @@
 use crate::query_graph::{
     optimizer::{OptRuleType, SingleReplacementRule},
-    properties::{keys::empty_key, num_columns},
+    properties::{empty_key, num_columns},
     JoinType, NodeId, QueryGraph, QueryNode,
 };
 
