@@ -88,6 +88,16 @@ pub fn unique_key(query_graph: &QueryGraph, node_id: NodeId) -> Option<Rc<Vec<Sc
     })
 }
 
+pub fn empty_key(query_graph: &QueryGraph, node_id: NodeId) -> Option<KeyBounds> {
+    keys(query_graph, node_id).iter().find_map(|key| {
+        if key.key.is_empty() {
+            Some(key.clone())
+        } else {
+            None
+        }
+    })
+}
+
 struct Keys {}
 
 impl Keys {
