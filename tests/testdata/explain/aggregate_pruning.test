@@ -25,23 +25,23 @@ Optimized:
 [4] Union
     - Num Columns: 2
     - Row Type: string, string
-  [8] Project [ref_0, ref_3]
+  [6] Project [ref_0, ref_3]
       - Num Columns: 2
       - Row Type: string, string
-    [7] Aggregate key: [ref_0, ref_1, ref_2], aggregates: [min(ref_3), max(ref_4)]
+    [9] Aggregate key: [ref_0, ref_1, ref_2], aggregates: [min(ref_3), max(ref_4)]
         - Num Columns: 5
         - Row Type: string, string, string, string, string
         - Keys: [key: [ref_0, ref_1, ref_2], lower_bound: 0, upper_bound: 1]
-      [5] Project [ref_0, ref_1, ref_2, ref_3, ref_5]
+      [8] Project [ref_0, ref_1, ref_2, ref_3, ref_5]
           - Num Columns: 5
           - Row Type: string, string, string, string, string
         [0] TableScan id: 1, num_columns: 6
             - Num Columns: 6
             - Row Type: string, string, string, string, string, string
-  [9] Project [ref_1, ref_4]
+  [7] Project [ref_1, ref_4]
       - Num Columns: 2
       - Row Type: string, string
-    Recurring node 7
+    Recurring node 9
 ----
 ----
 

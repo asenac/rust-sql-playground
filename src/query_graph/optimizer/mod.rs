@@ -41,6 +41,21 @@ pub trait Rule: Sync {
     }
 }
 
+impl<T: SingleReplacementRule> Rule for T {
+    fn rule_type(&self) -> OptRuleType {
+        SingleReplacementRule::rule_type(self)
+    }
+
+    fn apply(
+        &self,
+        query_graph: &mut QueryGraph,
+        node_id: NodeId,
+    ) -> Option<Vec<(NodeId, NodeId)>> {
+        self.apply(query_graph, node_id)
+            .map(|replacement_node| vec![(node_id, replacement_node)])
+    }
+}
+
 /// An optimizer is basically a rewrite pass, where all the rules work towards a shared
 /// goal.
 pub struct Optimizer {
@@ -236,67 +251,28 @@ impl QueryGraphPrePostVisitorMut for OptimizationVisitor<'_, '_, '_> {
     }
 }
 
-/// Helper to treat a SingleReplacementRule as a regular rule.
-struct SingleReplacementRuleWrapper<T: SingleReplacementRule> {
-    rule: T,
-}
-
-impl<T: SingleReplacementRule> SingleReplacementRuleWrapper<T> {
-    fn new(rule: T) -> Self {
-        Self { rule }
-    }
-}
-
-impl<T: SingleReplacementRule> Rule for SingleReplacementRuleWrapper<T> {
-    fn rule_type(&self) -> OptRuleType {
-        self.rule.rule_type()
-    }
-
-    fn apply(
-        &self,
-        query_graph: &mut QueryGraph,
-        node_id: NodeId,
-    ) -> Option<Vec<(NodeId, NodeId)>> {
-        self.rule
-            .apply(query_graph, node_id)
-            .map(|replacement_node| vec![(node_id, replacement_node)])
-    }
-
-    fn name(&self) -> &'static str {
-        self.rule.name()
-    }
-}
-
-/// Wrap a SingleReplacementRule as a regular Rule
-fn wrap<T>(rule: T) -> Box<dyn Rule>
-where
-    T: SingleReplacementRule + 'static,
-{
-    Box::new(SingleReplacementRuleWrapper::new(rule))
-}
-
 pub fn build_rule(rule_name: &str) -> Result<Box<dyn Rule>, ()> {
     use self::rules::*;
     match rule_name {
-        "AggregateProjectTransposeRule" => Ok(wrap(AggregateProjectTransposeRule {})),
+        "AggregateProjectTransposeRule" => Ok(Box::new(AggregateProjectTransposeRule {})),
         "AggregatePruningRule" => Ok(Box::new(AggregatePruningRule {})),
-        "AggregateRemoveRule" => Ok(wrap(AggregateRemoveRule {})),
-        "AggregateSimplifierRule" => Ok(wrap(AggregateSimplifierRule {})),
+        "AggregateRemoveRule" => Ok(Box::new(AggregateRemoveRule {})),
+        "AggregateSimplifierRule" => Ok(Box::new(AggregateSimplifierRule {})),
         "CommonAggregateDiscoveryRule" => Ok(Box::new(CommonAggregateDiscoveryRule {})),
-        "EqualityPropagationRule" => Ok(wrap(EqualityPropagationRule {})),
-        "FilterAggregateTransposeRule" => Ok(wrap(FilterAggregateTransposeRule {})),
-        "FilterJoinTransposeRule" => Ok(wrap(FilterJoinTransposeRule {})),
-        "FilterMergeRule" => Ok(wrap(FilterMergeRule {})),
-        "FilterNormalizationRule" => Ok(wrap(FilterNormalizationRule {})),
-        "FilterProjectTransposeRule" => Ok(wrap(FilterProjectTransposeRule {})),
-        "JoinProjectTransposeRule" => Ok(wrap(JoinProjectTransposeRule {})),
-        "ProjectMergeRule" => Ok(wrap(ProjectMergeRule {})),
-        "ProjectNormalizationRule" => Ok(wrap(ProjectNormalizationRule {})),
-        "PruneAggregateInputRule" => Ok(wrap(PruneAggregateInputRule {})),
-        "RemovePassthroughProjectRule" => Ok(wrap(RemovePassthroughProjectRule {})),
-        "UnionMergeRule" => Ok(wrap(UnionMergeRule {})),
-        "UnionPruningRule" => Ok(Box::new(UnionPruningRule {})),
+        "EqualityPropagationRule" => Ok(Box::new(EqualityPropagationRule {})),
+        "FilterAggregateTransposeRule" => Ok(Box::new(FilterAggregateTransposeRule {})),
+        "FilterJoinTransposeRule" => Ok(Box::new(FilterJoinTransposeRule {})),
+        "FilterMergeRule" => Ok(Box::new(FilterMergeRule {})),
+        "FilterNormalizationRule" => Ok(Box::new(FilterNormalizationRule {})),
+        "FilterProjectTransposeRule" => Ok(Box::new(FilterProjectTransposeRule {})),
+        "JoinProjectTransposeRule" => Ok(Box::new(JoinProjectTransposeRule {})),
         "JoinPruningRule" => Ok(Box::new(JoinPruningRule {})),
+        "ProjectMergeRule" => Ok(Box::new(ProjectMergeRule {})),
+        "ProjectNormalizationRule" => Ok(Box::new(ProjectNormalizationRule {})),
+        "PruneAggregateInputRule" => Ok(Box::new(PruneAggregateInputRule {})),
+        "RemovePassthroughProjectRule" => Ok(Box::new(RemovePassthroughProjectRule {})),
+        "UnionMergeRule" => Ok(Box::new(UnionMergeRule {})),
+        "UnionPruningRule" => Ok(Box::new(UnionPruningRule {})),
         _ => Err(()),
     }
 }
@@ -305,25 +281,25 @@ lazy_static! {
     pub static ref DEFAULT_OPTIMIZER: Optimizer = {
         use self::rules::*;
         let optimizer = Optimizer::new(vec![
-            wrap(AggregateProjectTransposeRule {}),
-            wrap(AggregateRemoveRule {}),
-            wrap(AggregateSimplifierRule {}),
-            wrap(EqualityPropagationRule {}),
-            wrap(FilterAggregateTransposeRule {}),
-            wrap(FilterJoinTransposeRule {}),
-            wrap(FilterMergeRule {}),
-            wrap(FilterNormalizationRule {}),
-            wrap(FilterProjectTransposeRule {}),
-            wrap(JoinProjectTransposeRule {}),
-            wrap(ProjectMergeRule {}),
-            wrap(ProjectNormalizationRule {}),
-            wrap(PruneAggregateInputRule {}),
-            wrap(RemovePassthroughProjectRule {}),
-            wrap(UnionMergeRule {}),
+            Box::new(AggregateProjectTransposeRule {}),
             Box::new(AggregatePruningRule {}),
+            Box::new(AggregateRemoveRule {}),
+            Box::new(AggregateSimplifierRule {}),
             Box::new(CommonAggregateDiscoveryRule {}),
-            Box::new(UnionPruningRule {}),
+            Box::new(EqualityPropagationRule {}),
+            Box::new(FilterAggregateTransposeRule {}),
+            Box::new(FilterJoinTransposeRule {}),
+            Box::new(FilterMergeRule {}),
+            Box::new(FilterNormalizationRule {}),
+            Box::new(FilterProjectTransposeRule {}),
+            Box::new(JoinProjectTransposeRule {}),
             Box::new(JoinPruningRule {}),
+            Box::new(ProjectMergeRule {}),
+            Box::new(ProjectNormalizationRule {}),
+            Box::new(PruneAggregateInputRule {}),
+            Box::new(RemovePassthroughProjectRule {}),
+            Box::new(UnionMergeRule {}),
+            Box::new(UnionPruningRule {}),
         ]);
         optimizer
     };
