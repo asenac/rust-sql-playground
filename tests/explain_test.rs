@@ -1316,6 +1316,29 @@ mod test_queries {
             query_graph
         });
     }
+
+    pub(crate) fn expression_reduction(queries: &mut HashMap<String, QueryGraph>) {
+        queries.insert("expression_reduction_1".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let join = query_graph.join(
+                JoinType::LeftOuter,
+                table_scan_1,
+                table_scan_1,
+                vec![ScalarExpr::null_literal(DataType::String)
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).to_ref())
+                    .to_ref()],
+            );
+            let filter_1 = query_graph.filter(
+                join,
+                vec![ScalarExpr::null_literal(DataType::String)
+                    .binary(BinaryOp::Lt, ScalarExpr::input_ref(1).to_ref())
+                    .to_ref()],
+            );
+            query_graph.set_entry_node(filter_1);
+            query_graph
+        });
+    }
 }
 
 fn static_queries() -> HashMap<String, QueryGraph> {
@@ -1480,6 +1503,7 @@ fn static_queries() -> HashMap<String, QueryGraph> {
     test_queries::aggregate_pruning(&mut queries);
     test_queries::aggregate_remove(&mut queries);
     test_queries::common_aggregate_discovery(&mut queries);
+    test_queries::expression_reduction(&mut queries);
     test_queries::filter_aggregate_transpose(&mut queries);
     test_queries::filter_join_transpose(&mut queries);
     test_queries::filter_merge(&mut queries);

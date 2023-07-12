@@ -1,5 +1,7 @@
 use std::{any::TypeId, rc::Rc};
 
+use itertools::Itertools;
+
 use crate::{
     query_graph::{visitor::QueryGraphPrePostVisitor, *},
     scalar_expr::{rewrite::*, BinaryOp, ScalarExpr, ToRef},
@@ -239,9 +241,15 @@ impl PulledUpPredicates {
                 );
             }
         };
-        predicates.sort();
-        predicates.dedup();
-        Rc::new(predicates)
+
+        predicates
+            .into_iter()
+            // Remove literals: NULL is not TRUE, FALSE is not TRUE
+            .filter(|e| !e.is_literal())
+            .sorted()
+            .dedup()
+            .collect_vec()
+            .into()
     }
 }
 
