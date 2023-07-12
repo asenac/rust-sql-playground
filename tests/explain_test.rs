@@ -4,7 +4,7 @@ use datadriven::walk;
 use rust_sql::query_graph::explain::Explainer;
 use rust_sql::query_graph::json::JsonSerializer;
 use rust_sql::query_graph::optimizer::{
-    build_rule, Optimizer, OptimizerContext, OptimizerListener, DEFAULT_OPTIMIZER,
+    build_rule, Optimizer, OptimizerContext, OptimizerListener, Replacement, DEFAULT_OPTIMIZER,
 };
 use rust_sql::query_graph::{JoinType, QueryGraph, QueryNode};
 use rust_sql::scalar_expr::NaryOp;
@@ -1371,35 +1371,38 @@ fn static_queries() -> HashMap<String, QueryGraph> {
 struct DebugOptimizerListener {}
 
 impl OptimizerListener for DebugOptimizerListener {
-    fn node_replacement(
+    fn node_replacements(
         &mut self,
         rule: &dyn rust_sql::query_graph::optimizer::Rule,
         query_graph: &QueryGraph,
-        old_node_id: rust_sql::query_graph::NodeId,
-        new_node_id: rust_sql::query_graph::NodeId,
+        replacements: &Vec<Replacement>,
     ) {
-        let old_nodes = query_graph.collect_nodes_under(old_node_id);
-        let new_nodes = query_graph.collect_nodes_under(new_node_id);
-        let common_nodes = old_nodes
-            .intersection(&new_nodes)
-            .cloned()
-            .collect::<HashSet<_>>();
-        let explain = Explainer::new(query_graph)
-            .with_leaves(common_nodes)
-            .with_all_annotators()
-            .with_entry_point(old_node_id);
-        println!("Before {}:\n{}", rule.name(), explain.explain());
-        let explain = explain.with_entry_point(new_node_id);
-        println!("After {}:\n{}", rule.name(), explain.explain());
+        for (old_node_id, new_node_id) in replacements.iter() {
+            let old_nodes = query_graph.collect_nodes_under(*old_node_id);
+            let new_nodes = query_graph.collect_nodes_under(*new_node_id);
+            let common_nodes = old_nodes
+                .intersection(&new_nodes)
+                .cloned()
+                .collect::<HashSet<_>>();
+            let explain = Explainer::new(query_graph)
+                .with_leaves(common_nodes)
+                .with_all_annotators()
+                .with_entry_point(*old_node_id);
+            println!("Before {}:\n{}", rule.name(), explain.explain());
+            let explain = explain.with_entry_point(*new_node_id);
+            println!("After {}:\n{}", rule.name(), explain.explain());
+        }
 
         let mut serializer = JsonSerializer::new_with_all_annotators();
         serializer.add_subgraph(query_graph, query_graph.entry_node);
-        serializer.add_node_replacement(
-            query_graph,
-            old_node_id,
-            new_node_id,
-            rule.name().to_string(),
-        );
+        for (old_node_id, new_node_id) in replacements.iter() {
+            serializer.add_node_replacement(
+                query_graph,
+                *old_node_id,
+                *new_node_id,
+                rule.name().to_string(),
+            );
+        }
         println!("{}", serializer.serialize().unwrap());
     }
 }
@@ -1419,22 +1422,23 @@ impl<'a> FullGraphCollector<'a> {
 }
 
 impl<'a> OptimizerListener for FullGraphCollector<'a> {
-    fn node_replacement(
+    fn node_replacements(
         &mut self,
         rule: &dyn rust_sql::query_graph::optimizer::Rule,
         query_graph: &QueryGraph,
-        old_node_id: rust_sql::query_graph::NodeId,
-        new_node_id: rust_sql::query_graph::NodeId,
+        replacements: &Vec<Replacement>,
     ) {
         self.replacement_count += 1;
-        self.serializer.add_subgraph(query_graph, old_node_id);
-        self.serializer.add_subgraph(query_graph, new_node_id);
-        self.serializer.add_node_replacement(
-            query_graph,
-            old_node_id,
-            new_node_id,
-            format!("{}: {}", self.replacement_count, rule.name()),
-        );
+        for (old_node_id, new_node_id) in replacements.iter() {
+            self.serializer.add_subgraph(query_graph, *old_node_id);
+            self.serializer.add_subgraph(query_graph, *new_node_id);
+            self.serializer.add_node_replacement(
+                query_graph,
+                *old_node_id,
+                *new_node_id,
+                format!("{}: {}", self.replacement_count, rule.name()),
+            );
+        }
     }
 }
 

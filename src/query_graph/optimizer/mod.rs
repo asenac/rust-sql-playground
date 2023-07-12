@@ -50,14 +50,15 @@ pub struct Optimizer {
     bottom_up_rules: Vec<usize>,
 }
 
+pub type Replacement = (NodeId, NodeId);
+
 pub trait OptimizerListener {
     /// Invoked for every node replacement performed by the optimizer.
-    fn node_replacement(
+    fn node_replacements(
         &mut self,
         rule: &dyn Rule,
         query_graph: &QueryGraph,
-        old_node_id: NodeId,
-        new_node_id: NodeId,
+        replacements: &Vec<Replacement>,
     );
 }
 
@@ -138,34 +139,25 @@ impl Optimizer {
             .map(|id| self.rules.get(*id).unwrap())
         {
             if let Some(replacements) = rule.apply(query_graph, query_graph.entry_node) {
+                Self::notify_replacements(context, &**rule, query_graph, &replacements);
                 for (original_node, replacement_node) in replacements {
-                    Self::notify_replacement(
-                        context,
-                        &**rule,
-                        query_graph,
-                        original_node,
-                        replacement_node,
-                    );
                     query_graph.replace_node(original_node, replacement_node);
                 }
             }
         }
     }
 
-    fn notify_replacement(
+    fn notify_replacements(
         context: &mut OptimizerContext,
         rule: &dyn Rule,
         query_graph: &QueryGraph,
-        original_node: NodeId,
-        replacement_node: NodeId,
+        replacements: &Vec<(NodeId, NodeId)>,
     ) {
         for listener in context.listeners.iter_mut() {
-            listener.node_replacement(rule, query_graph, original_node, replacement_node);
+            listener.node_replacements(rule, query_graph, replacements);
         }
     }
-}
 
-impl OptimizationVisitor<'_, '_, '_> {
     /// Apply a set of rules to the given node. It returns early if any of the rules
     /// replaces any node that is not the current one, as that invalidates the current
     /// traversal stack.
@@ -175,25 +167,17 @@ impl OptimizationVisitor<'_, '_, '_> {
     ///
     /// Returns whether the current traversal can continue or must be aborted.
     fn apply_rule_list(
-        &mut self,
+        &self,
+        context: &mut OptimizerContext,
         query_graph: &mut QueryGraph,
         rules: &Vec<usize>,
         node_id: &mut NodeId,
     ) -> bool {
         let mut can_continue = true;
-        for rule in rules
-            .iter()
-            .map(|id| self.optimizer.rules.get(*id).unwrap())
-        {
+        for rule in rules.iter().map(|id| self.rules.get(*id).unwrap()) {
             if let Some(replacements) = rule.apply(query_graph, *node_id) {
+                Optimizer::notify_replacements(context, &**rule, query_graph, &replacements);
                 for (original_node, replacement_node) in replacements {
-                    Optimizer::notify_replacement(
-                        self.context,
-                        &**rule,
-                        query_graph,
-                        original_node,
-                        replacement_node,
-                    );
                     // Replace the node in the graph and apply the remaining rules to the
                     // returned one.
                     query_graph.replace_node(original_node, replacement_node);
@@ -222,7 +206,12 @@ impl QueryGraphPrePostVisitorMut for OptimizationVisitor<'_, '_, '_> {
         query_graph: &mut QueryGraph,
         node_id: &mut NodeId,
     ) -> PreOrderVisitationResult {
-        if self.apply_rule_list(query_graph, &self.optimizer.top_down_rules, node_id) {
+        if self.optimizer.apply_rule_list(
+            self.context,
+            query_graph,
+            &self.optimizer.top_down_rules,
+            node_id,
+        ) {
             PreOrderVisitationResult::VisitInputs
         } else {
             PreOrderVisitationResult::Abort
@@ -234,7 +223,12 @@ impl QueryGraphPrePostVisitorMut for OptimizationVisitor<'_, '_, '_> {
         query_graph: &mut QueryGraph,
         node_id: &mut NodeId,
     ) -> PostOrderVisitationResult {
-        if self.apply_rule_list(query_graph, &self.optimizer.bottom_up_rules, node_id) {
+        if self.optimizer.apply_rule_list(
+            self.context,
+            query_graph,
+            &self.optimizer.bottom_up_rules,
+            node_id,
+        ) {
             PostOrderVisitationResult::Continue
         } else {
             PostOrderVisitationResult::Abort
