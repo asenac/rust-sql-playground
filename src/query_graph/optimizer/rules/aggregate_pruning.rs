@@ -1,18 +1,15 @@
-use std::rc::Rc;
+use itertools::Itertools;
 
-use crate::{
-    query_graph::{
-        optimizer::{
-            utils::{
-                apply_map_to_parent_projections_and_replace_input,
-                required_columns_from_parent_projections, required_columns_to_column_map,
-            },
-            OptRuleType, Rule,
+use crate::query_graph::{
+    optimizer::{
+        utils::{
+            apply_map_to_parent_projections_and_replace_input,
+            required_columns_from_parent_projections, required_columns_to_column_map,
         },
-        properties::num_columns,
-        NodeId, QueryGraph, QueryNode,
+        OptRuleType, Rule,
     },
-    scalar_expr::AggregateExpr,
+    properties::num_columns,
+    NodeId, QueryGraph, QueryNode,
 };
 
 /// Rule that given a shared aggregate where all its parents are pruning projections, computes
@@ -48,7 +45,7 @@ impl Rule for AggregatePruningRule {
                     return None;
                 }
                 let new_group_key = group_key.clone();
-                let new_aggregates: Vec<Rc<AggregateExpr>> = aggregates
+                let new_aggregates = aggregates
                     .iter()
                     .enumerate()
                     .filter(|(i, _)| {
@@ -56,7 +53,7 @@ impl Rule for AggregatePruningRule {
                         required_columns.contains(&col_offset)
                     })
                     .map(|(_, e)| e.clone())
-                    .collect();
+                    .collect_vec();
                 assert_ne!(new_aggregates.len(), aggregates.len());
                 let new_input = *input;
                 let new_aggregate = query_graph.add_node(QueryNode::Aggregate {
