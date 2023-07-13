@@ -1,10 +1,12 @@
 use std::{collections::HashMap, rc::Rc};
 
+use itertools::Itertools;
+
 use crate::{
     data_type::DataType,
     query_graph::{
         optimizer::{OptRuleType, SingleReplacementRule},
-        properties::{column_provenance, row_type, ColumnProvenanceInfo},
+        properties::{column_provenance, num_columns, row_type, ColumnProvenanceInfo},
         JoinType, NodeId, QueryGraph, QueryNode,
     },
     scalar_expr::{
@@ -94,7 +96,7 @@ fn do_all_parents_reject_null_from_non_preserving(
                         ) {
                             // 2.) and 3.)
                             let rewrite_map =
-                                build_rewrite_map(query_graph, &prov, non_preserving_node_id);
+                                build_rewrite_map(query_graph, &prov, non_preserving_node_id, 0);
                             let input_row_type = row_type(query_graph, *input);
                             // 4.) and 5.)
                             if any_condition_rejects_nulls(
@@ -112,15 +114,72 @@ fn do_all_parents_reject_null_from_non_preserving(
                         }
                     }
                     QueryNode::Join {
-                        conditions: _,
-                        join_type: _,
-                        left: _,
-                        right: _,
+                        conditions,
+                        join_type: JoinType::Inner,
+                        left,
+                        right,
                     } => {
-                        // TODO(asenac) for joins, how do we know which one is the input node that
-                        // leads to the non-preserving node?. Otherwise, the process is the same
-                        // as for filters.
-                        PreOrderVisitationResult::VisitInputs
+                        if let Some(prov) = find_path_to_non_preserving_side(
+                            query_graph,
+                            *left,
+                            non_preserving_node_id,
+                            join_node_id,
+                            non_preserving_side,
+                        ) {
+                            // 2.) and 3.)
+                            let rewrite_map =
+                                build_rewrite_map(query_graph, &prov, non_preserving_node_id, 0);
+                            // TODO(asenac) consider caching this as a property
+                            let input_row_type = row_type(query_graph, *left)
+                                .iter()
+                                .chain(row_type(query_graph, *right).iter())
+                                .cloned()
+                                .collect_vec();
+                            // 4.) and 5.)
+                            if any_condition_rejects_nulls(
+                                &rewrite_map,
+                                &input_row_type,
+                                conditions,
+                            ) {
+                                rejects_null_from_non_preserving = true;
+                                PreOrderVisitationResult::Abort
+                            } else {
+                                PreOrderVisitationResult::VisitInputs
+                            }
+                        } else if let Some(prov) = find_path_to_non_preserving_side(
+                            query_graph,
+                            *right,
+                            non_preserving_node_id,
+                            join_node_id,
+                            non_preserving_side,
+                        ) {
+                            // 2.) and 3.)
+                            let left_num_columns = num_columns(query_graph, *left);
+                            let rewrite_map = build_rewrite_map(
+                                query_graph,
+                                &prov,
+                                non_preserving_node_id,
+                                left_num_columns,
+                            );
+                            let input_row_type = row_type(query_graph, *left)
+                                .iter()
+                                .chain(row_type(query_graph, *right).iter())
+                                .cloned()
+                                .collect_vec();
+                            // 4.) and 5.)
+                            if any_condition_rejects_nulls(
+                                &rewrite_map,
+                                &input_row_type,
+                                conditions,
+                            ) {
+                                rejects_null_from_non_preserving = true;
+                                PreOrderVisitationResult::Abort
+                            } else {
+                                PreOrderVisitationResult::VisitInputs
+                            }
+                        } else {
+                            PreOrderVisitationResult::Abort
+                        }
                     }
                     // TODO(asenac) for aggregates we could do something
                     QueryNode::Aggregate { .. } | _ => PreOrderVisitationResult::Abort,
@@ -178,6 +237,8 @@ fn build_rewrite_map(
     query_graph: &QueryGraph,
     prov: &ColumnProvenanceInfo,
     non_preserving_node_id: NodeId,
+    // The initial offset used to refer the columns from the given provenance.
+    output_column_offset: usize,
 ) -> HashMap<usize, ScalarExprRef> {
     let non_prev_row_type = row_type(query_graph, non_preserving_node_id);
     // column_expressions are written in terms of the output of non_preserving_node_id.
@@ -208,7 +269,7 @@ fn build_rewrite_map(
                 // If the expression can be reduced to a literal, we can add it to
                 // the replacement map.
                 if reduced_expr.is_literal() {
-                    return Some((i, reduced_expr));
+                    return Some((output_column_offset + i, reduced_expr));
                 }
             }
             None
@@ -216,6 +277,8 @@ fn build_rewrite_map(
         .collect::<HashMap<_, _>>()
 }
 
+/// Check whether any of the given conditions evaluates to null or false after
+/// applying the replacements in the given map.
 fn any_condition_rejects_nulls(
     rewrite_map: &HashMap<usize, ScalarExprRef>,
     row_type: &[DataType],

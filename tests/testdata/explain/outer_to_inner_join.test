@@ -243,7 +243,70 @@ Optimized:
 [2] Inner Join [eq(ref_0, ref_10)]
     - Num Columns: 15
     - Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string
-    - Pulled Up Predicates: eq(ref_0, ref_10)
+    - Pulled Up Predicates: eq(ref_0, ref_10), eq(ref_5, ref_10)
+  [0] TableScan id: 1, num_columns: 5
+      - Num Columns: 5
+      - Row Type: string, string, string, string, string
+  [3] Inner Join [eq(ref_0, ref_5)]
+      - Num Columns: 10
+      - Row Type: string, string, string, string, string, string, string, string, string, string
+      - Pulled Up Predicates: eq(ref_0, ref_5)
+    Recurring node 0
+    Recurring node 0
+
+initial {"nodes":[{"id":"2","label":"[2] Inner Join [eq(ref_0, ref_10)]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ref_10)"]},{"id":"0","label":"[0] TableScan id: 1, num_columns: 5","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"1","label":"[1] Left Outer Join [eq(ref_0, ref_5)]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string"]}],"edges":[{"from":"2","to":"0","label":"input 0"},{"from":"2","to":"1","label":"input 1"},{"from":"1","to":"0","label":"input 0"},{"from":"1","to":"0","label":"input 1"}]}
+step OuterToInnerJoinRule {"nodes":[{"id":"2","label":"[2] Inner Join [eq(ref_0, ref_10)]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ref_10)"]},{"id":"0","label":"[0] TableScan id: 1, num_columns: 5","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"1","label":"[1] Left Outer Join [eq(ref_0, ref_5)]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string"]},{"id":"3","label":"[3] Inner Join [eq(ref_0, ref_5)]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ref_5)"]}],"edges":[{"from":"2","to":"0","label":"input 0"},{"from":"2","to":"1","label":"input 1"},{"from":"1","to":"0","label":"input 0"},{"from":"1","to":"0","label":"input 1"},{"from":"3","to":"0","label":"input 0"},{"from":"3","to":"0","label":"input 1"},{"from":"1","to":"3","label":"OuterToInnerJoinRule"}]}
+final {"nodes":[{"id":"2","label":"[2] Inner Join [eq(ref_0, ref_10)]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ref_10), eq(ref_5, ref_10)"]},{"id":"0","label":"[0] TableScan id: 1, num_columns: 5","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"3","label":"[3] Inner Join [eq(ref_0, ref_5)]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ref_5)"]}],"edges":[{"from":"2","to":"0","label":"input 0"},{"from":"2","to":"3","label":"input 1"},{"from":"3","to":"0","label":"input 0"},{"from":"3","to":"0","label":"input 1"}]}
+----
+----
+
+run
+outer_to_inner_5
+----
+----
+[2] Inner Join [eq(ref_0, ref_5)]
+    - Num Columns: 15
+    - Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string
+    - Pulled Up Predicates: eq(ref_0, ref_5)
+  [1] Left Outer Join [eq(ref_0, ref_5)]
+      - Num Columns: 10
+      - Row Type: string, string, string, string, string, string, string, string, string, string
+    [0] TableScan id: 1, num_columns: 5
+        - Num Columns: 5
+        - Row Type: string, string, string, string, string
+    Recurring node 0
+  Recurring node 0
+
+
+Optimized:
+[2] Inner Join [eq(ref_0, ref_5)]
+    - Num Columns: 15
+    - Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string
+    - Pulled Up Predicates: eq(ref_0, ref_5)
+  [3] Inner Join [eq(ref_0, ref_5)]
+      - Num Columns: 10
+      - Row Type: string, string, string, string, string, string, string, string, string, string
+      - Pulled Up Predicates: eq(ref_0, ref_5)
+    [0] TableScan id: 1, num_columns: 5
+        - Num Columns: 5
+        - Row Type: string, string, string, string, string
+    Recurring node 0
+  Recurring node 0
+
+initial {"nodes":[{"id":"2","label":"[2] Inner Join [eq(ref_0, ref_5)]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ref_5)"]},{"id":"1","label":"[1] Left Outer Join [eq(ref_0, ref_5)]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string"]},{"id":"0","label":"[0] TableScan id: 1, num_columns: 5","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"2","to":"1","label":"input 0"},{"from":"2","to":"0","label":"input 1"},{"from":"1","to":"0","label":"input 0"},{"from":"1","to":"0","label":"input 1"}]}
+step OuterToInnerJoinRule {"nodes":[{"id":"2","label":"[2] Inner Join [eq(ref_0, ref_5)]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ref_5)"]},{"id":"1","label":"[1] Left Outer Join [eq(ref_0, ref_5)]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string"]},{"id":"0","label":"[0] TableScan id: 1, num_columns: 5","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"3","label":"[3] Inner Join [eq(ref_0, ref_5)]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ref_5)"]}],"edges":[{"from":"2","to":"1","label":"input 0"},{"from":"2","to":"0","label":"input 1"},{"from":"1","to":"0","label":"input 0"},{"from":"1","to":"0","label":"input 1"},{"from":"3","to":"0","label":"input 0"},{"from":"3","to":"0","label":"input 1"},{"from":"1","to":"3","label":"OuterToInnerJoinRule"}]}
+final {"nodes":[{"id":"2","label":"[2] Inner Join [eq(ref_0, ref_5)]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ref_5)"]},{"id":"3","label":"[3] Inner Join [eq(ref_0, ref_5)]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ref_5)"]},{"id":"0","label":"[0] TableScan id: 1, num_columns: 5","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"2","to":"3","label":"input 0"},{"from":"2","to":"0","label":"input 1"},{"from":"3","to":"0","label":"input 0"},{"from":"3","to":"0","label":"input 1"}]}
+----
+----
+
+run
+outer_to_inner_negative_3
+----
+----
+[2] Inner Join [eq(ref_0, ref_5)]
+    - Num Columns: 15
+    - Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string
+    - Pulled Up Predicates: eq(ref_0, ref_5)
   [0] TableScan id: 1, num_columns: 5
       - Num Columns: 5
       - Row Type: string, string, string, string, string
@@ -253,8 +316,23 @@ Optimized:
     Recurring node 0
     Recurring node 0
 
-initial {"nodes":[{"id":"2","label":"[2] Inner Join [eq(ref_0, ref_10)]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ref_10)"]},{"id":"0","label":"[0] TableScan id: 1, num_columns: 5","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"1","label":"[1] Left Outer Join [eq(ref_0, ref_5)]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string"]}],"edges":[{"from":"2","to":"0","label":"input 0"},{"from":"2","to":"1","label":"input 1"},{"from":"1","to":"0","label":"input 0"},{"from":"1","to":"0","label":"input 1"}]}
 
-final {"nodes":[{"id":"2","label":"[2] Inner Join [eq(ref_0, ref_10)]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ref_10)"]},{"id":"0","label":"[0] TableScan id: 1, num_columns: 5","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"1","label":"[1] Left Outer Join [eq(ref_0, ref_5)]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string"]}],"edges":[{"from":"2","to":"0","label":"input 0"},{"from":"2","to":"1","label":"input 1"},{"from":"1","to":"0","label":"input 0"},{"from":"1","to":"0","label":"input 1"}]}
+Optimized:
+[2] Inner Join [eq(ref_0, ref_5)]
+    - Num Columns: 15
+    - Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string
+    - Pulled Up Predicates: eq(ref_0, ref_5)
+  [0] TableScan id: 1, num_columns: 5
+      - Num Columns: 5
+      - Row Type: string, string, string, string, string
+  [1] Left Outer Join [eq(ref_0, ref_5)]
+      - Num Columns: 10
+      - Row Type: string, string, string, string, string, string, string, string, string, string
+    Recurring node 0
+    Recurring node 0
+
+initial {"nodes":[{"id":"2","label":"[2] Inner Join [eq(ref_0, ref_5)]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ref_5)"]},{"id":"0","label":"[0] TableScan id: 1, num_columns: 5","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"1","label":"[1] Left Outer Join [eq(ref_0, ref_5)]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string"]}],"edges":[{"from":"2","to":"0","label":"input 0"},{"from":"2","to":"1","label":"input 1"},{"from":"1","to":"0","label":"input 0"},{"from":"1","to":"0","label":"input 1"}]}
+
+final {"nodes":[{"id":"2","label":"[2] Inner Join [eq(ref_0, ref_5)]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ref_5)"]},{"id":"0","label":"[0] TableScan id: 1, num_columns: 5","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"1","label":"[1] Left Outer Join [eq(ref_0, ref_5)]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string"]}],"edges":[{"from":"2","to":"0","label":"input 0"},{"from":"2","to":"1","label":"input 1"},{"from":"1","to":"0","label":"input 0"},{"from":"1","to":"0","label":"input 1"}]}
 ----
 ----
