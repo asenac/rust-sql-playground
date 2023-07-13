@@ -1,6 +1,7 @@
 use std::{collections::HashMap, rc::Rc};
 
 use crate::{
+    data_type::DataType,
     query_graph::{
         optimizer::{OptRuleType, SingleReplacementRule},
         properties::{column_provenance, row_type, ColumnProvenanceInfo},
@@ -91,76 +92,21 @@ fn do_all_parents_reject_null_from_non_preserving(
                             join_node_id,
                             non_preserving_side,
                         ) {
+                            // 2.) and 3.)
+                            let rewrite_map =
+                                build_rewrite_map(query_graph, &prov, non_preserving_node_id);
                             let input_row_type = row_type(query_graph, *input);
-                            let non_prev_row_type = row_type(query_graph, non_preserving_node_id);
-                            let rewrite_map = prov
-                                .column_expressions
-                                .iter()
-                                .map(|e| {
-                                    // 2.)
-                                    if let Some(e) = e {
-                                        return Some(rewrite_expr_post(
-                                            &mut |curr_expr: &ScalarExprRef| {
-                                                if let ScalarExpr::InputRef { index } =
-                                                    curr_expr.as_ref()
-                                                {
-                                                    return Some(
-                                                        ScalarExpr::null_literal(
-                                                            non_prev_row_type[*index].clone(),
-                                                        )
-                                                        .into(),
-                                                    );
-                                                }
-                                                None
-                                            },
-                                            e,
-                                        ));
-                                    }
-                                    None
-                                })
-                                .enumerate()
-                                .filter_map(|(i, e)| {
-                                    // 3.)
-                                    if let Some(e) = e {
-                                        let reduced_expr =
-                                            reduce_expr_recursively(&e, &input_row_type);
-                                        if reduced_expr.is_literal() {
-                                            return Some((i, reduced_expr));
-                                        }
-                                    }
-                                    None
-                                })
-                                .collect::<HashMap<_, _>>();
-                            for condition in conditions.iter() {
-                                // 4.)
-                                let rewritten_expr = rewrite_expr_post(
-                                    &mut |curr_expr: &ScalarExprRef| {
-                                        if let ScalarExpr::InputRef { index } = curr_expr.as_ref() {
-                                            return rewrite_map.get(index).cloned();
-                                        }
-                                        None
-                                    },
-                                    condition,
-                                );
-                                // 5.)
-                                let reduced_expr =
-                                    reduce_expr_recursively(&rewritten_expr, &input_row_type);
-                                match reduced_expr.as_ref() {
-                                    ScalarExpr::Literal(Literal {
-                                        value: Value::Bool(false),
-                                        data_type: _,
-                                    })
-                                    | ScalarExpr::Literal(Literal {
-                                        value: Value::Null,
-                                        data_type: _,
-                                    }) => {
-                                        rejects_null_from_non_preserving = true;
-                                        return PreOrderVisitationResult::Abort;
-                                    }
-                                    _ => {}
-                                }
+                            // 4.) and 5.)
+                            if any_condition_rejects_nulls(
+                                &rewrite_map,
+                                &input_row_type,
+                                conditions,
+                            ) {
+                                rejects_null_from_non_preserving = true;
+                                PreOrderVisitationResult::Abort
+                            } else {
+                                PreOrderVisitationResult::VisitInputs
                             }
-                            PreOrderVisitationResult::VisitInputs
                         } else {
                             PreOrderVisitationResult::Abort
                         }
@@ -223,4 +169,84 @@ fn last_two_nodes_in_inverse_path(
         current = query_graph.node(current).get_input(*input);
     }
     (parent, current)
+}
+
+/// Build the replacement map to replace any reference to the column reference that
+/// comes from the given provenance that can be reduced to a literal in a condition
+/// on top of the node the provenance info is associated with.
+fn build_rewrite_map(
+    query_graph: &QueryGraph,
+    prov: &ColumnProvenanceInfo,
+    non_preserving_node_id: NodeId,
+) -> HashMap<usize, ScalarExprRef> {
+    let non_prev_row_type = row_type(query_graph, non_preserving_node_id);
+    // column_expressions are written in terms of the output of non_preserving_node_id.
+    prov.column_expressions
+        .iter()
+        // Replace the input refs with nulls (properly typed).
+        .map(|e| {
+            if let Some(e) = e {
+                return Some(rewrite_expr_post(
+                    &mut |curr_expr: &ScalarExprRef| {
+                        if let ScalarExpr::InputRef { index } = curr_expr.as_ref() {
+                            return Some(
+                                ScalarExpr::null_literal(non_prev_row_type[*index].clone()).into(),
+                            );
+                        }
+                        None
+                    },
+                    e,
+                ));
+            }
+            None
+        })
+        .enumerate()
+        .filter_map(|(i, e)| {
+            if let Some(e) = e {
+                // Reduce the expression containing nulls instead of input refs
+                let reduced_expr = reduce_expr_recursively(&e, &non_prev_row_type);
+                // If the expression can be reduced to a literal, we can add it to
+                // the replacement map.
+                if reduced_expr.is_literal() {
+                    return Some((i, reduced_expr));
+                }
+            }
+            None
+        })
+        .collect::<HashMap<_, _>>()
+}
+
+fn any_condition_rejects_nulls(
+    rewrite_map: &HashMap<usize, ScalarExprRef>,
+    row_type: &[DataType],
+    conditions: &Vec<ScalarExprRef>,
+) -> bool {
+    for condition in conditions.iter() {
+        // 4.)
+        let rewritten_expr = rewrite_expr_post(
+            &mut |curr_expr: &ScalarExprRef| {
+                if let ScalarExpr::InputRef { index } = curr_expr.as_ref() {
+                    return rewrite_map.get(index).cloned();
+                }
+                None
+            },
+            condition,
+        );
+        // 5.)
+        let reduced_expr = reduce_expr_recursively(&rewritten_expr, row_type);
+        match reduced_expr.as_ref() {
+            ScalarExpr::Literal(Literal {
+                value: Value::Bool(false),
+                data_type: _,
+            })
+            | ScalarExpr::Literal(Literal {
+                value: Value::Null,
+                data_type: _,
+            }) => {
+                return true;
+            }
+            _ => {}
+        }
+    }
+    return false;
 }
