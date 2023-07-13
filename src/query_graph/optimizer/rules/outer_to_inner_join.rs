@@ -166,10 +166,10 @@ fn do_all_parents_reject_null_from_non_preserving(
                         }
                     }
                     QueryNode::Join {
-                        conditions,
-                        join_type,
-                        left,
-                        right,
+                        conditions: _,
+                        join_type: _,
+                        left: _,
+                        right: _,
                     } => {
                         // TODO(asenac) for joins, how do we know which one is the input node that
                         // leads to the non-preserving node?. Otherwise, the process is the same

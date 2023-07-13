@@ -85,7 +85,7 @@ impl BinaryOp {
         }
     }
 
-    pub fn return_type(&self, operand_types: &[DataType]) -> DataType {
+    pub fn return_type(&self, _operand_types: &[DataType]) -> DataType {
         match self {
             BinaryOp::RawEq
             | BinaryOp::Eq
@@ -120,7 +120,7 @@ impl NaryOp {
         }
     }
 
-    pub fn return_type(&self, operand_types: &[DataType]) -> DataType {
+    pub fn return_type(&self, _operand_types: &[DataType]) -> DataType {
         match self {
             NaryOp::And | NaryOp::Or => DataType::Bool,
             NaryOp::Concat => DataType::String,
@@ -391,7 +391,7 @@ impl ToScalarExpr for Rc<ExtendedScalarExpr> {
                     stack.truncate(stack.len() - operands.len());
                     expr
                 }
-                ExtendedScalarExpr::Aggregate { op, operands } => {
+                ExtendedScalarExpr::Aggregate { .. } => {
                     stack.clear();
                     return PostOrderVisitationResult::Abort;
                 }

@@ -1,7 +1,5 @@
 use std::rc::Rc;
 
-use itertools::Itertools;
-
 use crate::{
     query_graph::{
         optimizer::{
