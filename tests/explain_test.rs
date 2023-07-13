@@ -1381,6 +1381,76 @@ mod test_queries {
             query_graph.set_entry_node(join_2);
             query_graph
         });
+        queries.insert("outer_to_inner_negative_4".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let join_1 = query_graph.join(
+                JoinType::LeftOuter,
+                table_scan_1,
+                table_scan_1,
+                vec![ScalarExpr::input_ref(0)
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).into())
+                    .into()],
+            );
+            let join_2 = query_graph.join(
+                JoinType::LeftOuter,
+                join_1,
+                table_scan_1,
+                vec![ScalarExpr::input_ref(0)
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(10).into())
+                    .into()],
+            );
+            query_graph.set_entry_node(join_2);
+            query_graph
+        });
+        queries.insert("outer_to_inner_6".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let join_1 = query_graph.join(
+                JoinType::LeftOuter,
+                table_scan_1,
+                table_scan_1,
+                vec![ScalarExpr::input_ref(0)
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).into())
+                    .into()],
+            );
+            let join_2 = query_graph.join(
+                JoinType::LeftOuter,
+                table_scan_1,
+                join_1,
+                // 10 is the first column coming from the non-preserving side
+                // of the lower join
+                vec![ScalarExpr::input_ref(0)
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(10).into())
+                    .into()],
+            );
+            query_graph.set_entry_node(join_2);
+            query_graph
+        });
+        queries.insert("outer_to_inner_7".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let join_1 = query_graph.join(
+                JoinType::LeftOuter,
+                table_scan_1,
+                table_scan_1,
+                vec![ScalarExpr::input_ref(0)
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).into())
+                    .into()],
+            );
+            let join_2 = query_graph.join(
+                JoinType::RightOuter,
+                join_1,
+                table_scan_1,
+                // 5 is the first column coming from the non-preserving side
+                // of the lower join
+                vec![ScalarExpr::input_ref(5)
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(10).into())
+                    .into()],
+            );
+            query_graph.set_entry_node(join_2);
+            query_graph
+        });
     }
 
     pub(crate) fn expression_reduction(queries: &mut HashMap<String, QueryGraph>) {

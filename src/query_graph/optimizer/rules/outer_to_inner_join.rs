@@ -1,7 +1,5 @@
 use std::{collections::HashMap, rc::Rc};
 
-use itertools::Itertools;
-
 use crate::{
     data_type::DataType,
     query_graph::{
@@ -117,64 +115,50 @@ fn do_all_parents_reject_null_from_non_preserving(
                     }
                     QueryNode::Join {
                         conditions,
-                        join_type: JoinType::Inner,
+                        join_type,
                         left,
                         right,
                     } => {
-                        if let Some(prov) = find_path_to_non_preserving_side(
-                            query_graph,
-                            *left,
-                            non_preserving_node_id,
-                            join_node_id,
-                            non_preserving_side,
-                        ) {
-                            // 2.) and 3.)
-                            let rewrite_map =
-                                build_rewrite_map(query_graph, &prov, non_preserving_node_id, 0);
-                            let input_row_type =
-                                cross_product_row_type(query_graph, node_id).unwrap();
-                            // 4.) and 5.)
-                            if any_condition_rejects_nulls(
-                                &rewrite_map,
-                                &input_row_type,
-                                conditions,
-                            ) {
-                                rejects_null_from_non_preserving = true;
-                                PreOrderVisitationResult::Abort
-                            } else {
-                                PreOrderVisitationResult::VisitInputs
-                            }
-                        } else if let Some(prov) = find_path_to_non_preserving_side(
-                            query_graph,
-                            *right,
-                            non_preserving_node_id,
-                            join_node_id,
-                            non_preserving_side,
-                        ) {
-                            // 2.) and 3.)
-                            let left_num_columns = num_columns(query_graph, *left);
-                            let rewrite_map = build_rewrite_map(
+                        let left_num_columns = num_columns(query_graph, *left);
+                        // Null-rejecting predicates in inner joins reject nulls from both inputs,
+                        // but for outer joins only nulls from their non-preserving side are rejected.
+                        let paths = match join_type {
+                            JoinType::Inner => vec![(*left, 0), (*right, left_num_columns)],
+                            JoinType::RightOuter => vec![(*left, 0)],
+                            JoinType::LeftOuter => vec![(*right, left_num_columns)],
+                            _ => vec![],
+                        };
+                        for (input, column_offset) in paths {
+                            if let Some(prov) = find_path_to_non_preserving_side(
                                 query_graph,
-                                &prov,
+                                input,
                                 non_preserving_node_id,
-                                left_num_columns,
-                            );
-                            let input_row_type =
-                                cross_product_row_type(query_graph, node_id).unwrap();
-                            // 4.) and 5.)
-                            if any_condition_rejects_nulls(
-                                &rewrite_map,
-                                &input_row_type,
-                                conditions,
+                                join_node_id,
+                                non_preserving_side,
                             ) {
-                                rejects_null_from_non_preserving = true;
-                                PreOrderVisitationResult::Abort
-                            } else {
-                                PreOrderVisitationResult::VisitInputs
+                                // 2.) and 3.)
+                                let rewrite_map = build_rewrite_map(
+                                    query_graph,
+                                    &prov,
+                                    non_preserving_node_id,
+                                    column_offset,
+                                );
+                                let input_row_type =
+                                    cross_product_row_type(query_graph, node_id).unwrap();
+                                // 4.) and 5.)
+                                if any_condition_rejects_nulls(
+                                    &rewrite_map,
+                                    &input_row_type,
+                                    conditions,
+                                ) {
+                                    rejects_null_from_non_preserving = true;
+                                    return PreOrderVisitationResult::Abort;
+                                } else {
+                                    return PreOrderVisitationResult::VisitInputs;
+                                }
                             }
-                        } else {
-                            PreOrderVisitationResult::Abort
                         }
+                        PreOrderVisitationResult::Abort
                     }
                     // TODO(asenac) for aggregates we could do something
                     QueryNode::Aggregate { .. } | _ => PreOrderVisitationResult::Abort,
