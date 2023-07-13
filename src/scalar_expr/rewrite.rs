@@ -387,7 +387,7 @@ where
     E: RewritableExpr,
     F: FnMut(&Rc<E>) -> Option<Rc<E>>,
 {
-    let mut visitor = ExprRewriterPost::new(rewrite);
+    let mut visitor = ExprRewriterPrePost::new(rewrite);
     visit_expr(expr, &mut visitor);
     assert!(visitor.stack.len() == 1);
     visitor.stack.into_iter().next().unwrap()
