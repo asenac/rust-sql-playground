@@ -8,7 +8,7 @@ use crate::{
     },
     scalar_expr::{
         equivalence_class::to_replacement_map, rewrite::replace_sub_expressions_pre, ScalarExpr,
-        ToRef,
+        ScalarExprRef,
     },
 };
 
@@ -33,7 +33,7 @@ impl SingleReplacementRule for FilterNormalizationRule {
             let classes = equivalence_classes(query_graph, *input);
             let predicates = pulled_up_predicates(query_graph, *input);
             let mut replacement_map = to_replacement_map(&classes);
-            let true_literal = ScalarExpr::true_literal().to_ref();
+            let true_literal: ScalarExprRef = ScalarExpr::true_literal().into();
             // Anything that is already enforced by a descendent node, can be assumed
             // to be true.
             replacement_map.extend(

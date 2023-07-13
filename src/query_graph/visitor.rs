@@ -233,7 +233,7 @@ mod tests {
 
     use crate::{
         query_graph::{NodeId, QueryGraph, QueryNode},
-        scalar_expr::{ScalarExpr, ToRef},
+        scalar_expr::ScalarExpr,
         visitor_utils::PreOrderVisitationResult,
     };
 
@@ -257,14 +257,14 @@ mod tests {
         let mut input = table_scan;
         let mut branch1 = Vec::new();
         for _ in 0..5 {
-            input = query_graph.project(input, vec![ScalarExpr::false_literal().to_ref()]);
+            input = query_graph.project(input, vec![ScalarExpr::false_literal().into()]);
             branch1.push(input);
         }
 
         let mut branch2 = vec![];
         input = table_scan;
         for _ in 0..4 {
-            input = query_graph.project(input, vec![ScalarExpr::true_literal().to_ref()]);
+            input = query_graph.project(input, vec![ScalarExpr::true_literal().into()]);
             branch2.push(input);
         }
 

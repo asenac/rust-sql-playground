@@ -13,39 +13,39 @@ fn main() {
             vec![ScalarExpr::input_ref(0)
                 .binary(
                     BinaryOp::Eq,
-                    ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                    ScalarExpr::string_literal("hello".to_string()).into(),
                 )
-                .to_ref()],
+                .into()],
         );
         let filter_2 = query_graph.filter(
             filter_1,
             vec![ScalarExpr::input_ref(5)
                 .binary(
                     BinaryOp::Eq,
-                    ScalarExpr::string_literal("world".to_string()).to_ref(),
+                    ScalarExpr::string_literal("world".to_string()).into(),
                 )
-                .to_ref()],
+                .into()],
         );
         let project_1 = query_graph.project(
             filter_2,
             vec![
-                ScalarExpr::input_ref(0).to_ref(),
-                ScalarExpr::input_ref(9).to_ref(),
+                ScalarExpr::input_ref(0).into(),
+                ScalarExpr::input_ref(9).into(),
                 ScalarExpr::nary(
                     NaryOp::Concat,
                     vec![
-                        ScalarExpr::input_ref(2).to_ref(),
-                        ScalarExpr::input_ref(4).to_ref(),
+                        ScalarExpr::input_ref(2).into(),
+                        ScalarExpr::input_ref(4).into(),
                     ],
                 )
-                .to_ref(),
+                .into(),
             ],
         );
         let project_2 = query_graph.project(
             project_1,
             vec![
-                ScalarExpr::input_ref(0).to_ref(),
-                ScalarExpr::input_ref(2).to_ref(),
+                ScalarExpr::input_ref(0).into(),
+                ScalarExpr::input_ref(2).into(),
             ],
         );
         query_graph.set_entry_node(project_2);

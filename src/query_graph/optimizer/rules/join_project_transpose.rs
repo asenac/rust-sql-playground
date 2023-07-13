@@ -8,7 +8,7 @@ use crate::{
         properties::num_columns,
         NodeId, QueryGraph, QueryNode,
     },
-    scalar_expr::{rewrite::apply_column_map, ScalarExpr, ToRef},
+    scalar_expr::{rewrite::apply_column_map, ScalarExpr},
 };
 
 /// Given a non-sorted projection at the input of a join, it creates a new join with
@@ -58,7 +58,7 @@ impl SingleReplacementRule for JoinProjectTransposeRule {
                     let final_project = column_map
                         .iter()
                         .sorted_by_key(|(_, j)| *j)
-                        .map(|(i, _)| ScalarExpr::input_ref(*i).to_ref())
+                        .map(|(i, _)| ScalarExpr::input_ref(*i).into())
                         .collect_vec();
 
                     let join_type = *join_type;
@@ -96,7 +96,7 @@ impl SingleReplacementRule for JoinProjectTransposeRule {
                     let final_project = column_map
                         .iter()
                         .sorted_by_key(|(_, j)| *j)
-                        .map(|(i, _)| ScalarExpr::input_ref(*i).to_ref())
+                        .map(|(i, _)| ScalarExpr::input_ref(*i).into())
                         .collect_vec();
 
                     let join_type = *join_type;

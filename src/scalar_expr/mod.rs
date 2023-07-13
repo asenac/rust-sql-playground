@@ -171,7 +171,7 @@ impl ScalarExpr {
     pub fn binary(self, op: BinaryOp, rhs: ScalarExprRef) -> ScalarExpr {
         ScalarExpr::BinaryOp {
             op,
-            left: self.to_ref(),
+            left: self.into(),
             right: rhs,
         }
     }
@@ -403,16 +403,6 @@ impl ToScalarExpr for Rc<ExtendedScalarExpr> {
     }
 }
 
-pub trait ToRef: Sized {
-    fn to_ref(self) -> Rc<Self> {
-        Rc::new(self)
-    }
-}
-
-impl ToRef for AggregateExpr {}
-impl ToRef for ExtendedScalarExpr {}
-impl ToRef for ScalarExpr {}
-
 pub trait ToExtendedExpr {
     fn to_extended_expr(&self) -> ExtendedScalarExprRef;
 }
@@ -462,7 +452,7 @@ impl ToExtendedExpr for Rc<AggregateExpr> {
             operands: self
                 .operands
                 .iter()
-                .map(|i| ExtendedScalarExpr::InputRef { index: *i }.to_ref())
+                .map(|i| ExtendedScalarExpr::InputRef { index: *i }.into())
                 .collect_vec(),
         })
     }

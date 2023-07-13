@@ -14,7 +14,7 @@ use crate::{
         properties::num_columns,
         NodeId, QueryGraph, QueryNode,
     },
-    scalar_expr::{AggregateExpr, ScalarExpr, ToRef},
+    scalar_expr::AggregateExpr,
 };
 
 /// Rule that given a shared aggregate where all its parents are pruning projections, computes

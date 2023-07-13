@@ -10,7 +10,7 @@ use crate::{
         optimizer::{utils::sort_projection, OptRuleType, SingleReplacementRule},
         NodeId, QueryGraph, QueryNode,
     },
-    scalar_expr::{AggregateExpr, ScalarExpr, ToRef},
+    scalar_expr::{AggregateExpr, ScalarExpr},
 };
 
 /// Given an aggregate node over a non-sorted projection, it creates a new aggregate node
@@ -73,7 +73,7 @@ impl SingleReplacementRule for AggregateProjectTransposeRule {
                         .map(|(i, _)| i)
                         // ... and the aggregates
                         .chain(group_key_len..group_key_len + aggregates_len)
-                        .map(|i| ScalarExpr::input_ref(i).to_ref())
+                        .map(|i| ScalarExpr::input_ref(i).into())
                         .collect_vec();
 
                     let new_project = query_graph.project(*proj_input, sorted_proj);

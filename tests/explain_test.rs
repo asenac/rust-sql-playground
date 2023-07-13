@@ -7,15 +7,15 @@ use rust_sql::query_graph::optimizer::{
     build_rule, Optimizer, OptimizerContext, OptimizerListener, Replacement, DEFAULT_OPTIMIZER,
 };
 use rust_sql::query_graph::{JoinType, QueryGraph, QueryNode};
+use rust_sql::scalar_expr::BinaryOp;
 use rust_sql::scalar_expr::NaryOp;
 use rust_sql::scalar_expr::ScalarExpr;
-use rust_sql::scalar_expr::{BinaryOp, ToRef};
 
 mod test_queries {
     use itertools::Itertools;
     use rust_sql::{
         data_type::DataType,
-        scalar_expr::{AggregateExpr, AggregateOp, ToRef},
+        scalar_expr::{AggregateExpr, AggregateOp, ScalarExprRef},
     };
 
     use super::*;
@@ -28,7 +28,7 @@ mod test_queries {
                 table_scan_1,
                 (0..5)
                     .rev()
-                    .map(|i| ScalarExpr::input_ref(i).to_ref())
+                    .map(|i| ScalarExpr::input_ref(i).into())
                     .collect_vec(),
             );
             let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
@@ -38,12 +38,12 @@ mod test_queries {
                         op: AggregateOp::Min,
                         operands: vec![4],
                     }
-                    .to_ref(),
+                    .into(),
                     AggregateExpr {
                         op: AggregateOp::Max,
                         operands: vec![3],
                     }
-                    .to_ref(),
+                    .into(),
                 ],
                 input: project_1,
             });
@@ -82,32 +82,32 @@ mod test_queries {
                         op: AggregateOp::Max,
                         operands: vec![3],
                     }
-                    .to_ref(),
+                    .into(),
                     AggregateExpr {
                         op: AggregateOp::Min,
                         operands: vec![3],
                     }
-                    .to_ref(),
+                    .into(),
                     AggregateExpr {
                         op: AggregateOp::Max,
                         operands: vec![5],
                     }
-                    .to_ref(),
+                    .into(),
                 ],
                 input: table_scan_1,
             });
             let project_1 = query_graph.project(
                 aggregate_1,
                 vec![
-                    ScalarExpr::input_ref(0).to_ref(),
-                    ScalarExpr::input_ref(4).to_ref(),
+                    ScalarExpr::input_ref(0).into(),
+                    ScalarExpr::input_ref(4).into(),
                 ],
             );
             let project_2 = query_graph.project(
                 aggregate_1,
                 vec![
-                    ScalarExpr::input_ref(1).to_ref(),
-                    ScalarExpr::input_ref(5).to_ref(),
+                    ScalarExpr::input_ref(1).into(),
+                    ScalarExpr::input_ref(5).into(),
                 ],
             );
             let union_1 = query_graph.add_node(QueryNode::Union {
@@ -127,32 +127,32 @@ mod test_queries {
                         op: AggregateOp::Max,
                         operands: vec![3],
                     }
-                    .to_ref(),
+                    .into(),
                     AggregateExpr {
                         op: AggregateOp::Min,
                         operands: vec![3],
                     }
-                    .to_ref(),
+                    .into(),
                     AggregateExpr {
                         op: AggregateOp::Max,
                         operands: vec![5],
                     }
-                    .to_ref(),
+                    .into(),
                 ],
                 input: table_scan_1,
             });
             let project_1 = query_graph.project(
                 aggregate_1,
                 vec![
-                    ScalarExpr::input_ref(3).to_ref(),
-                    ScalarExpr::input_ref(4).to_ref(),
+                    ScalarExpr::input_ref(3).into(),
+                    ScalarExpr::input_ref(4).into(),
                 ],
             );
             let project_2 = query_graph.project(
                 aggregate_1,
                 vec![
-                    ScalarExpr::input_ref(3).to_ref(),
-                    ScalarExpr::input_ref(5).to_ref(),
+                    ScalarExpr::input_ref(3).into(),
+                    ScalarExpr::input_ref(5).into(),
                 ],
             );
             let union_1 = query_graph.add_node(QueryNode::Union {
@@ -171,33 +171,33 @@ mod test_queries {
                         op: AggregateOp::Max,
                         operands: vec![3],
                     }
-                    .to_ref(),
+                    .into(),
                     AggregateExpr {
                         op: AggregateOp::Min,
                         operands: vec![3],
                     }
-                    .to_ref(),
+                    .into(),
                     // This one could be pruned as it is redundant
                     AggregateExpr {
                         op: AggregateOp::Max,
                         operands: vec![3],
                     }
-                    .to_ref(),
+                    .into(),
                 ],
                 input: table_scan_1,
             });
             let project_1 = query_graph.project(
                 aggregate_1,
                 vec![
-                    ScalarExpr::input_ref(3).to_ref(),
-                    ScalarExpr::input_ref(4).to_ref(),
+                    ScalarExpr::input_ref(3).into(),
+                    ScalarExpr::input_ref(4).into(),
                 ],
             );
             let project_2 = query_graph.project(
                 aggregate_1,
                 vec![
-                    ScalarExpr::input_ref(3).to_ref(),
-                    ScalarExpr::input_ref(5).to_ref(),
+                    ScalarExpr::input_ref(3).into(),
+                    ScalarExpr::input_ref(5).into(),
                 ],
             );
             let union_1 = query_graph.add_node(QueryNode::Union {
@@ -212,13 +212,13 @@ mod test_queries {
         queries.insert("filter_merge_1".to_string(), {
             let mut query_graph = QueryGraph::new();
             let table_scan_id = query_graph.table_scan(0, 10);
-            let filter_1 = ScalarExpr::input_ref(0)
-                .binary(BinaryOp::Eq, ScalarExpr::input_ref(1).to_ref())
-                .to_ref();
+            let filter_1: ScalarExprRef = ScalarExpr::input_ref(0)
+                .binary(BinaryOp::Eq, ScalarExpr::input_ref(1).into())
+                .into();
             let filter_id_1 = query_graph.filter(table_scan_id, vec![filter_1.clone()]);
-            let filter_2 = ScalarExpr::input_ref(2)
-                .binary(BinaryOp::Gt, ScalarExpr::input_ref(3).to_ref())
-                .to_ref();
+            let filter_2: ScalarExprRef = ScalarExpr::input_ref(2)
+                .binary(BinaryOp::Gt, ScalarExpr::input_ref(3).into())
+                .into();
             let filter_id_2 = query_graph.filter(filter_id_1, vec![filter_2.clone()]);
             query_graph.set_entry_node(filter_id_2);
             query_graph
@@ -227,16 +227,16 @@ mod test_queries {
             let mut query_graph = QueryGraph::new();
             let table_scan_id = query_graph.table_scan(0, 10);
             let filter_1 = ScalarExpr::input_ref(0)
-                .binary(BinaryOp::Eq, ScalarExpr::input_ref(1).to_ref())
-                .to_ref();
+                .binary(BinaryOp::Eq, ScalarExpr::input_ref(1).into())
+                .into();
             let filter_id_1 = query_graph.filter(table_scan_id, vec![filter_1]);
             let filter_2 = ScalarExpr::input_ref(2)
-                .binary(BinaryOp::Gt, ScalarExpr::input_ref(3).to_ref())
-                .to_ref();
+                .binary(BinaryOp::Gt, ScalarExpr::input_ref(3).into())
+                .into();
             let filter_id_2 = query_graph.filter(filter_id_1, vec![filter_2]);
             let filter_3 = ScalarExpr::input_ref(4)
-                .binary(BinaryOp::Lt, ScalarExpr::input_ref(5).to_ref())
-                .to_ref();
+                .binary(BinaryOp::Lt, ScalarExpr::input_ref(5).into())
+                .into();
             let filter_id_3 = query_graph.filter(filter_id_2, vec![filter_3]);
             query_graph.set_entry_node(filter_id_3);
             query_graph
@@ -250,39 +250,39 @@ mod test_queries {
                 vec![ScalarExpr::input_ref(0)
                     .binary(
                         BinaryOp::Eq,
-                        ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                        ScalarExpr::string_literal("hello".to_string()).into(),
                     )
-                    .to_ref()],
+                    .into()],
             );
             let filter_2 = query_graph.filter(
                 filter_1,
                 vec![ScalarExpr::input_ref(5)
                     .binary(
                         BinaryOp::Eq,
-                        ScalarExpr::string_literal("world".to_string()).to_ref(),
+                        ScalarExpr::string_literal("world".to_string()).into(),
                     )
-                    .to_ref()],
+                    .into()],
             );
             let project_1 = query_graph.project(
                 filter_2,
                 vec![
-                    ScalarExpr::input_ref(0).to_ref(),
-                    ScalarExpr::input_ref(9).to_ref(),
+                    ScalarExpr::input_ref(0).into(),
+                    ScalarExpr::input_ref(9).into(),
                     ScalarExpr::nary(
                         NaryOp::Concat,
                         vec![
-                            ScalarExpr::input_ref(2).to_ref(),
-                            ScalarExpr::input_ref(4).to_ref(),
+                            ScalarExpr::input_ref(2).into(),
+                            ScalarExpr::input_ref(4).into(),
                         ],
                     )
-                    .to_ref(),
+                    .into(),
                 ],
             );
             let project_2 = query_graph.project(
                 project_1,
                 vec![
-                    ScalarExpr::input_ref(0).to_ref(),
-                    ScalarExpr::input_ref(2).to_ref(),
+                    ScalarExpr::input_ref(0).into(),
+                    ScalarExpr::input_ref(2).into(),
                 ],
             );
             query_graph.set_entry_node(project_2);
@@ -321,7 +321,7 @@ mod test_queries {
                 join,
                 (0..3)
                     .rev()
-                    .map(|col| ScalarExpr::input_ref(col).to_ref())
+                    .map(|col| ScalarExpr::input_ref(col).into())
                     .collect(),
             );
             query_graph.set_entry_node(project);
@@ -345,7 +345,7 @@ mod test_queries {
                 join,
                 (0..3)
                     .rev()
-                    .map(|col| ScalarExpr::input_ref(col).to_ref())
+                    .map(|col| ScalarExpr::input_ref(col).into())
                     .collect(),
             );
             query_graph.set_entry_node(project);
@@ -365,8 +365,8 @@ mod test_queries {
                 (0..3)
                     .map(|i| {
                         ScalarExpr::input_ref(i)
-                            .binary(BinaryOp::Eq, ScalarExpr::input_ref(i + 3).to_ref())
-                            .to_ref()
+                            .binary(BinaryOp::Eq, ScalarExpr::input_ref(i + 3).into())
+                            .into()
                     })
                     .collect(),
             );
@@ -374,7 +374,7 @@ mod test_queries {
                 join,
                 (0..3)
                     .rev()
-                    .map(|col| ScalarExpr::input_ref(col).to_ref())
+                    .map(|col| ScalarExpr::input_ref(col).into())
                     .collect(),
             );
             query_graph.set_entry_node(project);
@@ -398,7 +398,7 @@ mod test_queries {
                 join,
                 (0..3)
                     .rev()
-                    .map(|col| ScalarExpr::input_ref(col).to_ref())
+                    .map(|col| ScalarExpr::input_ref(col).into())
                     .collect(),
             );
             query_graph.set_entry_node(project);
@@ -424,14 +424,14 @@ mod test_queries {
                 aggregate_2,
                 vec![
                     ScalarExpr::input_ref(0)
-                        .binary(BinaryOp::Eq, ScalarExpr::input_ref(3).to_ref())
-                        .to_ref(),
+                        .binary(BinaryOp::Eq, ScalarExpr::input_ref(3).into())
+                        .into(),
                     ScalarExpr::input_ref(1)
-                        .binary(BinaryOp::Eq, ScalarExpr::input_ref(4).to_ref())
-                        .to_ref(),
+                        .binary(BinaryOp::Eq, ScalarExpr::input_ref(4).into())
+                        .into(),
                     ScalarExpr::input_ref(2)
-                        .binary(BinaryOp::Eq, ScalarExpr::input_ref(4).to_ref())
-                        .to_ref(),
+                        .binary(BinaryOp::Eq, ScalarExpr::input_ref(4).into())
+                        .into(),
                 ],
             );
             query_graph.set_entry_node(join);
@@ -457,14 +457,14 @@ mod test_queries {
                 aggregate_2,
                 vec![
                     ScalarExpr::input_ref(0)
-                        .binary(BinaryOp::Eq, ScalarExpr::input_ref(3).to_ref())
-                        .to_ref(),
+                        .binary(BinaryOp::Eq, ScalarExpr::input_ref(3).into())
+                        .into(),
                     ScalarExpr::input_ref(1)
-                        .binary(BinaryOp::Eq, ScalarExpr::input_ref(4).to_ref())
-                        .to_ref(),
+                        .binary(BinaryOp::Eq, ScalarExpr::input_ref(4).into())
+                        .into(),
                     ScalarExpr::input_ref(2)
-                        .binary(BinaryOp::Eq, ScalarExpr::input_ref(4).to_ref())
-                        .to_ref(),
+                        .binary(BinaryOp::Eq, ScalarExpr::input_ref(4).into())
+                        .into(),
                 ],
             );
             query_graph.set_entry_node(join);
@@ -487,15 +487,15 @@ mod test_queries {
                     ScalarExpr::input_ref(1)
                         .binary(
                             BinaryOp::Lt,
-                            ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                            ScalarExpr::string_literal("hello".to_string()).into(),
                         )
-                        .to_ref(),
+                        .into(),
                     ScalarExpr::input_ref(0)
                         .binary(
                             BinaryOp::Gt,
-                            ScalarExpr::string_literal("world".to_string()).to_ref(),
+                            ScalarExpr::string_literal("world".to_string()).into(),
                         )
-                        .to_ref(),
+                        .into(),
                 ],
             );
             let filter_2 = query_graph.filter(
@@ -503,9 +503,9 @@ mod test_queries {
                 vec![ScalarExpr::input_ref(0)
                     .binary(
                         BinaryOp::Gt,
-                        ScalarExpr::string_literal("world".to_string()).to_ref(),
+                        ScalarExpr::string_literal("world".to_string()).into(),
                     )
-                    .to_ref()],
+                    .into()],
             );
             let union_ = query_graph.add_node(QueryNode::Union {
                 inputs: vec![filter_2, filter_1],
@@ -521,14 +521,14 @@ mod test_queries {
             let mut query_graph = QueryGraph::new();
             let table_scan_id = query_graph.table_scan(0, 5);
             let project_outputs = vec![
-                ScalarExpr::input_ref(4).to_ref(),
-                ScalarExpr::input_ref(2).to_ref(),
-                ScalarExpr::input_ref(3).to_ref(),
+                ScalarExpr::input_ref(4).into(),
+                ScalarExpr::input_ref(2).into(),
+                ScalarExpr::input_ref(3).into(),
             ];
             let project_id = query_graph.project(table_scan_id, project_outputs);
             let filter_2 = ScalarExpr::input_ref(2)
-                .binary(BinaryOp::Gt, ScalarExpr::input_ref(1).to_ref())
-                .to_ref();
+                .binary(BinaryOp::Gt, ScalarExpr::input_ref(1).into())
+                .into();
             let filter_id_2 = query_graph.filter(project_id, vec![filter_2]);
             query_graph.set_entry_node(filter_id_2);
             query_graph
@@ -551,8 +551,8 @@ mod test_queries {
                     table_scan_1,
                     table_scan_2,
                     vec![ScalarExpr::input_ref(0)
-                        .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).to_ref())
-                        .to_ref()],
+                        .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).into())
+                        .into()],
                 );
                 let filter_1 = query_graph.filter(
                     join,
@@ -560,21 +560,21 @@ mod test_queries {
                         ScalarExpr::input_ref(1)
                             .binary(
                                 BinaryOp::Lt,
-                                ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                                ScalarExpr::string_literal("hello".to_string()).into(),
                             )
-                            .to_ref(),
+                            .into(),
                         ScalarExpr::input_ref(2)
                             .binary(
                                 BinaryOp::Eq,
-                                ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                                ScalarExpr::string_literal("hello".to_string()).into(),
                             )
-                            .to_ref(),
+                            .into(),
                         ScalarExpr::input_ref(6)
                             .binary(
                                 BinaryOp::Gt,
-                                ScalarExpr::string_literal("world".to_string()).to_ref(),
+                                ScalarExpr::string_literal("world".to_string()).into(),
                             )
-                            .to_ref(),
+                            .into(),
                     ],
                 );
                 let filter_2 = query_graph.filter(
@@ -583,15 +583,15 @@ mod test_queries {
                         ScalarExpr::input_ref(6)
                             .binary(
                                 BinaryOp::Gt,
-                                ScalarExpr::string_literal("world".to_string()).to_ref(),
+                                ScalarExpr::string_literal("world".to_string()).into(),
                             )
-                            .to_ref(),
+                            .into(),
                         ScalarExpr::input_ref(2)
                             .binary(
                                 BinaryOp::Eq,
-                                ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                                ScalarExpr::string_literal("hello".to_string()).into(),
                             )
-                            .to_ref(),
+                            .into(),
                     ],
                 );
                 let union_ = query_graph.add_node(QueryNode::Union {
@@ -611,8 +611,8 @@ mod test_queries {
                     table_scan_1,
                     table_scan_2,
                     vec![ScalarExpr::input_ref(0)
-                        .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).to_ref())
-                        .to_ref()],
+                        .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).into())
+                        .into()],
                 );
                 let filter_1 = query_graph.filter(
                     join,
@@ -620,15 +620,15 @@ mod test_queries {
                         ScalarExpr::input_ref(1)
                             .binary(
                                 BinaryOp::Lt,
-                                ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                                ScalarExpr::string_literal("hello".to_string()).into(),
                             )
-                            .to_ref(),
+                            .into(),
                         ScalarExpr::input_ref(2)
                             .binary(
                                 BinaryOp::Eq,
-                                ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                                ScalarExpr::string_literal("hello".to_string()).into(),
                             )
-                            .to_ref(),
+                            .into(),
                     ],
                 );
                 let filter_2 = query_graph.filter(
@@ -636,9 +636,9 @@ mod test_queries {
                     vec![ScalarExpr::input_ref(2)
                         .binary(
                             BinaryOp::Eq,
-                            ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                            ScalarExpr::string_literal("hello".to_string()).into(),
                         )
-                        .to_ref()],
+                        .into()],
                 );
                 let union_ = query_graph.add_node(QueryNode::Union {
                     inputs: vec![filter_2, filter_1],
@@ -677,15 +677,15 @@ mod test_queries {
             let project_1 = query_graph.project(
                 union_1,
                 vec![
-                    ScalarExpr::input_ref(0).to_ref(),
-                    ScalarExpr::input_ref(2).to_ref(),
+                    ScalarExpr::input_ref(0).into(),
+                    ScalarExpr::input_ref(2).into(),
                 ],
             );
             let project_2 = query_graph.project(
                 union_1,
                 vec![
-                    ScalarExpr::input_ref(3).to_ref(),
-                    ScalarExpr::input_ref(2).to_ref(),
+                    ScalarExpr::input_ref(3).into(),
+                    ScalarExpr::input_ref(2).into(),
                 ],
             );
             let union_3 = query_graph.add_node(QueryNode::Union {
@@ -704,15 +704,15 @@ mod test_queries {
                 table_scan_1,
                 (0..5)
                     .rev()
-                    .map(|col| ScalarExpr::input_ref(col).to_ref())
+                    .map(|col| ScalarExpr::input_ref(col).into())
                     .collect(),
             );
             let join = query_graph.inner_join(
                 project_1,
                 table_scan_1,
                 vec![ScalarExpr::input_ref(3)
-                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).to_ref())
-                    .to_ref()],
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).into())
+                    .into()],
             );
             query_graph.set_entry_node(join);
             query_graph
@@ -724,15 +724,15 @@ mod test_queries {
                 table_scan_1,
                 (0..5)
                     .rev()
-                    .map(|col| ScalarExpr::input_ref(col).to_ref())
+                    .map(|col| ScalarExpr::input_ref(col).into())
                     .collect(),
             );
             let join = query_graph.inner_join(
                 table_scan_1,
                 project_1,
                 vec![ScalarExpr::input_ref(3)
-                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).to_ref())
-                    .to_ref()],
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).into())
+                    .into()],
             );
             query_graph.set_entry_node(join);
             query_graph
@@ -748,21 +748,21 @@ mod test_queries {
                 table_scan_1,
                 table_scan_1,
                 vec![ScalarExpr::input_ref(4)
-                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(15).to_ref())
-                    .to_ref()],
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(15).into())
+                    .into()],
             );
             let project_1 = query_graph.project(
                 join,
                 vec![
-                    ScalarExpr::input_ref(0).to_ref(),
-                    ScalarExpr::input_ref(18).to_ref(),
+                    ScalarExpr::input_ref(0).into(),
+                    ScalarExpr::input_ref(18).into(),
                 ],
             );
             let project_2 = query_graph.project(
                 join,
                 vec![
-                    ScalarExpr::input_ref(3).to_ref(),
-                    ScalarExpr::input_ref(12).to_ref(),
+                    ScalarExpr::input_ref(3).into(),
+                    ScalarExpr::input_ref(12).into(),
                 ],
             );
             let union_1 = query_graph.add_node(QueryNode::Union {
@@ -778,33 +778,33 @@ mod test_queries {
                 table_scan_1,
                 table_scan_1,
                 vec![ScalarExpr::input_ref(4)
-                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(15).to_ref())
-                    .to_ref()],
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(15).into())
+                    .into()],
             );
             let filter_1 = query_graph.filter(
                 join,
                 vec![ScalarExpr::input_ref(2)
-                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(16).to_ref())
-                    .to_ref()],
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(16).into())
+                    .into()],
             );
             let project_1 = query_graph.project(
                 filter_1,
                 vec![
-                    ScalarExpr::input_ref(0).to_ref(),
-                    ScalarExpr::input_ref(18).to_ref(),
+                    ScalarExpr::input_ref(0).into(),
+                    ScalarExpr::input_ref(18).into(),
                 ],
             );
             let filter_2 = query_graph.filter(
                 join,
                 vec![ScalarExpr::input_ref(3)
-                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(15).to_ref())
-                    .to_ref()],
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(15).into())
+                    .into()],
             );
             let project_2 = query_graph.project(
                 filter_2,
                 vec![
-                    ScalarExpr::input_ref(3).to_ref(),
-                    ScalarExpr::input_ref(12).to_ref(),
+                    ScalarExpr::input_ref(3).into(),
+                    ScalarExpr::input_ref(12).into(),
                 ],
             );
             let union_1 = query_graph.add_node(QueryNode::Union {
@@ -821,14 +821,14 @@ mod test_queries {
                 table_scan_1,
                 table_scan_2,
                 vec![ScalarExpr::input_ref(0)
-                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(4).to_ref())
-                    .to_ref()],
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(4).into())
+                    .into()],
             );
             let filter_1 = query_graph.filter(
                 join,
                 vec![ScalarExpr::input_ref(2)
-                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(1).to_ref())
-                    .to_ref()],
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(1).into())
+                    .into()],
             );
             let agg_1 = query_graph.add_node(QueryNode::Aggregate {
                 group_key: BTreeSet::from([0, 1]),
@@ -858,28 +858,28 @@ mod test_queries {
                     ScalarExpr::input_ref(1)
                         .binary(
                             BinaryOp::Lt,
-                            ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                            ScalarExpr::string_literal("hello".to_string()).into(),
                         )
-                        .to_ref(),
+                        .into(),
                     ScalarExpr::input_ref(2)
                         .binary(
                             BinaryOp::Eq,
-                            ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                            ScalarExpr::string_literal("hello".to_string()).into(),
                         )
-                        .to_ref(),
+                        .into(),
                 ],
             );
             let project_1 = query_graph.project(
                 filter_1,
                 vec![
-                    ScalarExpr::input_ref(1).to_ref(),
-                    ScalarExpr::input_ref(2).to_ref(),
+                    ScalarExpr::input_ref(1).into(),
+                    ScalarExpr::input_ref(2).into(),
                     ScalarExpr::input_ref(2)
                         .binary(
                             BinaryOp::Eq,
-                            ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                            ScalarExpr::string_literal("hello".to_string()).into(),
                         )
-                        .to_ref(),
+                        .into(),
                 ],
             );
             query_graph.set_entry_node(project_1);
@@ -897,21 +897,21 @@ mod test_queries {
                     ScalarExpr::input_ref(1)
                         .binary(
                             BinaryOp::Lt,
-                            ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                            ScalarExpr::string_literal("hello".to_string()).into(),
                         )
-                        .to_ref(),
+                        .into(),
                     ScalarExpr::input_ref(1)
                         .binary(
                             BinaryOp::Lt,
-                            ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                            ScalarExpr::string_literal("hello".to_string()).into(),
                         )
-                        .to_ref(),
+                        .into(),
                     ScalarExpr::input_ref(2)
                         .binary(
                             BinaryOp::Eq,
-                            ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                            ScalarExpr::string_literal("hello".to_string()).into(),
                         )
-                        .to_ref(),
+                        .into(),
                 ],
             );
             query_graph.set_entry_node(filter_1);
@@ -928,9 +928,9 @@ mod test_queries {
                 vec![ScalarExpr::input_ref(0)
                     .binary(
                         BinaryOp::Eq,
-                        ScalarExpr::string_literal("world".to_string()).to_ref(),
+                        ScalarExpr::string_literal("world".to_string()).into(),
                     )
-                    .to_ref()],
+                    .into()],
             );
             let filter_2 = query_graph.filter(
                 table_scan_1,
@@ -938,15 +938,15 @@ mod test_queries {
                     ScalarExpr::input_ref(1)
                         .binary(
                             BinaryOp::Eq,
-                            ScalarExpr::string_literal("hello".to_string()).to_ref(),
+                            ScalarExpr::string_literal("hello".to_string()).into(),
                         )
-                        .to_ref(),
+                        .into(),
                     ScalarExpr::input_ref(0)
                         .binary(
                             BinaryOp::Eq,
-                            ScalarExpr::string_literal("world".to_string()).to_ref(),
+                            ScalarExpr::string_literal("world".to_string()).into(),
                         )
-                        .to_ref(),
+                        .into(),
                 ],
             );
             let union_ = query_graph.add_node(QueryNode::Union {
@@ -962,7 +962,7 @@ mod test_queries {
             let mut query_graph = QueryGraph::new();
             let table_scan_1 = query_graph.table_scan(1, 5);
             let filter_1 =
-                query_graph.filter(table_scan_1, vec![ScalarExpr::false_literal().to_ref()]);
+                query_graph.filter(table_scan_1, vec![ScalarExpr::false_literal().into()]);
             query_graph.set_entry_node(filter_1);
             query_graph
         });
@@ -971,7 +971,7 @@ mod test_queries {
             let table_scan_1 = query_graph.table_scan(1, 5);
             let filter_1 = query_graph.filter(
                 table_scan_1,
-                vec![ScalarExpr::null_literal(DataType::Bool).to_ref()],
+                vec![ScalarExpr::null_literal(DataType::Bool).into()],
             );
             query_graph.set_entry_node(filter_1);
             query_graph
@@ -1019,7 +1019,7 @@ mod test_queries {
                 table_scan_1,
                 [2, 4]
                     .iter()
-                    .map(|i| ScalarExpr::input_ref(*i).to_ref())
+                    .map(|i| ScalarExpr::input_ref(*i).into())
                     .collect_vec(),
             );
             let union_1 = query_graph.add_node(QueryNode::Union {
@@ -1045,8 +1045,8 @@ mod test_queries {
             let project_1 = query_graph.project(
                 aggregate_2,
                 vec![
-                    ScalarExpr::string_literal("hello".to_owned()).to_ref(),
-                    ScalarExpr::string_literal("world".to_owned()).to_ref(),
+                    ScalarExpr::string_literal("hello".to_owned()).into(),
+                    ScalarExpr::string_literal("world".to_owned()).into(),
                 ],
             );
             let union_1 = query_graph.add_node(QueryNode::Union {
@@ -1068,12 +1068,12 @@ mod test_queries {
                         op: AggregateOp::Min,
                         operands: vec![4],
                     }
-                    .to_ref(),
+                    .into(),
                     AggregateExpr {
                         op: AggregateOp::Max,
                         operands: vec![3],
                     }
-                    .to_ref(),
+                    .into(),
                 ],
                 input: table_scan_1,
             });
@@ -1084,12 +1084,12 @@ mod test_queries {
                         op: AggregateOp::Max,
                         operands: vec![4],
                     }
-                    .to_ref(),
+                    .into(),
                     AggregateExpr {
                         op: AggregateOp::Max,
                         operands: vec![3],
                     }
-                    .to_ref(),
+                    .into(),
                 ],
                 input: table_scan_1,
             });
@@ -1109,12 +1109,12 @@ mod test_queries {
                         op: AggregateOp::Min,
                         operands: vec![4],
                     }
-                    .to_ref(),
+                    .into(),
                     AggregateExpr {
                         op: AggregateOp::Max,
                         operands: vec![3],
                     }
-                    .to_ref(),
+                    .into(),
                 ],
                 input: table_scan_1,
             });
@@ -1125,12 +1125,12 @@ mod test_queries {
                         op: AggregateOp::Max,
                         operands: vec![4],
                     }
-                    .to_ref(),
+                    .into(),
                     AggregateExpr {
                         op: AggregateOp::Max,
                         operands: vec![3],
                     }
-                    .to_ref(),
+                    .into(),
                 ],
                 input: table_scan_1,
             });
@@ -1141,12 +1141,12 @@ mod test_queries {
                         op: AggregateOp::Min,
                         operands: vec![4],
                     }
-                    .to_ref(),
+                    .into(),
                     AggregateExpr {
                         op: AggregateOp::Min,
                         operands: vec![3],
                     }
-                    .to_ref(),
+                    .into(),
                 ],
                 input: table_scan_1,
             });
@@ -1162,17 +1162,17 @@ mod test_queries {
             let project_1 = query_graph.project(
                 table_scan_1,
                 vec![
-                    ScalarExpr::input_ref(0).to_ref(),
-                    ScalarExpr::input_ref(1).to_ref(),
-                    ScalarExpr::input_ref(2).to_ref(),
+                    ScalarExpr::input_ref(0).into(),
+                    ScalarExpr::input_ref(1).into(),
+                    ScalarExpr::input_ref(2).into(),
                     ScalarExpr::nary(
                         NaryOp::Concat,
                         vec![
-                            ScalarExpr::input_ref(3).to_ref(),
-                            ScalarExpr::input_ref(4).to_ref(),
+                            ScalarExpr::input_ref(3).into(),
+                            ScalarExpr::input_ref(4).into(),
                         ],
                     )
-                    .to_ref(),
+                    .into(),
                 ],
             );
             let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
@@ -1181,7 +1181,7 @@ mod test_queries {
                     op: AggregateOp::Min,
                     operands: vec![3],
                 }
-                .to_ref()],
+                .into()],
                 input: project_1,
             });
             let aggregate_2 = query_graph.add_node(QueryNode::Aggregate {
@@ -1190,7 +1190,7 @@ mod test_queries {
                     op: AggregateOp::Max,
                     operands: vec![4],
                 }
-                .to_ref()],
+                .into()],
                 input: table_scan_1,
             });
             let union_1 = query_graph.add_node(QueryNode::Union {
@@ -1210,14 +1210,14 @@ mod test_queries {
                 table_scan_1,
                 table_scan_1,
                 vec![ScalarExpr::input_ref(0)
-                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).to_ref())
-                    .to_ref()],
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).into())
+                    .into()],
             );
             let filter_1 = query_graph.filter(
                 join,
                 vec![ScalarExpr::input_ref(0)
-                    .binary(BinaryOp::Lt, ScalarExpr::input_ref(1).to_ref())
-                    .to_ref()],
+                    .binary(BinaryOp::Lt, ScalarExpr::input_ref(1).into())
+                    .into()],
             );
             query_graph.set_entry_node(filter_1);
             query_graph
@@ -1231,14 +1231,14 @@ mod test_queries {
                 table_scan_1,
                 table_scan_1,
                 vec![ScalarExpr::input_ref(0)
-                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).to_ref())
-                    .to_ref()],
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).into())
+                    .into()],
             );
             let filter_1 = query_graph.filter(
                 join,
                 vec![ScalarExpr::input_ref(5)
-                    .binary(BinaryOp::Lt, ScalarExpr::input_ref(1).to_ref())
-                    .to_ref()],
+                    .binary(BinaryOp::Lt, ScalarExpr::input_ref(1).into())
+                    .into()],
             );
             let union_1 = query_graph.add_node(QueryNode::Union {
                 inputs: vec![join, filter_1],
@@ -1254,14 +1254,14 @@ mod test_queries {
                 table_scan_1,
                 table_scan_1,
                 vec![ScalarExpr::input_ref(0)
-                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).to_ref())
-                    .to_ref()],
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).into())
+                    .into()],
             );
             let filter_1 = query_graph.filter(
                 join,
                 vec![ScalarExpr::input_ref(5)
-                    .binary(BinaryOp::Lt, ScalarExpr::input_ref(1).to_ref())
-                    .to_ref()],
+                    .binary(BinaryOp::Lt, ScalarExpr::input_ref(1).into())
+                    .into()],
             );
             query_graph.set_entry_node(filter_1);
             query_graph
@@ -1274,14 +1274,14 @@ mod test_queries {
                 table_scan_1,
                 table_scan_1,
                 vec![ScalarExpr::input_ref(0)
-                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).to_ref())
-                    .to_ref()],
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).into())
+                    .into()],
             );
             let filter_1 = query_graph.filter(
                 join,
                 vec![ScalarExpr::input_ref(5)
-                    .binary(BinaryOp::Lt, ScalarExpr::input_ref(1).to_ref())
-                    .to_ref()],
+                    .binary(BinaryOp::Lt, ScalarExpr::input_ref(1).into())
+                    .into()],
             );
             query_graph.set_entry_node(filter_1);
             query_graph
@@ -1294,20 +1294,20 @@ mod test_queries {
                 table_scan_1,
                 table_scan_1,
                 vec![ScalarExpr::input_ref(0)
-                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).to_ref())
-                    .to_ref()],
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).into())
+                    .into()],
             );
             let filter_1 = query_graph.filter(
                 join,
                 vec![ScalarExpr::input_ref(5)
-                    .binary(BinaryOp::Lt, ScalarExpr::input_ref(1).to_ref())
-                    .to_ref()],
+                    .binary(BinaryOp::Lt, ScalarExpr::input_ref(1).into())
+                    .into()],
             );
             let filter_2 = query_graph.filter(
                 join,
                 vec![ScalarExpr::input_ref(5)
-                    .binary(BinaryOp::Lt, ScalarExpr::input_ref(2).to_ref())
-                    .to_ref()],
+                    .binary(BinaryOp::Lt, ScalarExpr::input_ref(2).into())
+                    .into()],
             );
             let union_1 = query_graph.add_node(QueryNode::Union {
                 inputs: vec![filter_1, filter_2],
@@ -1326,14 +1326,14 @@ mod test_queries {
                 table_scan_1,
                 table_scan_1,
                 vec![ScalarExpr::null_literal(DataType::String)
-                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).to_ref())
-                    .to_ref()],
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).into())
+                    .into()],
             );
             let filter_1 = query_graph.filter(
                 join,
                 vec![ScalarExpr::null_literal(DataType::String)
-                    .binary(BinaryOp::Lt, ScalarExpr::input_ref(1).to_ref())
-                    .to_ref()],
+                    .binary(BinaryOp::Lt, ScalarExpr::input_ref(1).into())
+                    .into()],
             );
             query_graph.set_entry_node(filter_1);
             query_graph
@@ -1349,16 +1349,16 @@ fn static_queries() -> HashMap<String, QueryGraph> {
         let project = query_graph.project(
             table_scan_1,
             vec![
-                ScalarExpr::input_ref(0).to_ref(),
+                ScalarExpr::input_ref(0).into(),
                 ScalarExpr::nary(
                     NaryOp::Concat,
                     vec![
-                        ScalarExpr::input_ref(0).to_ref(),
-                        ScalarExpr::input_ref(2).to_ref(),
+                        ScalarExpr::input_ref(0).into(),
+                        ScalarExpr::input_ref(2).into(),
                     ],
                 )
-                .to_ref(),
-                ScalarExpr::input_ref(2).to_ref(),
+                .into(),
+                ScalarExpr::input_ref(2).into(),
             ],
         );
         let aggregate = query_graph.add_node(QueryNode::Aggregate {
@@ -1375,24 +1375,24 @@ fn static_queries() -> HashMap<String, QueryGraph> {
         let project = query_graph.project(
             table_scan_1,
             vec![
-                ScalarExpr::input_ref(0).to_ref(),
+                ScalarExpr::input_ref(0).into(),
                 ScalarExpr::nary(
                     NaryOp::Concat,
                     vec![
-                        ScalarExpr::input_ref(0).to_ref(),
-                        ScalarExpr::input_ref(2).to_ref(),
+                        ScalarExpr::input_ref(0).into(),
+                        ScalarExpr::input_ref(2).into(),
                     ],
                 )
-                .to_ref(),
-                ScalarExpr::input_ref(2).to_ref(),
+                .into(),
+                ScalarExpr::input_ref(2).into(),
                 ScalarExpr::nary(
                     NaryOp::Concat,
                     vec![
-                        ScalarExpr::input_ref(0).to_ref(),
-                        ScalarExpr::input_ref(2).to_ref(),
+                        ScalarExpr::input_ref(0).into(),
+                        ScalarExpr::input_ref(2).into(),
                     ],
                 )
-                .to_ref(),
+                .into(),
             ],
         );
         let aggregate = query_graph.add_node(QueryNode::Aggregate {
@@ -1409,24 +1409,24 @@ fn static_queries() -> HashMap<String, QueryGraph> {
         let project = query_graph.project(
             table_scan_1,
             vec![
-                ScalarExpr::input_ref(0).to_ref(),
+                ScalarExpr::input_ref(0).into(),
                 ScalarExpr::nary(
                     NaryOp::Concat,
                     vec![
-                        ScalarExpr::input_ref(0).to_ref(),
-                        ScalarExpr::input_ref(2).to_ref(),
+                        ScalarExpr::input_ref(0).into(),
+                        ScalarExpr::input_ref(2).into(),
                     ],
                 )
-                .to_ref(),
-                ScalarExpr::input_ref(2).to_ref(),
+                .into(),
+                ScalarExpr::input_ref(2).into(),
                 ScalarExpr::nary(
                     NaryOp::Concat,
                     vec![
-                        ScalarExpr::input_ref(0).to_ref(),
-                        ScalarExpr::input_ref(2).to_ref(),
+                        ScalarExpr::input_ref(0).into(),
+                        ScalarExpr::input_ref(2).into(),
                     ],
                 )
-                .to_ref(),
+                .into(),
             ],
         );
         let aggregate = query_graph.add_node(QueryNode::Aggregate {
@@ -1443,9 +1443,9 @@ fn static_queries() -> HashMap<String, QueryGraph> {
         let project = query_graph.project(
             table_scan_1,
             vec![
-                ScalarExpr::string_literal("hello".to_string()).to_ref(),
-                ScalarExpr::string_literal("world".to_string()).to_ref(),
-                ScalarExpr::string_literal("bla".to_string()).to_ref(),
+                ScalarExpr::string_literal("hello".to_string()).into(),
+                ScalarExpr::string_literal("world".to_string()).into(),
+                ScalarExpr::string_literal("bla".to_string()).into(),
             ],
         );
         let aggregate = query_graph.add_node(QueryNode::Aggregate {
@@ -1474,9 +1474,9 @@ fn static_queries() -> HashMap<String, QueryGraph> {
             vec![ScalarExpr::input_ref(0)
                 .binary(
                     BinaryOp::Eq,
-                    ScalarExpr::string_literal("world".to_string()).to_ref(),
+                    ScalarExpr::string_literal("world".to_string()).into(),
                 )
-                .to_ref()],
+                .into()],
         );
         let union_ = query_graph.add_node(QueryNode::Union {
             inputs: vec![aggregate_1, filter_1],
@@ -1492,9 +1492,9 @@ fn static_queries() -> HashMap<String, QueryGraph> {
             aggregates: Vec::new(),
             input: table_scan_1,
         });
-        let project_1 = query_graph.project(aggregate_1, vec![ScalarExpr::true_literal().to_ref()]);
+        let project_1 = query_graph.project(aggregate_1, vec![ScalarExpr::true_literal().into()]);
         let join = query_graph.join(JoinType::Inner, table_scan_1, project_1, Vec::new());
-        let project_2 = query_graph.project(join, vec![ScalarExpr::input_ref(0).to_ref()]);
+        let project_2 = query_graph.project(join, vec![ScalarExpr::input_ref(0).into()]);
         query_graph.set_entry_node(project_2);
         query_graph
     });

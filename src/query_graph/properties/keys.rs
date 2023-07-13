@@ -8,7 +8,7 @@ use crate::{
     scalar_expr::{
         equivalence_class::{extract_equivalence_classes, find_class},
         rewrite::{lift_scalar_expr, normalize_scalar_expr, shift_right_input_refs},
-        ScalarExpr, ScalarExprRef, ToRef,
+        ScalarExpr, ScalarExprRef,
     },
     value::Value,
     visitor_utils::PreOrderVisitationResult,
@@ -316,7 +316,7 @@ impl Keys {
                     group_key
                         .iter()
                         .enumerate()
-                        .map(|(out_col, _)| ScalarExpr::input_ref(out_col).to_ref())
+                        .map(|(out_col, _)| ScalarExpr::input_ref(out_col).into())
                         .collect(),
                 ),
                 lower_bound: if group_key.is_empty() { 1 } else { 0 },

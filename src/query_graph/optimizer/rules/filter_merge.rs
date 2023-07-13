@@ -40,7 +40,7 @@ mod tests {
     use crate::{
         query_graph::QueryGraph,
         query_graph::{optimizer::SingleReplacementRule, QueryNode},
-        scalar_expr::{BinaryOp, ScalarExpr, ToRef},
+        scalar_expr::{BinaryOp, ScalarExpr, ScalarExprRef},
     };
 
     use super::FilterMergeRule;
@@ -51,16 +51,16 @@ mod tests {
         let table_scan_id = query_graph.table_scan(0, 10);
         let project_id = query_graph.project(
             table_scan_id,
-            (0..10).map(|i| ScalarExpr::input_ref(i).to_ref()).collect(),
+            (0..10).map(|i| ScalarExpr::input_ref(i).into()).collect(),
         );
 
-        let filter_1 = ScalarExpr::input_ref(0)
-            .binary(BinaryOp::Eq, ScalarExpr::input_ref(1).to_ref())
-            .to_ref();
+        let filter_1: ScalarExprRef = ScalarExpr::input_ref(0)
+            .binary(BinaryOp::Eq, ScalarExpr::input_ref(1).into())
+            .into();
         let filter_id_1 = query_graph.filter(project_id, vec![filter_1.clone()]);
-        let filter_2 = ScalarExpr::input_ref(2)
-            .binary(BinaryOp::Gt, ScalarExpr::input_ref(3).to_ref())
-            .to_ref();
+        let filter_2: ScalarExprRef = ScalarExpr::input_ref(2)
+            .binary(BinaryOp::Gt, ScalarExpr::input_ref(3).into())
+            .into();
         let filter_id_2 = query_graph.filter(filter_id_1, vec![filter_2.clone()]);
         query_graph.set_entry_node(filter_id_2);
 

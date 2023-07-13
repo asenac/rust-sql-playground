@@ -10,7 +10,7 @@ use crate::{
     scalar_expr::{
         rewrite::{dereference_extended_scalar_expr, dereference_scalar_expr},
         AggregateExpr, ExtendedScalarExpr, ExtendedScalarExprRef, ScalarExpr, ScalarExprRef,
-        ToExtendedExpr, ToRef, ToScalarExpr,
+        ToExtendedExpr, ToScalarExpr,
     },
     visitor_utils::PreOrderVisitationResult,
 };
@@ -56,7 +56,7 @@ impl Rule for CommonAggregateDiscoveryRule {
                 {
                     let mut group_key = group_key
                         .iter()
-                        .map(|i| ScalarExpr::InputRef { index: *i }.to_ref())
+                        .map(|i| ScalarExpr::InputRef { index: *i }.into())
                         .collect_vec();
                     let mut aggregates = aggregates
                         .iter()
@@ -137,7 +137,7 @@ impl Rule for CommonAggregateDiscoveryRule {
                             op: op.clone(),
                             operands,
                         }
-                        .to_ref()
+                        .into()
                     }
                     _ => panic!(),
                 })
@@ -159,7 +159,7 @@ impl Rule for CommonAggregateDiscoveryRule {
                                 // the aggregate must be present in the list of aggregates
                                 .unwrap()
                     }))
-                    .map(|i| ScalarExpr::input_ref(i).to_ref())
+                    .map(|i| ScalarExpr::input_ref(i).into())
                     .collect_vec();
                 let new_project = query_graph.project(new_aggregate, project);
                 result

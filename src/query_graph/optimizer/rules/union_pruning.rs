@@ -11,7 +11,7 @@ use crate::{
         },
         NodeId, QueryGraph, QueryNode,
     },
-    scalar_expr::{ScalarExpr, ToRef},
+    scalar_expr::ScalarExpr,
 };
 
 /// Rule that given a shared union where all its parents are pruning projections, computes
@@ -40,7 +40,7 @@ impl Rule for UnionPruningRule {
                     .iter()
                     .map(|(i, _)| *i)
                     .sorted()
-                    .map(|i| ScalarExpr::InputRef { index: i }.to_ref())
+                    .map(|i| ScalarExpr::InputRef { index: i }.into())
                     .collect::<Vec<_>>();
                 let new_inputs = inputs
                     .clone() // clone to make the borrow checker happy

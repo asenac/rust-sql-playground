@@ -4,7 +4,7 @@ use itertools::Itertools;
 
 use crate::data_type::DataType;
 
-use super::{rewrite::rewrite_expr_pre_post, NaryOp, ScalarExpr, ScalarExprRef, ToRef};
+use super::{rewrite::rewrite_expr_pre_post, NaryOp, ScalarExpr, ScalarExprRef};
 
 /// Reduce the given expression recursively. Keeps trying until the expression cannot
 /// be reduced any further.
@@ -30,7 +30,7 @@ pub fn reduce_expr(expr: &ScalarExprRef, row_type: &[DataType]) -> Option<Scalar
     } = expr.as_ref()
     {
         if operands.iter().any(|o| **o == ScalarExpr::false_literal()) {
-            return Some(ScalarExpr::false_literal().to_ref());
+            return Some(ScalarExpr::false_literal().into());
         }
         if operands.iter().any(|o| **o == ScalarExpr::true_literal()) {
             let new_operands = operands
@@ -40,9 +40,9 @@ pub fn reduce_expr(expr: &ScalarExprRef, row_type: &[DataType]) -> Option<Scalar
                 .cloned()
                 .collect_vec();
             return Some(match new_operands.len() {
-                0 => ScalarExpr::true_literal().to_ref(),
+                0 => ScalarExpr::true_literal().into(),
                 1 => new_operands[0].clone(),
-                _ => ScalarExpr::nary(NaryOp::And, new_operands).to_ref(),
+                _ => ScalarExpr::nary(NaryOp::And, new_operands).into(),
             });
         }
     }
@@ -52,7 +52,7 @@ pub fn reduce_expr(expr: &ScalarExprRef, row_type: &[DataType]) -> Option<Scalar
     } = expr.as_ref()
     {
         if operands.iter().any(|o| **o == ScalarExpr::true_literal()) {
-            return Some(ScalarExpr::true_literal().to_ref());
+            return Some(ScalarExpr::true_literal().into());
         }
         if operands.iter().any(|o| **o == ScalarExpr::false_literal()) {
             let new_operands = operands
@@ -62,15 +62,15 @@ pub fn reduce_expr(expr: &ScalarExprRef, row_type: &[DataType]) -> Option<Scalar
                 .cloned()
                 .collect_vec();
             return Some(match new_operands.len() {
-                0 => ScalarExpr::false_literal().to_ref(),
+                0 => ScalarExpr::false_literal().into(),
                 1 => new_operands[0].clone(),
-                _ => ScalarExpr::nary(NaryOp::And, new_operands).to_ref(),
+                _ => ScalarExpr::nary(NaryOp::And, new_operands).into(),
             });
         }
     }
     if let ScalarExpr::BinaryOp { op, left, right } = expr.as_ref() {
         if op.propagates_null() && (left.is_null() || right.is_null()) {
-            return Some(ScalarExpr::null_literal(expr.data_type(row_type)).to_ref());
+            return Some(ScalarExpr::null_literal(expr.data_type(row_type)).into());
         }
     }
     None

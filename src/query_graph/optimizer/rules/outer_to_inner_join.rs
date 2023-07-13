@@ -8,7 +8,6 @@ use crate::{
     },
     scalar_expr::{
         reduction::reduce_expr_recursively, rewrite::rewrite_expr_post, ScalarExpr, ScalarExprRef,
-        ToRef,
     },
     value::{Literal, Value},
     visitor_utils::PreOrderVisitationResult,
@@ -109,7 +108,7 @@ fn do_all_parents_reject_null_from_non_preserving(
                                                         ScalarExpr::null_literal(
                                                             non_prev_row_type[*index].clone(),
                                                         )
-                                                        .to_ref(),
+                                                        .into(),
                                                     );
                                                 }
                                                 None

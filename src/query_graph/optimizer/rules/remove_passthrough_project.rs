@@ -37,7 +37,7 @@ mod tests {
     use crate::{
         query_graph::optimizer::SingleReplacementRule,
         query_graph::QueryGraph,
-        scalar_expr::{BinaryOp, ScalarExpr, ToRef},
+        scalar_expr::{BinaryOp, ScalarExpr, ScalarExprRef},
     };
 
     use super::RemovePassthroughProjectRule;
@@ -46,17 +46,17 @@ mod tests {
     fn test_remove_passthrough_project() {
         let mut query_graph = QueryGraph::new();
         let table_scan_id = query_graph.table_scan(0, 10);
-        let filter_1 = ScalarExpr::input_ref(0)
-            .binary(BinaryOp::Eq, ScalarExpr::input_ref(1).to_ref())
-            .to_ref();
+        let filter_1: ScalarExprRef = ScalarExpr::input_ref(0)
+            .binary(BinaryOp::Eq, ScalarExpr::input_ref(1).into())
+            .into();
         let filter_id = query_graph.filter(table_scan_id, vec![filter_1.clone()]);
         let project_id_1 = query_graph.project(
             filter_id,
-            (0..10).map(|i| ScalarExpr::input_ref(i).to_ref()).collect(),
+            (0..10).map(|i| ScalarExpr::input_ref(i).into()).collect(),
         );
         let project_id_2 = query_graph.project(
             filter_id,
-            (0..5).map(|i| ScalarExpr::input_ref(i).to_ref()).collect(),
+            (0..5).map(|i| ScalarExpr::input_ref(i).into()).collect(),
         );
 
         let remove_passthrough_project = RemovePassthroughProjectRule {};

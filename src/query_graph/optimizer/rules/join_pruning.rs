@@ -17,7 +17,7 @@ use crate::{
     scalar_expr::{
         rewrite::{apply_column_map, rewrite_expr_vec},
         visitor::store_input_dependencies,
-        ScalarExpr, ToRef,
+        ScalarExpr,
     },
 };
 
@@ -74,7 +74,7 @@ impl Rule for JoinPruningRule {
                         .partition(|col| **col < left_num_columns);
                 let left_outputs = left_columns
                     .iter()
-                    .map(|i| ScalarExpr::InputRef { index: *i }.to_ref())
+                    .map(|i| ScalarExpr::InputRef { index: *i }.into())
                     .collect::<Vec<_>>();
                 let right_outputs = right_columns
                     .iter()
@@ -82,7 +82,7 @@ impl Rule for JoinPruningRule {
                         ScalarExpr::InputRef {
                             index: *i - left_num_columns,
                         }
-                        .to_ref()
+                        .into()
                     })
                     .collect::<Vec<_>>();
                 let left = *left;
@@ -98,7 +98,7 @@ impl Rule for JoinPruningRule {
                     .sorted()
                     .enumerate()
                     .filter(|(_, orig_col)| required_columns.contains(&orig_col))
-                    .map(|(i, _)| ScalarExpr::input_ref(i).to_ref())
+                    .map(|(i, _)| ScalarExpr::input_ref(i).into())
                     .collect();
                 let pruning_proj = query_graph.project(new_join, pruning_proj_outputs);
 

@@ -108,7 +108,7 @@ pub fn shift_right_input_refs(expr: &ScalarExprRef, offset: usize) -> ScalarExpr
     rewrite_expr_post(
         &mut |expr: &ScalarExprRef| {
             if let ScalarExpr::InputRef { index } = expr.as_ref() {
-                return Some(ScalarExpr::input_ref(index + offset).to_ref());
+                return Some(ScalarExpr::input_ref(index + offset).into());
             }
             None
         },
@@ -120,7 +120,7 @@ pub fn shift_left_input_refs(expr: &ScalarExprRef, offset: usize) -> ScalarExprR
     rewrite_expr_post(
         &mut |expr: &ScalarExprRef| {
             if let ScalarExpr::InputRef { index } = expr.as_ref() {
-                return Some(ScalarExpr::input_ref(index - offset).to_ref());
+                return Some(ScalarExpr::input_ref(index - offset).into());
             }
             None
         },
@@ -221,7 +221,7 @@ pub fn lift_scalar_expr(expr: &ScalarExprRef, proj: &Vec<ScalarExprRef>) -> Opti
                 .find(|(_, proj_expr)| **proj_expr == *expr)
                 .map(|(i, _)| i)
             {
-                return Ok(Some(ScalarExpr::input_ref(proj_col).to_ref()));
+                return Ok(Some(ScalarExpr::input_ref(proj_col).into()));
             }
             if let ScalarExpr::InputRef { .. } = expr.as_ref() {
                 Err(())
@@ -244,7 +244,7 @@ pub fn lift_scalar_expr_2(
                 .find(|(proj_expr, _)| **proj_expr == *expr)
                 .map(|(_, i)| *i)
             {
-                return Ok(Some(ScalarExpr::input_ref(proj_col).to_ref()));
+                return Ok(Some(ScalarExpr::input_ref(proj_col).into()));
             }
             if let ScalarExpr::InputRef { .. } = expr.as_ref() {
                 Err(())
@@ -278,7 +278,7 @@ pub fn apply_column_map(
         &mut |expr: &ScalarExprRef| {
             if let ScalarExpr::InputRef { index } = expr.as_ref() {
                 if let Some(mapped_index) = column_map.get(index) {
-                    Ok(Some(ScalarExpr::input_ref(*mapped_index).to_ref()))
+                    Ok(Some(ScalarExpr::input_ref(*mapped_index).into()))
                 } else {
                     Err(())
                 }
@@ -462,51 +462,51 @@ mod tests {
     #[test]
     fn test_lift_scalar_expr() {
         let proj = vec![
-            ScalarExpr::input_ref(2).to_ref(),
+            ScalarExpr::input_ref(2).into(),
             ScalarExpr::nary(
                 NaryOp::Concat,
                 vec![
-                    ScalarExpr::input_ref(1).to_ref(),
-                    ScalarExpr::input_ref(3).to_ref(),
+                    ScalarExpr::input_ref(1).into(),
+                    ScalarExpr::input_ref(3).into(),
                 ],
             )
-            .to_ref(),
+            .into(),
         ];
 
         let tests = vec![
             (
-                ScalarExpr::input_ref(2).to_ref(),
-                Some(ScalarExpr::input_ref(0).to_ref()),
+                ScalarExpr::input_ref(2).into(),
+                Some(ScalarExpr::input_ref(0).into()),
             ),
             (
                 ScalarExpr::nary(
                     NaryOp::Concat,
                     vec![
-                        ScalarExpr::input_ref(2).to_ref(),
-                        ScalarExpr::input_ref(3).to_ref(),
+                        ScalarExpr::input_ref(2).into(),
+                        ScalarExpr::input_ref(3).into(),
                     ],
                 )
-                .to_ref(),
+                .into(),
                 None,
             ),
             (
                 ScalarExpr::nary(
                     NaryOp::Concat,
                     vec![
-                        ScalarExpr::input_ref(2).to_ref(),
-                        ScalarExpr::input_ref(2).to_ref(),
+                        ScalarExpr::input_ref(2).into(),
+                        ScalarExpr::input_ref(2).into(),
                     ],
                 )
-                .to_ref(),
+                .into(),
                 Some(
                     ScalarExpr::nary(
                         NaryOp::Concat,
                         vec![
-                            ScalarExpr::input_ref(0).to_ref(),
-                            ScalarExpr::input_ref(0).to_ref(),
+                            ScalarExpr::input_ref(0).into(),
+                            ScalarExpr::input_ref(0).into(),
                         ],
                     )
-                    .to_ref(),
+                    .into(),
                 ),
             ),
         ];

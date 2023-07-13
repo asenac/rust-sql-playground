@@ -11,7 +11,7 @@ use crate::{
         properties::{input_dependencies, num_columns},
         NodeId, QueryGraph, QueryNode,
     },
-    scalar_expr::{AggregateExpr, ScalarExpr, ToRef},
+    scalar_expr::{AggregateExpr, ScalarExpr},
 };
 
 /// Given an aggregate node not using all the columns from its input, it inserts
@@ -60,7 +60,7 @@ impl SingleReplacementRule for PruneAggregateInputRule {
                 let project_outputs = input_dependencies
                     .iter()
                     .sorted()
-                    .map(|i| ScalarExpr::input_ref(*i).to_ref())
+                    .map(|i| ScalarExpr::input_ref(*i).into())
                     .collect();
 
                 let pruning_project = query_graph.project(*input, project_outputs);

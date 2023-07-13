@@ -4,7 +4,7 @@ use itertools::Itertools;
 
 use crate::{
     query_graph::{visitor::QueryGraphPrePostVisitor, *},
-    scalar_expr::{rewrite::lift_scalar_expr_2, ScalarExpr, ToRef},
+    scalar_expr::{rewrite::lift_scalar_expr_2, ScalarExpr},
     visitor_utils::PreOrderVisitationResult,
 };
 
@@ -81,7 +81,7 @@ impl ColumnProvenance {
             source_node: node_id,
             column_expressions: Rc::new(
                 (0..num_columns(query_graph, node_id))
-                    .map(|i| Some(ScalarExpr::input_ref(i).to_ref()))
+                    .map(|i| Some(ScalarExpr::input_ref(i).into()))
                     .collect_vec(),
             ),
             filtered: false,

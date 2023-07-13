@@ -4,7 +4,7 @@ use itertools::Itertools;
 
 use crate::{
     query_graph::{visitor::QueryGraphPrePostVisitor, *},
-    scalar_expr::{rewrite::*, BinaryOp, ScalarExpr, ToRef},
+    scalar_expr::{rewrite::*, BinaryOp, ScalarExpr},
     visitor_utils::PreOrderVisitationResult,
 };
 
@@ -117,7 +117,7 @@ impl PulledUpPredicates {
                         Some(
                             ScalarExpr::input_ref(i)
                                 .binary(BinaryOp::RawEq, rewritten_expr)
-                                .to_ref(),
+                                .into(),
                         )
                     })
                 }));
@@ -139,7 +139,7 @@ impl PulledUpPredicates {
                         Some(
                             ScalarExpr::input_ref(i)
                                 .binary(BinaryOp::RawEq, rewritten_expr)
-                                .to_ref(),
+                                .into(),
                         )
                     })
                 }));
@@ -220,9 +220,9 @@ impl PulledUpPredicates {
                         ScalarExpr::input_ref(group_key_len + j)
                             .binary(
                                 BinaryOp::RawEq,
-                                ScalarExpr::input_ref(group_key_len + i).to_ref(),
+                                ScalarExpr::input_ref(group_key_len + i).into(),
                             )
-                            .to_ref(),
+                            .into(),
                     );
                 }
             }

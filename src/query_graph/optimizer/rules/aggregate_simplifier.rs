@@ -9,7 +9,7 @@ use crate::{
     scalar_expr::{
         equivalence_class::{find_class, EquivalenceClasses},
         rewrite::{rewrite_expr_post, rewrite_expr_vec},
-        ScalarExpr, ScalarExprRef, ToRef,
+        ScalarExpr, ScalarExprRef,
     },
 };
 
@@ -53,7 +53,7 @@ impl SingleReplacementRule for AggregateSimplifierRule {
                 let project = (0..num_columns)
                     .map(|i| {
                         if i != out_col {
-                            ScalarExpr::input_ref(i).to_ref()
+                            ScalarExpr::input_ref(i).into()
                         } else {
                             expr.clone()
                         }
@@ -77,7 +77,7 @@ fn find_redundant_key(
     classes: &EquivalenceClasses,
 ) -> Option<(usize, usize, ScalarExprRef)> {
     group_key.iter().enumerate().find_map(|(out_col, in_col)| {
-        let input_ref = ScalarExpr::input_ref(out_col).to_ref();
+        let input_ref = ScalarExpr::input_ref(out_col).into();
         if let Some(class_id) = find_class(&classes, &input_ref) {
             let class = &classes[class_id];
             // TODO(asenac) verify that other doesn't reference input_ref
@@ -100,7 +100,7 @@ fn update_project_after_pruning_column(
             &mut |e: &ScalarExprRef| {
                 if let ScalarExpr::InputRef { index } = e.as_ref() {
                     if *index > pruned_col {
-                        return Some(ScalarExpr::input_ref(index - 1).to_ref());
+                        return Some(ScalarExpr::input_ref(index - 1).into());
                     }
                 }
                 None
