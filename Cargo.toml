@@ -12,9 +12,6 @@ path = "src/lib.rs"
 [[bin]]
 name = "dag"
 
-[[bin]]
-name = "nested"
-
 [dependencies]
 datadriven = "0.7.0"
 itertools = "0.11.0"
