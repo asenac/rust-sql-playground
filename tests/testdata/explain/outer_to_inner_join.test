@@ -220,3 +220,41 @@ step FilterNormalizationRule {"nodes":[{"id":"4","label":"[4] Union","annotation
 final {"nodes":[{"id":"4","label":"[4] Union","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ref_5)"]},{"id":"6","label":"[6] Filter [lt(ref_0, ref_1)]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ref_5), lt(ref_0, ref_1)"]},{"id":"5","label":"[5] Inner Join [eq(ref_0, ref_5)]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ref_5)"]},{"id":"0","label":"[0] TableScan id: 1, num_columns: 5","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"7","label":"[7] Filter [lt(ref_0, ref_2)]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ref_5), lt(ref_0, ref_2)"]}],"edges":[{"from":"4","to":"6","label":"input 0"},{"from":"4","to":"7","label":"input 1"},{"from":"6","to":"5","label":"input 0"},{"from":"5","to":"0","label":"input 0"},{"from":"5","to":"0","label":"input 1"},{"from":"7","to":"5","label":"input 0"}]}
 ----
 ----
+
+run
+outer_to_inner_4
+----
+----
+[2] Inner Join [eq(ref_0, ref_10)]
+    - Num Columns: 15
+    - Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string
+    - Pulled Up Predicates: eq(ref_0, ref_10)
+  [0] TableScan id: 1, num_columns: 5
+      - Num Columns: 5
+      - Row Type: string, string, string, string, string
+  [1] Left Outer Join [eq(ref_0, ref_5)]
+      - Num Columns: 10
+      - Row Type: string, string, string, string, string, string, string, string, string, string
+    Recurring node 0
+    Recurring node 0
+
+
+Optimized:
+[2] Inner Join [eq(ref_0, ref_10)]
+    - Num Columns: 15
+    - Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string
+    - Pulled Up Predicates: eq(ref_0, ref_10)
+  [0] TableScan id: 1, num_columns: 5
+      - Num Columns: 5
+      - Row Type: string, string, string, string, string
+  [1] Left Outer Join [eq(ref_0, ref_5)]
+      - Num Columns: 10
+      - Row Type: string, string, string, string, string, string, string, string, string, string
+    Recurring node 0
+    Recurring node 0
+
+initial {"nodes":[{"id":"2","label":"[2] Inner Join [eq(ref_0, ref_10)]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ref_10)"]},{"id":"0","label":"[0] TableScan id: 1, num_columns: 5","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"1","label":"[1] Left Outer Join [eq(ref_0, ref_5)]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string"]}],"edges":[{"from":"2","to":"0","label":"input 0"},{"from":"2","to":"1","label":"input 1"},{"from":"1","to":"0","label":"input 0"},{"from":"1","to":"0","label":"input 1"}]}
+
+final {"nodes":[{"id":"2","label":"[2] Inner Join [eq(ref_0, ref_10)]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ref_10)"]},{"id":"0","label":"[0] TableScan id: 1, num_columns: 5","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"1","label":"[1] Left Outer Join [eq(ref_0, ref_5)]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string"]}],"edges":[{"from":"2","to":"0","label":"input 0"},{"from":"2","to":"1","label":"input 1"},{"from":"1","to":"0","label":"input 0"},{"from":"1","to":"0","label":"input 1"}]}
+----
+----
