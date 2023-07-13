@@ -418,7 +418,7 @@ fn clone_expr_if_needed<E: RewritableExpr>(mut expr: Rc<E>, new_inputs: &[Rc<E>]
 impl RewritableExpr for ScalarExpr {
     fn clone_with_new_inputs(&self, inputs: &[ScalarExprRef]) -> ScalarExprRef {
         assert!(inputs.len() == self.num_inputs());
-        Rc::new(match self {
+        match self {
             ScalarExpr::BinaryOp { op, .. } => ScalarExpr::BinaryOp {
                 op: op.clone(),
                 left: inputs[0].clone(),
@@ -429,14 +429,15 @@ impl RewritableExpr for ScalarExpr {
                 operands: inputs.to_vec(),
             },
             ScalarExpr::Literal { .. } | ScalarExpr::InputRef { .. } => panic!(),
-        })
+        }
+        .into()
     }
 }
 
 impl RewritableExpr for ExtendedScalarExpr {
     fn clone_with_new_inputs(&self, inputs: &[ExtendedScalarExprRef]) -> ExtendedScalarExprRef {
         assert!(inputs.len() == self.num_inputs());
-        Rc::new(match self {
+        match self {
             ExtendedScalarExpr::BinaryOp { op, .. } => ExtendedScalarExpr::BinaryOp {
                 op: op.clone(),
                 left: inputs[0].clone(),
@@ -451,7 +452,8 @@ impl RewritableExpr for ExtendedScalarExpr {
                 op: op.clone(),
                 operands: inputs.to_vec(),
             },
-        })
+        }
+        .into()
     }
 }
 

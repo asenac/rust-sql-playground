@@ -396,7 +396,7 @@ impl ToScalarExpr for Rc<ExtendedScalarExpr> {
                     return PostOrderVisitationResult::Abort;
                 }
             };
-            stack.push(Rc::new(extended_expr));
+            stack.push(extended_expr.into());
             PostOrderVisitationResult::Continue
         });
         stack.into_iter().next()
@@ -438,7 +438,7 @@ impl ToExtendedExpr for Rc<ScalarExpr> {
                     expr
                 }
             };
-            stack.push(Rc::new(extended_expr));
+            stack.push(extended_expr.into());
             PostOrderVisitationResult::Continue
         });
         stack.into_iter().next().unwrap()
@@ -447,13 +447,14 @@ impl ToExtendedExpr for Rc<ScalarExpr> {
 
 impl ToExtendedExpr for Rc<AggregateExpr> {
     fn to_extended_expr(&self) -> ExtendedScalarExprRef {
-        Rc::new(ExtendedScalarExpr::Aggregate {
+        ExtendedScalarExpr::Aggregate {
             op: self.op.clone(),
             operands: self
                 .operands
                 .iter()
                 .map(|i| ExtendedScalarExpr::InputRef { index: *i }.into())
                 .collect_vec(),
-        })
+        }
+        .into()
     }
 }

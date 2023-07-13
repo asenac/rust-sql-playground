@@ -1,7 +1,4 @@
-use std::{
-    collections::{BTreeSet, HashMap},
-    rc::Rc,
-};
+use std::collections::{BTreeSet, HashMap};
 
 use itertools::Itertools;
 
@@ -47,14 +44,15 @@ impl SingleReplacementRule for PruneAggregateInputRule {
                 let new_aggregates = aggregates
                     .iter()
                     .map(|k| {
-                        Rc::new(AggregateExpr {
+                        AggregateExpr {
                             op: k.op.clone(),
                             operands: k
                                 .operands
                                 .iter()
                                 .map(|e| *column_map.get(e).unwrap())
                                 .collect_vec(),
-                        })
+                        }
+                        .into()
                     })
                     .collect_vec();
                 let project_outputs = input_dependencies

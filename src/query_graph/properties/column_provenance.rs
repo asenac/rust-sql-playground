@@ -79,11 +79,10 @@ impl ColumnProvenance {
         // Default provenance
         let default_prov = ColumnProvenanceInfo {
             source_node: node_id,
-            column_expressions: Rc::new(
-                (0..num_columns(query_graph, node_id))
-                    .map(|i| Some(ScalarExpr::input_ref(i).into()))
-                    .collect_vec(),
-            ),
+            column_expressions: (0..num_columns(query_graph, node_id))
+                .map(|i| Some(ScalarExpr::input_ref(i).into()))
+                .collect_vec()
+                .into(),
             filtered: false,
             inverse_path: Vec::new(),
         };
@@ -127,12 +126,11 @@ impl ColumnProvenance {
                         .collect::<HashMap<_, _>>();
                     ColumnProvenanceInfo {
                         source_node: prov_info.source_node,
-                        column_expressions: Rc::new(
-                            outputs
-                                .iter()
-                                .map(|expr| lift_scalar_expr_2(expr, &lifting_map))
-                                .collect_vec(),
-                        ),
+                        column_expressions: outputs
+                            .iter()
+                            .map(|expr| lift_scalar_expr_2(expr, &lifting_map))
+                            .collect_vec()
+                            .into(),
                         filtered: prov_info.filtered,
                         inverse_path: prov_info
                             .inverse_path
@@ -156,12 +154,11 @@ impl ColumnProvenance {
                 prov.extend(input_prov.iter().map(|prov_info| {
                     ColumnProvenanceInfo {
                         source_node: prov_info.source_node,
-                        column_expressions: Rc::new(
-                            (0..group_key.len())
-                                .map(|i| prov_info.column_expressions[i].clone())
-                                .chain(aggregates.iter().map(|_| None))
-                                .collect_vec(),
-                        ),
+                        column_expressions: (0..group_key.len())
+                            .map(|i| prov_info.column_expressions[i].clone())
+                            .chain(aggregates.iter().map(|_| None))
+                            .collect_vec()
+                            .into(),
                         // The aggregate node doesn't filter, but reduces the input relation
                         filtered: prov_info.filtered,
                         inverse_path: prov_info
@@ -195,14 +192,13 @@ impl ColumnProvenance {
                     prov.extend(input_prov.iter().map(|prov_info| {
                         ColumnProvenanceInfo {
                             source_node: prov_info.source_node,
-                            column_expressions: Rc::new(
-                                prov_info
-                                    .column_expressions
-                                    .iter()
-                                    .cloned()
-                                    .chain((0..right_num_columns).map(|_| None))
-                                    .collect_vec(),
-                            ),
+                            column_expressions: prov_info
+                                .column_expressions
+                                .iter()
+                                .cloned()
+                                .chain((0..right_num_columns).map(|_| None))
+                                .collect_vec()
+                                .into(),
                             filtered: false,
                             inverse_path: prov_info
                                 .inverse_path
@@ -219,12 +215,11 @@ impl ColumnProvenance {
                     prov.extend(input_prov.iter().map(|prov_info| {
                         ColumnProvenanceInfo {
                             source_node: prov_info.source_node,
-                            column_expressions: Rc::new(
-                                (0..left_num_columns)
-                                    .map(|_| None)
-                                    .chain(prov_info.column_expressions.iter().cloned())
-                                    .collect_vec(),
-                            ),
+                            column_expressions: (0..left_num_columns)
+                                .map(|_| None)
+                                .chain(prov_info.column_expressions.iter().cloned())
+                                .collect_vec()
+                                .into(),
                             filtered: false,
                             inverse_path: prov_info
                                 .inverse_path
@@ -240,7 +235,7 @@ impl ColumnProvenance {
             _ => {}
         };
 
-        Rc::new(prov)
+        prov.into()
     }
 }
 

@@ -1,9 +1,6 @@
 //! Module containing utilities used by several optimization rules.
 
-use std::{
-    collections::{HashMap, HashSet},
-    rc::Rc,
-};
+use std::collections::{HashMap, HashSet};
 
 use itertools::Itertools;
 
@@ -201,14 +198,15 @@ pub(crate) fn apply_map_to_parent_projections_and_replace_input(
                         let new_aggregates = aggregates
                             .iter()
                             .map(|k| {
-                                Rc::new(AggregateExpr {
+                                AggregateExpr {
                                     op: k.op.clone(),
                                     operands: k
                                         .operands
                                         .iter()
                                         .map(|e| *column_map.get(e).unwrap())
                                         .collect_vec(),
-                                })
+                                }
+                                .into()
                             })
                             .collect_vec();
                         let new_agg = query_graph.add_node(QueryNode::Aggregate {

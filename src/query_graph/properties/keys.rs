@@ -150,7 +150,7 @@ impl Keys {
                     if lifted_key.len() == key.key.len() {
                         lifted_key.sort();
                         Some(KeyBounds {
-                            key: Rc::new(lifted_key),
+                            key: lifted_key.into(),
                             lower_bound: key.lower_bound,
                             upper_bound: key.upper_bound,
                         })
@@ -163,7 +163,7 @@ impl Keys {
                 // FALSE/NULL predicate -> empty relation
                 if has_false_or_null_predicate(conditions) {
                     keys.push(KeyBounds {
-                        key: Rc::new(Vec::new()),
+                        key: Default::default(),
                         lower_bound: 0,
                         upper_bound: Some(0),
                     });
@@ -200,12 +200,12 @@ impl Keys {
                     .keys_unchecked(query_graph, *right)
                     .iter()
                     .map(|key| KeyBounds {
-                        key: Rc::new(
-                            key.key
-                                .iter()
-                                .map(|e| shift_right_input_refs(e, left_num_columns))
-                                .collect(),
-                        ),
+                        key: key
+                            .key
+                            .iter()
+                            .map(|e| shift_right_input_refs(e, left_num_columns))
+                            .collect_vec()
+                            .into(),
                         lower_bound: key.lower_bound,
                         upper_bound: key.upper_bound,
                     })
@@ -215,7 +215,7 @@ impl Keys {
                     // FALSE/NULL predicate -> empty relation
                     if has_false_or_null_predicate(conditions) {
                         keys.push(KeyBounds {
-                            key: Rc::new(Vec::new()),
+                            key: Default::default(),
                             lower_bound: 0,
                             upper_bound: Some(0),
                         });
@@ -312,13 +312,12 @@ impl Keys {
                 input: _,
             } => keys.push(KeyBounds {
                 // TODO(asenac) use input keys
-                key: Rc::new(
-                    group_key
-                        .iter()
-                        .enumerate()
-                        .map(|(out_col, _)| ScalarExpr::input_ref(out_col).into())
-                        .collect(),
-                ),
+                key: group_key
+                    .iter()
+                    .enumerate()
+                    .map(|(out_col, _)| ScalarExpr::input_ref(out_col).into())
+                    .collect_vec()
+                    .into(),
                 lower_bound: if group_key.is_empty() { 1 } else { 0 },
                 upper_bound: Some(1),
             }),
@@ -358,21 +357,21 @@ impl Keys {
         // TODO(asenac) consider removing the non-normalized version
         let classes = equivalence_classes(query_graph, node_id);
         let normalized_keys = keys.clone().into_iter().map(|k| KeyBounds {
-            key: Rc::new(
-                k.key
-                    .iter()
-                    .map(|e| normalize_scalar_expr(e, &classes))
-                    .filter(|e| {
-                        if let ScalarExpr::Literal(_) = e.as_ref() {
-                            false
-                        } else {
-                            true
-                        }
-                    })
-                    .sorted()
-                    .dedup()
-                    .collect(),
-            ),
+            key: k
+                .key
+                .iter()
+                .map(|e| normalize_scalar_expr(e, &classes))
+                .filter(|e| {
+                    if let ScalarExpr::Literal(_) = e.as_ref() {
+                        false
+                    } else {
+                        true
+                    }
+                })
+                .sorted()
+                .dedup()
+                .collect_vec()
+                .into(),
             lower_bound: k.lower_bound,
             upper_bound: k.upper_bound,
         });
@@ -384,7 +383,7 @@ impl Keys {
             .sorted()
             .dedup()
             .collect_vec();
-        Rc::new(keys)
+        keys.into()
     }
 }
 

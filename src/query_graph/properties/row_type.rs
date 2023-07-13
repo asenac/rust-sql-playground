@@ -1,5 +1,7 @@
 use std::{any::TypeId, rc::Rc};
 
+use itertools::Itertools;
+
 use crate::{
     data_type::DataType,
     query_graph::{visitor::QueryGraphPrePostVisitor, *},
@@ -57,17 +59,17 @@ impl RowType {
         match query_graph.node(node_id) {
             QueryNode::Project { outputs, input } => {
                 let input_row_type = self.row_type_unchecked(query_graph, *input);
-                Rc::new(
-                    outputs
-                        .iter()
-                        .map(|e| e.data_type(&input_row_type[..]))
-                        .collect(),
-                )
+                outputs
+                    .iter()
+                    .map(|e| e.data_type(&input_row_type[..]))
+                    .collect_vec()
+                    .into()
             }
             QueryNode::Filter { input, .. } => self.row_type_unchecked(query_graph, *input),
-            QueryNode::TableScan { num_columns, .. } => {
-                Rc::new((0..*num_columns).map(|_| DataType::String).collect())
-            }
+            QueryNode::TableScan { num_columns, .. } => (0..*num_columns)
+                .map(|_| DataType::String)
+                .collect_vec()
+                .into(),
             QueryNode::Join {
                 join_type,
                 left,
@@ -77,13 +79,13 @@ impl RowType {
                 JoinType::Inner
                 | JoinType::LeftOuter
                 | JoinType::RightOuter
-                | JoinType::FullOuter => Rc::new(
-                    self.row_type_unchecked(query_graph, *left)
-                        .iter()
-                        .chain(self.row_type_unchecked(query_graph, *right).iter())
-                        .cloned()
-                        .collect(),
-                ),
+                | JoinType::FullOuter => self
+                    .row_type_unchecked(query_graph, *left)
+                    .iter()
+                    .chain(self.row_type_unchecked(query_graph, *right).iter())
+                    .cloned()
+                    .collect_vec()
+                    .into(),
                 JoinType::Semi | JoinType::Anti => self.row_type_unchecked(query_graph, *left),
             },
             QueryNode::Aggregate {
@@ -92,17 +94,16 @@ impl RowType {
                 input,
             } => {
                 let input_row_type = self.row_type_unchecked(query_graph, *input);
-                Rc::new(
-                    group_key
-                        .iter()
-                        .map(|e| input_row_type[*e].clone())
-                        .chain(aggregates.iter().map(|agg| agg.data_type(&*input_row_type)))
-                        .collect(),
-                )
+                group_key
+                    .iter()
+                    .map(|e| input_row_type[*e].clone())
+                    .chain(aggregates.iter().map(|agg| agg.data_type(&*input_row_type)))
+                    .collect_vec()
+                    .into()
             }
             QueryNode::Union { inputs } => {
                 if inputs.is_empty() {
-                    Rc::new(vec![])
+                    Default::default()
                 } else {
                     self.row_type_unchecked(query_graph, inputs[0])
                 }
