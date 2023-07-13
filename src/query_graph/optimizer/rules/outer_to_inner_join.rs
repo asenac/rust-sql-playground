@@ -246,20 +246,8 @@ fn build_rewrite_map(
         .iter()
         // Replace the input refs with nulls (properly typed).
         .map(|e| {
-            if let Some(e) = e {
-                return Some(rewrite_expr_post(
-                    &mut |curr_expr: &ScalarExprRef| {
-                        if let ScalarExpr::InputRef { index } = curr_expr.as_ref() {
-                            return Some(
-                                ScalarExpr::null_literal(non_prev_row_type[*index].clone()).into(),
-                            );
-                        }
-                        None
-                    },
-                    e,
-                ));
-            }
-            None
+            e.as_ref()
+                .map(|e| replace_with_nulls(e, &non_prev_row_type))
         })
         .enumerate()
         .filter_map(|(i, e)| {
@@ -275,6 +263,19 @@ fn build_rewrite_map(
             None
         })
         .collect::<HashMap<_, _>>()
+}
+
+/// Replace the input references with nulls of the corresponding type
+fn replace_with_nulls(expr: &ScalarExprRef, row_type: &[DataType]) -> ScalarExprRef {
+    rewrite_expr_post(
+        &mut |curr_expr: &ScalarExprRef| {
+            if let ScalarExpr::InputRef { index } = curr_expr.as_ref() {
+                return Some(ScalarExpr::null_literal(row_type[*index].clone()).into());
+            }
+            None
+        },
+        expr,
+    )
 }
 
 /// Check whether any of the given conditions evaluates to null or false after
