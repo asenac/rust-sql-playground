@@ -6,7 +6,9 @@ use crate::{
     data_type::DataType,
     query_graph::{
         optimizer::{OptRuleType, SingleReplacementRule},
-        properties::{column_provenance, num_columns, row_type, ColumnProvenanceInfo},
+        properties::{
+            column_provenance, cross_product_row_type, num_columns, row_type, ColumnProvenanceInfo,
+        },
         JoinType, NodeId, QueryGraph, QueryNode,
     },
     scalar_expr::{
@@ -129,12 +131,8 @@ fn do_all_parents_reject_null_from_non_preserving(
                             // 2.) and 3.)
                             let rewrite_map =
                                 build_rewrite_map(query_graph, &prov, non_preserving_node_id, 0);
-                            // TODO(asenac) consider caching this as a property
-                            let input_row_type = row_type(query_graph, *left)
-                                .iter()
-                                .chain(row_type(query_graph, *right).iter())
-                                .cloned()
-                                .collect_vec();
+                            let input_row_type =
+                                cross_product_row_type(query_graph, node_id).unwrap();
                             // 4.) and 5.)
                             if any_condition_rejects_nulls(
                                 &rewrite_map,
@@ -161,11 +159,8 @@ fn do_all_parents_reject_null_from_non_preserving(
                                 non_preserving_node_id,
                                 left_num_columns,
                             );
-                            let input_row_type = row_type(query_graph, *left)
-                                .iter()
-                                .chain(row_type(query_graph, *right).iter())
-                                .cloned()
-                                .collect_vec();
+                            let input_row_type =
+                                cross_product_row_type(query_graph, node_id).unwrap();
                             // 4.) and 5.)
                             if any_condition_rejects_nulls(
                                 &rewrite_map,

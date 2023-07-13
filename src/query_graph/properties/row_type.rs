@@ -13,6 +13,28 @@ pub fn row_type(query_graph: &QueryGraph, node_id: NodeId) -> Rc<Vec<DataType>> 
     RowType::row_type(query_graph, node_id)
 }
 
+/// Given a join node returns the row type of the cross product of its operands.
+/// This is the row type the expressions in the join refer to.
+pub fn cross_product_row_type(query_graph: &QueryGraph, node_id: NodeId) -> Option<Vec<DataType>> {
+    if let QueryNode::Join {
+        join_type: _,
+        conditions: _,
+        left,
+        right,
+    } = query_graph.node(node_id)
+    {
+        Some(
+            row_type(query_graph, *left)
+                .iter()
+                .chain(row_type(query_graph, *right).iter())
+                .cloned()
+                .collect_vec(),
+        )
+    } else {
+        None
+    }
+}
+
 /// Helper function to include row type information when explaining the plan.
 pub fn row_type_annotator(query_graph: &QueryGraph, node_id: NodeId) -> Option<String> {
     let row_type = row_type(query_graph, node_id);
