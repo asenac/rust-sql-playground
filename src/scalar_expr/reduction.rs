@@ -9,18 +9,10 @@ use super::{rewrite::rewrite_expr_pre_post, NaryOp, ScalarExpr, ScalarExprRef};
 /// Reduce the given expression recursively. Keeps trying until the expression cannot
 /// be reduced any further.
 pub fn reduce_expr_recursively(expr: &ScalarExprRef, row_type: &[DataType]) -> ScalarExprRef {
-    let mut current = expr.clone();
-    loop {
-        let rewritten = rewrite_expr_pre_post(
-            &mut |curr_expr: &ScalarExprRef| reduce_expr(curr_expr, row_type),
-            &current,
-        );
-        if &*current as *const ScalarExpr == &*rewritten as *const ScalarExpr {
-            break;
-        }
-        current = rewritten;
-    }
-    return current;
+    rewrite_expr_pre_post(
+        &mut |curr_expr: &ScalarExprRef| reduce_expr(curr_expr, row_type),
+        &expr,
+    )
 }
 
 pub fn reduce_expr(expr: &ScalarExprRef, row_type: &[DataType]) -> Option<ScalarExprRef> {

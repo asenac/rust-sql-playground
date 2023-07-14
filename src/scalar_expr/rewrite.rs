@@ -46,7 +46,7 @@ where
     E: RewritableExpr,
     F: FnMut(&Rc<E>) -> Option<Rc<E>>,
 {
-    fn visit_pre(&mut self, _: &Rc<E>) -> PreOrderVisitationResult {
+    fn visit_pre(&mut self, _: &mut Rc<E>) -> PreOrderVisitationResult {
         PreOrderVisitationResult::VisitInputs
     }
 
@@ -168,7 +168,7 @@ where
     E: RewritableExpr,
     F: FnMut(&Rc<E>) -> Result<Option<Rc<E>>, ()>,
 {
-    fn visit_pre(&mut self, expr: &Rc<E>) -> PreOrderVisitationResult {
+    fn visit_pre(&mut self, expr: &mut Rc<E>) -> PreOrderVisitationResult {
         match (self.rewrite)(expr) {
             Ok(Some(rewritten_expr)) => {
                 self.stack.push(rewritten_expr);
@@ -329,7 +329,6 @@ where
     F: FnMut(&Rc<E>) -> Option<Rc<E>>,
 {
     stack: Vec<Rc<E>>,
-    skip_post: bool,
     rewrite: &'a mut F,
 }
 
@@ -341,7 +340,6 @@ where
     fn new(rewrite: &'a mut F) -> Self {
         Self {
             stack: Vec::new(),
-            skip_post: false,
             rewrite,
         }
     }
@@ -352,30 +350,25 @@ where
     E: RewritableExpr,
     F: FnMut(&Rc<E>) -> Option<Rc<E>>,
 {
-    fn visit_pre(&mut self, expr: &Rc<E>) -> PreOrderVisitationResult {
+    fn visit_pre(&mut self, expr: &mut Rc<E>) -> PreOrderVisitationResult {
         match (self.rewrite)(expr) {
             Some(rewritten_expr) => {
-                self.stack.push(rewritten_expr);
-                self.skip_post = true;
-                PreOrderVisitationResult::DoNotVisitInputs
+                *expr = rewritten_expr;
+                PreOrderVisitationResult::VisitInputs
             }
             None => PreOrderVisitationResult::VisitInputs,
         }
     }
 
     fn visit_post(&mut self, expr: &Rc<E>) -> PostOrderVisitationResult {
-        if !self.skip_post {
-            let num_inputs = expr.num_inputs();
-            let new_inputs = &self.stack[self.stack.len() - num_inputs..];
-            let mut curr_expr = clone_expr_if_needed(expr.clone(), new_inputs);
-            self.stack.truncate(self.stack.len() - num_inputs);
-            if let Some(rewritten_expr) = (self.rewrite)(&curr_expr) {
-                curr_expr = rewritten_expr;
-            }
-            self.stack.push(curr_expr);
-        } else {
-            self.skip_post = false;
+        let num_inputs = expr.num_inputs();
+        let new_inputs = &self.stack[self.stack.len() - num_inputs..];
+        let mut curr_expr = clone_expr_if_needed(expr.clone(), new_inputs);
+        self.stack.truncate(self.stack.len() - num_inputs);
+        if let Some(rewritten_expr) = (self.rewrite)(&curr_expr) {
+            curr_expr = rewritten_expr;
         }
+        self.stack.push(curr_expr);
         PostOrderVisitationResult::Continue
     }
 }

@@ -4,6 +4,8 @@ use std::marker::PhantomData;
 use crate::scalar_expr::*;
 use crate::visitor_utils::*;
 
+/// Trait that needs to be implemented for any expression type in order for
+/// it to be visited with the utilities in this module.
 pub trait VisitableExpr {
     fn num_inputs(&self) -> usize;
 
@@ -11,7 +13,11 @@ pub trait VisitableExpr {
 }
 
 pub trait ExprPrePostVisitor<E: VisitableExpr> {
-    fn visit_pre(&mut self, expr: &Rc<E>) -> PreOrderVisitationResult;
+    /// The expression is a mutable reference so we can override the current
+    /// node in order to allow visiting the inputs of a different node. Useful
+    /// when performing expression rewrites.
+    fn visit_pre(&mut self, expr: &mut Rc<E>) -> PreOrderVisitationResult;
+
     fn visit_post(&mut self, expr: &Rc<E>) -> PostOrderVisitationResult;
 }
 
@@ -23,7 +29,7 @@ where
     let mut stack = vec![VisitationStep::new(expr.clone())];
     while let Some(step) = stack.last_mut() {
         if step.next_child.is_none() {
-            match visitor.visit_pre(&step.node) {
+            match visitor.visit_pre(&mut step.node) {
                 PreOrderVisitationResult::Abort => break,
                 PreOrderVisitationResult::VisitInputs => {}
                 PreOrderVisitationResult::DoNotVisitInputs => {
@@ -54,6 +60,7 @@ where
         }
     }
 }
+
 struct ExprPreVisitor<'a, F, E>
 where
     E: VisitableExpr,
@@ -68,7 +75,7 @@ where
     E: VisitableExpr,
     F: FnMut(&Rc<E>) -> PreOrderVisitationResult,
 {
-    fn visit_pre(&mut self, expr: &Rc<E>) -> PreOrderVisitationResult {
+    fn visit_pre(&mut self, expr: &mut Rc<E>) -> PreOrderVisitationResult {
         (self.visitor)(expr)
     }
     fn visit_post(&mut self, _: &Rc<E>) -> PostOrderVisitationResult {
@@ -103,7 +110,7 @@ where
     E: VisitableExpr,
     F: FnMut(&Rc<E>) -> PostOrderVisitationResult,
 {
-    fn visit_pre(&mut self, _: &Rc<E>) -> PreOrderVisitationResult {
+    fn visit_pre(&mut self, _: &mut Rc<E>) -> PreOrderVisitationResult {
         PreOrderVisitationResult::VisitInputs
     }
     fn visit_post(&mut self, expr: &Rc<E>) -> PostOrderVisitationResult {
