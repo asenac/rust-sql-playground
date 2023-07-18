@@ -23,6 +23,7 @@ pub use column_provenance::ColumnProvenanceInfo;
 pub use equivalence_classes::equivalence_classes;
 pub use input_dependencies::input_dependencies;
 pub use keys::empty_key;
+pub use keys::is_empty_relation;
 pub use keys::keys;
 pub use keys::keys_annotator;
 pub use keys::unique_key;

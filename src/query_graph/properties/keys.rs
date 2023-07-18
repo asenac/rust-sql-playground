@@ -99,6 +99,13 @@ pub fn empty_key(query_graph: &QueryGraph, node_id: NodeId) -> Option<KeyBounds>
     })
 }
 
+/// Whether the given relation is known to produce an empty result set.
+pub fn is_empty_relation(query_graph: &QueryGraph, node_id: NodeId) -> bool {
+    empty_key(query_graph, node_id)
+        .map(|k| k.upper_bound == Some(0))
+        .unwrap_or(false)
+}
+
 struct Keys {}
 
 impl Keys {
