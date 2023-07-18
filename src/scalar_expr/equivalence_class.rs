@@ -99,6 +99,7 @@ pub fn to_replacement_map(classes: &EquivalenceClasses) -> HashMap<ScalarExprRef
                 .members
                 .iter()
                 .skip(1)
+                .filter(|other| !other.is_literal())
                 .map(|other| (other.clone(), first.clone()))
         })
         .flatten()
