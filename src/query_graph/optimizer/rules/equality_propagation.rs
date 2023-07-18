@@ -53,7 +53,7 @@ impl SingleReplacementRule for EqualityPropagationRule {
                         shift_right_input_refs(e, left_num_columns)
                     });
 
-                let new_left_predicates = if from_left_to_right_allowed {
+                let new_left_predicates = if from_right_to_left_allowed {
                     Self::propagate_predicates(
                         &right_predicates,
                         &right_to_left,
@@ -63,7 +63,7 @@ impl SingleReplacementRule for EqualityPropagationRule {
                 } else {
                     Vec::new()
                 };
-                let new_right_predicates = if from_right_to_left_allowed {
+                let new_right_predicates = if from_left_to_right_allowed {
                     Self::propagate_predicates(
                         &left_predicates,
                         &left_to_right,

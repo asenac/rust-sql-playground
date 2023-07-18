@@ -955,6 +955,45 @@ mod test_queries {
             query_graph.set_entry_node(union_);
             query_graph
         });
+        queries.insert("left_join_predicates".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let filter_1 = query_graph.filter(
+                table_scan_1,
+                vec![ScalarExpr::input_ref(0)
+                    .binary(
+                        BinaryOp::Eq,
+                        ScalarExpr::string_literal("world".to_string()).into(),
+                    )
+                    .into()],
+            );
+            let project_2 = query_graph.project(
+                table_scan_1,
+                vec![
+                    ScalarExpr::input_ref(0).into(),
+                    ScalarExpr::input_ref(0).into(),
+                ],
+            );
+            let filter_2 = query_graph.filter(
+                project_2,
+                vec![ScalarExpr::input_ref(1)
+                    .binary(
+                        BinaryOp::Eq,
+                        ScalarExpr::string_literal("hello".to_string()).into(),
+                    )
+                    .into()],
+            );
+            let join = query_graph.join(
+                JoinType::LeftOuter,
+                filter_1,
+                filter_2,
+                vec![ScalarExpr::input_ref(0)
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(5).into())
+                    .into()],
+            );
+            query_graph.set_entry_node(join);
+            query_graph
+        });
     }
 
     pub(crate) fn keys_filter(queries: &mut HashMap<String, QueryGraph>) {

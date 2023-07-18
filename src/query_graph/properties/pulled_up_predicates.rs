@@ -163,30 +163,32 @@ impl PulledUpPredicates {
                 if let JoinType::Inner = join_type {
                     predicates.extend(conditions.iter().cloned());
                 }
-                let forward_left_predicates = match join_type {
-                    JoinType::Semi | JoinType::Anti | JoinType::LeftOuter | JoinType::Inner => true,
-                    JoinType::RightOuter | JoinType::FullOuter => false,
-                };
-                if forward_left_predicates {
-                    predicates.extend(
-                        self.predicates_unchecked(query_graph, *left)
-                            .iter()
-                            .cloned(),
-                    );
-                }
-                let forward_right_predicates = match join_type {
-                    JoinType::Semi | JoinType::Anti | JoinType::RightOuter | JoinType::Inner => {
-                        true
+                let left_predicates_filter = match join_type {
+                    JoinType::Semi | JoinType::Anti | JoinType::LeftOuter | JoinType::Inner => {
+                        always_true
                     }
-                    JoinType::LeftOuter | JoinType::FullOuter => false,
+                    JoinType::RightOuter => is_raw_column_equivalence,
+                    JoinType::FullOuter => always_false,
                 };
-                if forward_right_predicates {
-                    predicates.extend(
-                        self.predicates_unchecked(query_graph, *right)
-                            .iter()
-                            .map(|x| shift_right_input_refs(x, left_size)),
-                    );
-                }
+                predicates.extend(
+                    self.predicates_unchecked(query_graph, *left)
+                        .iter()
+                        .filter(|x| left_predicates_filter(x))
+                        .cloned(),
+                );
+                let right_predicates_filter = match join_type {
+                    JoinType::Semi | JoinType::Anti | JoinType::RightOuter | JoinType::Inner => {
+                        always_true
+                    }
+                    JoinType::LeftOuter => is_raw_column_equivalence,
+                    JoinType::FullOuter => always_false,
+                };
+                predicates.extend(
+                    self.predicates_unchecked(query_graph, *right)
+                        .iter()
+                        .filter(|x| right_predicates_filter(x))
+                        .map(|x| shift_right_input_refs(x, left_size)),
+                );
             }
             QueryNode::Aggregate {
                 group_key,
@@ -282,4 +284,31 @@ impl QueryGraphPrePostVisitor for PulledUpPredicates {
                 .insert(Self::metadata_type_id(), Box::new(predicates));
         }
     }
+}
+
+fn always_true(_: &ScalarExprRef) -> bool {
+    true
+}
+
+fn always_false(_: &ScalarExprRef) -> bool {
+    false
+}
+
+/// Whether the given predicate is a raw equality among columns.
+/// These predicates can still be forwarded when coming from the non-preserving
+/// side of outer joins.
+fn is_raw_column_equivalence(predicate: &ScalarExprRef) -> bool {
+    if let ScalarExpr::BinaryOp {
+        op: BinaryOp::RawEq,
+        left,
+        right,
+    } = predicate.as_ref()
+    {
+        if let ScalarExpr::InputRef { .. } = left.as_ref() {
+            if let ScalarExpr::InputRef { .. } = right.as_ref() {
+                return true;
+            }
+        }
+    }
+    false
 }
