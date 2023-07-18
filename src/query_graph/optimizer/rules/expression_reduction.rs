@@ -63,7 +63,9 @@ impl SingleReplacementRule for ExpressionReductionRule {
             }
             _ => node_id,
         };
-        if new_node != node_id {
+        // Note: the graph may contain duplicated nodes as a result of input
+        // replacements.
+        if new_node != node_id && query_graph.node(new_node) != query_graph.node(node_id) {
             Some(new_node)
         } else {
             None
