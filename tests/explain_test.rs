@@ -1514,6 +1514,38 @@ mod test_queries {
             query_graph
         });
     }
+
+    pub(crate) fn cte_discovery(queries: &mut HashMap<String, QueryGraph>) {
+        queries.insert("cte_discovery_1".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let filter_1 = query_graph.filter(
+                table_scan_1,
+                vec![ScalarExpr::input_ref(0)
+                    .binary(BinaryOp::Lt, ScalarExpr::input_ref(1).into())
+                    .into()],
+            );
+            // Passthrough projection that will be removed leading to duplicated
+            // nodes in the graph
+            let project_1 = query_graph.project(
+                table_scan_1,
+                (0..5)
+                    .map(|i| ScalarExpr::input_ref(i).into())
+                    .collect_vec(),
+            );
+            let filter_2 = query_graph.filter(
+                project_1,
+                vec![ScalarExpr::input_ref(0)
+                    .binary(BinaryOp::Lt, ScalarExpr::input_ref(1).into())
+                    .into()],
+            );
+            let union_ = query_graph.add_node(QueryNode::Union {
+                inputs: vec![filter_1, filter_2],
+            });
+            query_graph.set_entry_node(union_);
+            query_graph
+        });
+    }
 }
 
 fn static_queries() -> HashMap<String, QueryGraph> {
@@ -1678,6 +1710,7 @@ fn static_queries() -> HashMap<String, QueryGraph> {
     test_queries::aggregate_pruning(&mut queries);
     test_queries::aggregate_remove(&mut queries);
     test_queries::common_aggregate_discovery(&mut queries);
+    test_queries::cte_discovery(&mut queries);
     test_queries::expression_reduction(&mut queries);
     test_queries::filter_aggregate_transpose(&mut queries);
     test_queries::filter_join_transpose(&mut queries);
