@@ -1,13 +1,17 @@
 use std::collections::HashMap;
 
 use crate::{
+    data_type::DataType,
     query_graph::{
         optimizer::{OptRuleType, SingleReplacementRule},
-        properties::{num_columns, pulled_up_predicates},
+        properties::{
+            cross_product_row_type, is_empty_relation, num_columns, pulled_up_predicates,
+        },
         JoinType, NodeId, QueryGraph, QueryNode,
     },
     scalar_expr::{
         equivalence_class::extract_equivalence_classes,
+        reduction::reduce_expr_recursively,
         rewrite::{
             rewrite_expr_pre, rewrite_expr_vec, shift_left_input_refs, shift_right_input_refs,
         },
@@ -36,11 +40,11 @@ impl SingleReplacementRule for EqualityPropagationRule {
             let from_left_to_right_allowed = match join_type {
                 JoinType::Semi | JoinType::Inner | JoinType::LeftOuter => true,
                 JoinType::RightOuter | JoinType::FullOuter | JoinType::Anti => false,
-            };
+            } && !is_empty_relation(query_graph, *right);
             let from_right_to_left_allowed = match join_type {
                 JoinType::Semi | JoinType::Inner | JoinType::RightOuter => true,
                 JoinType::LeftOuter | JoinType::FullOuter | JoinType::Anti => false,
-            };
+            } && !is_empty_relation(query_graph, *left);
             if from_left_to_right_allowed || from_right_to_left_allowed {
                 let left_num_columns = num_columns(&query_graph, *left);
 
@@ -53,12 +57,15 @@ impl SingleReplacementRule for EqualityPropagationRule {
                         shift_right_input_refs(e, left_num_columns)
                     });
 
+                let cross_product_row_type = cross_product_row_type(query_graph, node_id).unwrap();
+
                 let new_left_predicates = if from_right_to_left_allowed {
                     Self::propagate_predicates(
                         &right_predicates,
                         &right_to_left,
                         &left_predicates,
                         &|c| c < left_num_columns,
+                        &cross_product_row_type,
                     )
                 } else {
                     Vec::new()
@@ -69,6 +76,7 @@ impl SingleReplacementRule for EqualityPropagationRule {
                         &left_to_right,
                         &right_predicates,
                         &|c| c >= left_num_columns,
+                        &cross_product_row_type,
                     )
                 } else {
                     Vec::new()
@@ -161,6 +169,7 @@ impl EqualityPropagationRule {
         translation_map: &HashMap<ScalarExprRef, ScalarExprRef>,
         other_side_predicates: &Vec<ScalarExprRef>,
         validate_input_ref: &F,
+        cross_product_row_type: &[DataType],
     ) -> Vec<ScalarExprRef>
     where
         F: Fn(usize) -> bool,
@@ -178,6 +187,8 @@ impl EqualityPropagationRule {
                 predicate,
             )
             .unwrap();
+            let rewritten_predicate =
+                reduce_expr_recursively(&rewritten_predicate, cross_product_row_type);
 
             if !other_side_predicates.contains(&rewritten_predicate)
                 && collect_input_dependencies(&rewritten_predicate)
