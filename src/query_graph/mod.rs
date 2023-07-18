@@ -392,3 +392,38 @@ impl fmt::Display for JoinType {
         write!(f, "{}", self.name())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::scalar_expr::ScalarExpr;
+
+    use super::*;
+
+    #[test]
+    fn test_add_node() {
+        let mut query_graph = QueryGraph::new();
+        let table_scan_id_1 = query_graph.table_scan(0, 10);
+        let table_scan_id_2 = query_graph.table_scan(0, 10);
+        assert_eq!(table_scan_id_1, table_scan_id_2);
+
+        let project_id_1 = query_graph.project(
+            table_scan_id_1,
+            (0..10).map(|i| ScalarExpr::input_ref(i).into()).collect(),
+        );
+        let project_id_2 = query_graph.project(
+            table_scan_id_2,
+            (0..10).map(|i| ScalarExpr::input_ref(i).into()).collect(),
+        );
+        assert_eq!(project_id_1, project_id_2);
+
+        let project_id_1 = query_graph.project(
+            table_scan_id_1,
+            vec![ScalarExpr::string_literal("value".to_owned()).into()],
+        );
+        let project_id_2 = query_graph.project(
+            table_scan_id_2,
+            vec![ScalarExpr::string_literal("value".to_owned()).into()],
+        );
+        assert_eq!(project_id_1, project_id_2);
+    }
+}
