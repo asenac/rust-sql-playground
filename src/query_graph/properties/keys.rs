@@ -363,6 +363,20 @@ impl Keys {
         // Normalize the keys, remove constants
         // TODO(asenac) consider removing the non-normalized version
         let classes = equivalence_classes(query_graph, node_id);
+
+        // Classes with more than one literal mean that the relation has impossible
+        // condition, and hence, it is empty.
+        // TODO(asenac) -0.0 and 0.0 should not be treated as different literals
+        if classes
+            .iter()
+            .any(|class| class.members.iter().filter(|e| e.is_literal()).count() > 1)
+        {
+            keys = vec![KeyBounds {
+                key: Default::default(),
+                lower_bound: 0,
+                upper_bound: Some(0),
+            }];
+        }
         let normalized_keys = keys.clone().into_iter().map(|k| KeyBounds {
             key: k
                 .key

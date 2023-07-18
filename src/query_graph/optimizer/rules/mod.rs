@@ -18,6 +18,7 @@ mod project_merge;
 mod project_normalization;
 mod prune_aggregate_input;
 mod remove_passthrough_project;
+mod top_projection;
 mod union_merge;
 mod union_pruning;
 
@@ -41,5 +42,6 @@ pub use project_merge::ProjectMergeRule;
 pub use project_normalization::ProjectNormalizationRule;
 pub use prune_aggregate_input::PruneAggregateInputRule;
 pub use remove_passthrough_project::RemovePassthroughProjectRule;
+pub use top_projection::TopProjectionRule;
 pub use union_merge::UnionMergeRule;
 pub use union_pruning::UnionPruningRule;

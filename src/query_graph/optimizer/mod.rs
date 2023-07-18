@@ -274,6 +274,7 @@ pub fn build_rule(rule_name: &str) -> Result<Box<dyn Rule>, ()> {
         "ProjectNormalizationRule" => Ok(Box::new(ProjectNormalizationRule {})),
         "PruneAggregateInputRule" => Ok(Box::new(PruneAggregateInputRule {})),
         "RemovePassthroughProjectRule" => Ok(Box::new(RemovePassthroughProjectRule {})),
+        "TopProjectionRule" => Ok(Box::new(TopProjectionRule {})),
         "UnionMergeRule" => Ok(Box::new(UnionMergeRule {})),
         "UnionPruningRule" => Ok(Box::new(UnionPruningRule {})),
         _ => Err(()),
@@ -304,6 +305,7 @@ lazy_static! {
             Box::new(ProjectNormalizationRule {}),
             Box::new(PruneAggregateInputRule {}),
             Box::new(RemovePassthroughProjectRule {}),
+            Box::new(TopProjectionRule {}),
             Box::new(UnionMergeRule {}),
             Box::new(UnionPruningRule {}),
         ]);

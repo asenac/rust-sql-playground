@@ -191,20 +191,26 @@ impl QueryGraph {
     /// Replaces all the references to `node_id` to make them point to `new_node_id`.
     /// Invalidates the cached metadata for the nodes that are no longer part of the
     /// query graph.
-    ///
-    /// Contract is: the sub-graph under new_node_id cannot contain node_id.
     pub fn replace_node(&mut self, node_id: NodeId, new_node_id: NodeId) {
         self.invalidate_properties_upwards(node_id);
 
         // All the parents of the old node are now parents of the new one
-        if let Some(parents) = self.parents.remove(&node_id) {
+        // unless the parent is the new node
+        if let Some(mut parents) = self.parents.remove(&node_id) {
             for parent_id in parents.iter() {
                 let parent_node = self.nodes.get_mut(&parent_id).unwrap();
-                for input in 0..parent_node.num_inputs() {
-                    if parent_node.get_input(input) == node_id {
-                        parent_node.set_input(input, new_node_id);
+                if *parent_id != new_node_id {
+                    for input in 0..parent_node.num_inputs() {
+                        if parent_node.get_input(input) == node_id {
+                            parent_node.set_input(input, new_node_id);
+                        }
                     }
                 }
+            }
+
+            // Keep the new node as a parent of the old node
+            if parents.remove(&new_node_id) {
+                self.parents.insert(node_id, BTreeSet::from([new_node_id]));
             }
 
             if let Some(new_node_parents) = self.parents.get_mut(&new_node_id) {
