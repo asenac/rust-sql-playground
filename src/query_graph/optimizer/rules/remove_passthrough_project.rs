@@ -16,7 +16,8 @@ impl SingleReplacementRule for RemovePassthroughProjectRule {
 
     fn apply(&self, query_graph: &mut QueryGraph, node_id: NodeId) -> Option<NodeId> {
         if let QueryNode::Project { outputs, input } = query_graph.node(node_id) {
-            if outputs.len() == num_columns(query_graph, *input)
+            if query_graph.num_parents(node_id) > 0
+                && outputs.len() == num_columns(query_graph, *input)
                 && outputs
                     .iter()
                     .enumerate()
@@ -58,6 +59,14 @@ mod tests {
             filter_id,
             (0..5).map(|i| ScalarExpr::input_ref(i).into()).collect(),
         );
+        let project_id_3 = query_graph.project(
+            project_id_1,
+            (0..10).map(|i| ScalarExpr::input_ref(i).into()).collect(),
+        );
+        let project_id_4 = query_graph.project(
+            project_id_2,
+            (0..10).map(|i| ScalarExpr::input_ref(i).into()).collect(),
+        );
 
         let remove_passthrough_project = RemovePassthroughProjectRule {};
         assert!(remove_passthrough_project
@@ -71,6 +80,13 @@ mod tests {
         );
         assert!(remove_passthrough_project
             .apply(&mut query_graph, project_id_2)
+            .is_none());
+
+        assert!(remove_passthrough_project
+            .apply(&mut query_graph, project_id_3)
+            .is_none());
+        assert!(remove_passthrough_project
+            .apply(&mut query_graph, project_id_4)
             .is_none());
     }
 }
