@@ -61,6 +61,8 @@ impl SingleReplacementRule for FilterNormalizationRule {
             let new_conditions = new_conditions
                 .into_iter()
                 .filter(|e| *e != true_literal)
+                .sorted()
+                .dedup()
                 .collect_vec();
 
             if new_conditions != *conditions {
