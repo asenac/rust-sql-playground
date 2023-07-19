@@ -62,9 +62,3 @@ impl SingleReplacementRule for FilterAggregateTransposeRule {
         None
     }
 }
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn test_filter_aggregate_transpose() {}
-}
