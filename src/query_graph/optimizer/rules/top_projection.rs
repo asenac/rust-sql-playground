@@ -9,6 +9,10 @@ use crate::{
     scalar_expr::ScalarExpr,
 };
 
+/// Rule that ensures the root node of the query is a projection.
+///
+/// Adding a projection as the top level node helps with column pruning
+/// as columns that are bound to other columns or constants can be pruned.
 pub struct TopProjectionRule {}
 
 impl SingleReplacementRule for TopProjectionRule {
