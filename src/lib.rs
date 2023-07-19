@@ -4,6 +4,7 @@ extern crate lazy_static;
 #[macro_use]
 extern crate serde_derive;
 
+pub mod converter;
 pub mod data_type;
 pub mod query_graph;
 pub mod scalar_expr;
