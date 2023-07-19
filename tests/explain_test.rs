@@ -917,6 +917,16 @@ mod test_queries {
             query_graph.set_entry_node(filter_1);
             query_graph
         });
+        // Check that the upper FALSE predicate is not replaced with TRUE
+        queries.insert("filter_normalization_2".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let filter_1 =
+                query_graph.filter(table_scan_1, vec![ScalarExpr::false_literal().into()]);
+            let filter_2 = query_graph.filter(filter_1, vec![ScalarExpr::false_literal().into()]);
+            query_graph.set_entry_node(filter_2);
+            query_graph
+        });
     }
 
     pub(crate) fn pulled_up_predicates(queries: &mut HashMap<String, QueryGraph>) {
