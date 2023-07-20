@@ -48,10 +48,13 @@ pub(crate) fn common_parent_filters(
     None
 }
 
-/// If all the parents of the given node are projections or filters leading to a projection,
+/// If all the parents of the given node are pruning nodes or filters leading to a pruning node,
 /// computes the superset of columns from the given node required by them, and return a column
 /// map for pruning the given node if not all columns are required.
-pub(crate) fn required_columns_from_parent_projections(
+///
+/// Pruning nodes are those that do not forward all the columns from its input, namely Project
+/// and Aggregate.
+pub(crate) fn required_columns_from_parents(
     query_graph: &QueryGraph,
     node_id: NodeId,
 ) -> Option<HashSet<usize>> {
@@ -121,14 +124,17 @@ pub(crate) fn required_columns_to_column_map(
 }
 
 /// Utility for most pruning rules. All the parents of the given node are expected to be
-/// Project nodes, or chains of 0 or more Filters leading to a Project, and the given
+/// pruning nodes, or chains of 0 or more Filters leading to a pruning node, and the given
 /// column map is required to contain all the columns required by any parent projection.
 /// Clones all the filter nodes over `node_id` adapting their expressions to catch up
-/// with the pruning of columns, until a projection is reached.
+/// with the pruning of columns, until a pruning node is reached.
 ///
-/// Returns a list with the replacement for the projections on top of `node_id` replacing
+/// Returns a list with the replacement for the pruning nodes on top of `node_id` replacing
 /// them with projections on top of `replacement_node_id`.
-pub(crate) fn apply_map_to_parent_projections_and_replace_input(
+///
+/// Pruning nodes are those that do not forward all the columns from its input, namely Project
+/// and Aggregate.
+pub(crate) fn apply_map_to_parents_and_replace_input(
     query_graph: &mut QueryGraph,
     node_id: NodeId,
     column_map: &HashMap<usize, usize>,

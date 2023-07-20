@@ -3,8 +3,8 @@ use itertools::Itertools;
 use crate::query_graph::{
     optimizer::{
         utils::{
-            apply_map_to_parent_projections_and_replace_input,
-            required_columns_from_parent_projections, required_columns_to_column_map,
+            apply_map_to_parents_and_replace_input, required_columns_from_parents,
+            required_columns_to_column_map,
         },
         OptRuleType, Rule,
     },
@@ -35,8 +35,7 @@ impl Rule for AggregatePruningRule {
             input,
         } = query_graph.node(node_id)
         {
-            if let Some(mut required_columns) =
-                required_columns_from_parent_projections(query_graph, node_id)
+            if let Some(mut required_columns) = required_columns_from_parents(query_graph, node_id)
             {
                 // All the columns from the grouping key are implicitly required
                 required_columns.extend(0..group_key.len());
@@ -64,7 +63,7 @@ impl Rule for AggregatePruningRule {
 
                 // Rewrite the parent projections
                 let column_map = required_columns_to_column_map(&required_columns);
-                return Some(apply_map_to_parent_projections_and_replace_input(
+                return Some(apply_map_to_parents_and_replace_input(
                     query_graph,
                     node_id,
                     &column_map,

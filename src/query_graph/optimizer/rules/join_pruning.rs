@@ -6,8 +6,8 @@ use crate::{
     query_graph::{
         optimizer::{
             utils::{
-                apply_map_to_parent_projections_and_replace_input,
-                required_columns_from_parent_projections, required_columns_to_column_map,
+                apply_map_to_parents_and_replace_input, required_columns_from_parents,
+                required_columns_to_column_map,
             },
             OptRuleType, Rule,
         },
@@ -44,9 +44,7 @@ impl Rule for JoinPruningRule {
             conditions,
         } = query_graph.node(node_id)
         {
-            if let Some(required_columns) =
-                required_columns_from_parent_projections(query_graph, node_id)
-            {
+            if let Some(required_columns) = required_columns_from_parents(query_graph, node_id) {
                 // Rewrite conditions
                 let column_map = required_columns_to_column_map(&required_columns);
                 let mut required_columns_including_join = column_map
@@ -103,7 +101,7 @@ impl Rule for JoinPruningRule {
                 let pruning_proj = query_graph.project(new_join, pruning_proj_outputs);
 
                 // Rewrite the parent projections
-                return Some(apply_map_to_parent_projections_and_replace_input(
+                return Some(apply_map_to_parents_and_replace_input(
                     query_graph,
                     node_id,
                     &column_map,
