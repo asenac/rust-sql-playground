@@ -267,7 +267,7 @@ pub fn build_rule(rule_name: &str) -> Result<Box<dyn Rule>, ()> {
         "FilterMergeRule" => Ok(Box::new(FilterMergeRule {})),
         "FilterNormalizationRule" => Ok(Box::new(FilterNormalizationRule {})),
         "FilterProjectTransposeRule" => Ok(Box::new(FilterProjectTransposeRule {})),
-        "IdentityRelationRule" => Ok(Box::new(IdentityJoinRule {})),
+        "IdentityJoinRule" => Ok(Box::new(IdentityJoinRule {})),
         "JoinProjectTransposeRule" => Ok(Box::new(JoinProjectTransposeRule {})),
         "JoinPruningRule" => Ok(Box::new(JoinPruningRule {})),
         "OuterToInnerJoinRule" => Ok(Box::new(OuterToInnerJoinRule {})),
