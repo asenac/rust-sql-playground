@@ -260,6 +260,27 @@ impl AggregateExpr {
             .collect_vec();
         self.op.return_type(&operand_types)
     }
+
+    /// Returns the result of the aggregation when the input is empty.
+    pub fn on_empty_group(&self, row_type: &[DataType]) -> Literal {
+        match self.op {
+            AggregateOp::Count => Literal::build_default(self.data_type(row_type)),
+            AggregateOp::Min | AggregateOp::Max => Literal::build_null(self.data_type(row_type)),
+        }
+    }
+
+    /// Returns the result of the aggregate when the input is a single tuple.
+    pub fn on_unique_tuple(&self) -> ScalarExprRef {
+        match self.op {
+            AggregateOp::Count => {
+                ScalarExpr::Literal(Literal::new(Value::BigInt(0), DataType::BigInt)).into()
+            }
+            AggregateOp::Min | AggregateOp::Max => ScalarExpr::InputRef {
+                index: self.operands[0],
+            }
+            .into(),
+        }
+    }
 }
 
 impl fmt::Display for AggregateExpr {

@@ -21,15 +21,20 @@ impl SingleReplacementRule for AggregateRemoveRule {
             input,
         } = query_graph.node(node_id)
         {
-            // TODO(asenac) fold the aggregate
-            if aggregates.is_empty() {
+            if !group_key.is_empty() {
                 if let Some(input_unique_key) = unique_key(query_graph, *input) {
                     let group_key_expr = group_key
                         .iter()
                         .map(|col| ScalarExpr::input_ref(*col).into())
                         .collect::<Vec<_>>();
                     if input_unique_key.iter().all(|e| group_key_expr.contains(e)) {
-                        return Some(query_graph.project(*input, group_key_expr));
+                        let mut values = group_key_expr;
+                        values.extend(
+                            aggregates
+                                .iter()
+                                .map(|aggregate| aggregate.on_unique_tuple()),
+                        );
+                        return Some(query_graph.project(*input, values));
                     }
                 }
             }
