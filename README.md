@@ -5,6 +5,11 @@ This is a SQL query compiler written in Rust mainly for learning and blogging pu
 There is no SQL parser yet and its overall functionality is very limited, although the
 logical optimizer is getting real.
 
+## Blog posts
+
+* [Part one, the query plan representation](https://andres.senac.es/posts/query-compiler-part-one/)
+* [Part two, the query rewrite driver](https://andres.senac.es/posts/query-compiler-part-two-rule-driver/)
+
 ## Visualizing query plans
 
 `JsonSerializer` utility can be used to dump the query plan in JSON format that can be
