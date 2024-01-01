@@ -88,10 +88,7 @@ impl RowType {
                     .into()
             }
             QueryNode::Filter { input, .. } => self.row_type_unchecked(query_graph, *input),
-            QueryNode::TableScan { num_columns, .. } => (0..*num_columns)
-                .map(|_| DataType::String)
-                .collect_vec()
-                .into(),
+            QueryNode::TableScan { row_type, .. } => row_type.clone(),
             QueryNode::Join {
                 join_type,
                 left,

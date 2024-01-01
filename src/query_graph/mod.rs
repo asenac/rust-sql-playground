@@ -1,8 +1,12 @@
-use crate::scalar_expr::{AggregateExprRef, ScalarExprRef};
+use crate::{
+    data_type::DataType,
+    scalar_expr::{AggregateExprRef, ScalarExprRef},
+};
 use std::{
     cell::RefCell,
     collections::{BTreeSet, HashMap, HashSet},
     fmt,
+    rc::Rc,
 };
 
 use self::properties::PropertyCache;
@@ -39,7 +43,7 @@ pub enum QueryNode {
     },
     TableScan {
         table_id: usize,
-        num_columns: usize,
+        row_type: Rc<Vec<DataType>>,
     },
     Join {
         join_type: JoinType,
@@ -254,7 +258,7 @@ impl QueryGraph {
     pub fn table_scan(&mut self, table_id: usize, num_columns: usize) -> NodeId {
         self.add_node(QueryNode::TableScan {
             table_id,
-            num_columns,
+            row_type: Rc::new(vec![DataType::String; num_columns]),
         })
     }
 

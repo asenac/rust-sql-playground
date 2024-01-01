@@ -48,7 +48,7 @@ impl NumColumns {
         match query_graph.node(node_id) {
             QueryNode::Project { outputs, .. } => outputs.len(),
             QueryNode::Filter { input, .. } => self.num_columns_unchecked(query_graph, *input),
-            QueryNode::TableScan { num_columns, .. } => *num_columns,
+            QueryNode::TableScan { row_type, .. } => row_type.len(),
             QueryNode::Join {
                 join_type,
                 left,

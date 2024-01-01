@@ -6,7 +6,7 @@ filter_keys_1
     - Num Columns: 5
     - Row Type: string, string, string, string, string
     - Keys: [key: [], lower_bound: 0, upper_bound: 0]
-  [0] TableScan id: 1, num_columns: 5
+  [0] TableScan id: 1
       - Num Columns: 5
       - Row Type: string, string, string, string, string
 
@@ -20,13 +20,13 @@ Optimized:
       - Num Columns: 5
       - Row Type: string, string, string, string, string
       - Keys: [key: [], lower_bound: 0, upper_bound: 0]
-    [0] TableScan id: 1, num_columns: 5
+    [0] TableScan id: 1
         - Num Columns: 5
         - Row Type: string, string, string, string, string
 
-initial {"nodes":[{"id":"1","label":"[1] Filter [FALSE]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Keys: [key: [], lower_bound: 0, upper_bound: 0]"]},{"id":"0","label":"[0] TableScan id: 1, num_columns: 5","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"1","to":"0","label":"input 0"}]}
-step TopProjectionRule {"nodes":[{"id":"1","label":"[1] Filter [FALSE]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Keys: [key: [], lower_bound: 0, upper_bound: 0]"]},{"id":"0","label":"[0] TableScan id: 1, num_columns: 5","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"2","label":"[2] Project [ref_0, ref_1, ref_2, ref_3, ref_4]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Keys: [key: [], lower_bound: 0, upper_bound: 0]"]}],"edges":[{"from":"1","to":"0","label":"input 0"},{"from":"2","to":"1","label":"input 0"},{"from":"1","to":"2","label":"TopProjectionRule"}]}
-final {"nodes":[{"id":"2","label":"[2] Project [ref_0, ref_1, ref_2, ref_3, ref_4]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Keys: [key: [], lower_bound: 0, upper_bound: 0]"]},{"id":"1","label":"[1] Filter [FALSE]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Keys: [key: [], lower_bound: 0, upper_bound: 0]"]},{"id":"0","label":"[0] TableScan id: 1, num_columns: 5","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"2","to":"1","label":"input 0"},{"from":"1","to":"0","label":"input 0"}]}
+initial {"nodes":[{"id":"1","label":"[1] Filter [FALSE]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Keys: [key: [], lower_bound: 0, upper_bound: 0]"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"1","to":"0","label":"input 0"}]}
+step TopProjectionRule {"nodes":[{"id":"1","label":"[1] Filter [FALSE]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Keys: [key: [], lower_bound: 0, upper_bound: 0]"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"2","label":"[2] Project [ref_0, ref_1, ref_2, ref_3, ref_4]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Keys: [key: [], lower_bound: 0, upper_bound: 0]"]}],"edges":[{"from":"1","to":"0","label":"input 0"},{"from":"2","to":"1","label":"input 0"},{"from":"1","to":"2","label":"TopProjectionRule"}]}
+final {"nodes":[{"id":"2","label":"[2] Project [ref_0, ref_1, ref_2, ref_3, ref_4]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Keys: [key: [], lower_bound: 0, upper_bound: 0]"]},{"id":"1","label":"[1] Filter [FALSE]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Keys: [key: [], lower_bound: 0, upper_bound: 0]"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"2","to":"1","label":"input 0"},{"from":"1","to":"0","label":"input 0"}]}
 ----
 ----
 
@@ -38,7 +38,7 @@ filter_keys_2
     - Num Columns: 5
     - Row Type: string, string, string, string, string
     - Keys: [key: [], lower_bound: 0, upper_bound: 0]
-  [0] TableScan id: 1, num_columns: 5
+  [0] TableScan id: 1
       - Num Columns: 5
       - Row Type: string, string, string, string, string
 
@@ -52,12 +52,12 @@ Optimized:
       - Num Columns: 5
       - Row Type: string, string, string, string, string
       - Keys: [key: [], lower_bound: 0, upper_bound: 0]
-    [0] TableScan id: 1, num_columns: 5
+    [0] TableScan id: 1
         - Num Columns: 5
         - Row Type: string, string, string, string, string
 
-initial {"nodes":[{"id":"1","label":"[1] Filter [NULL]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Keys: [key: [], lower_bound: 0, upper_bound: 0]"]},{"id":"0","label":"[0] TableScan id: 1, num_columns: 5","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"1","to":"0","label":"input 0"}]}
-step TopProjectionRule {"nodes":[{"id":"1","label":"[1] Filter [NULL]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Keys: [key: [], lower_bound: 0, upper_bound: 0]"]},{"id":"0","label":"[0] TableScan id: 1, num_columns: 5","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"2","label":"[2] Project [ref_0, ref_1, ref_2, ref_3, ref_4]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Keys: [key: [], lower_bound: 0, upper_bound: 0]"]}],"edges":[{"from":"1","to":"0","label":"input 0"},{"from":"2","to":"1","label":"input 0"},{"from":"1","to":"2","label":"TopProjectionRule"}]}
-final {"nodes":[{"id":"2","label":"[2] Project [ref_0, ref_1, ref_2, ref_3, ref_4]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Keys: [key: [], lower_bound: 0, upper_bound: 0]"]},{"id":"1","label":"[1] Filter [NULL]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Keys: [key: [], lower_bound: 0, upper_bound: 0]"]},{"id":"0","label":"[0] TableScan id: 1, num_columns: 5","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"2","to":"1","label":"input 0"},{"from":"1","to":"0","label":"input 0"}]}
+initial {"nodes":[{"id":"1","label":"[1] Filter [NULL]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Keys: [key: [], lower_bound: 0, upper_bound: 0]"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"1","to":"0","label":"input 0"}]}
+step TopProjectionRule {"nodes":[{"id":"1","label":"[1] Filter [NULL]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Keys: [key: [], lower_bound: 0, upper_bound: 0]"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"2","label":"[2] Project [ref_0, ref_1, ref_2, ref_3, ref_4]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Keys: [key: [], lower_bound: 0, upper_bound: 0]"]}],"edges":[{"from":"1","to":"0","label":"input 0"},{"from":"2","to":"1","label":"input 0"},{"from":"1","to":"2","label":"TopProjectionRule"}]}
+final {"nodes":[{"id":"2","label":"[2] Project [ref_0, ref_1, ref_2, ref_3, ref_4]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Keys: [key: [], lower_bound: 0, upper_bound: 0]"]},{"id":"1","label":"[1] Filter [NULL]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Keys: [key: [], lower_bound: 0, upper_bound: 0]"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"2","to":"1","label":"input 0"},{"from":"1","to":"0","label":"input 0"}]}
 ----
 ----

@@ -122,13 +122,9 @@ impl<'a> QueryGraphPrePostVisitor for ExplainVisitor<'a> {
                 prefix,
                 explain_scalar_expr_vec(conditions),
             ),
-            QueryNode::TableScan {
-                table_id,
-                num_columns,
-            } => format!(
-                "{}TableScan id: {}, num_columns: {}\n",
-                prefix, table_id, num_columns
-            ),
+            QueryNode::TableScan { table_id, .. } => {
+                format!("{}TableScan id: {}\n", prefix, table_id)
+            }
             QueryNode::Join {
                 join_type,
                 conditions,

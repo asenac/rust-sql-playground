@@ -66,13 +66,9 @@ impl<'a> QueryGraphPrePostVisitor for JsonSerializer<'a> {
             QueryNode::Filter { conditions, .. } => {
                 format!("{}Filter [{}]", prefix, explain_scalar_expr_vec(conditions),)
             }
-            QueryNode::TableScan {
-                table_id,
-                num_columns,
-            } => format!(
-                "{}TableScan id: {}, num_columns: {}",
-                prefix, table_id, num_columns
-            ),
+            QueryNode::TableScan { table_id, .. } => {
+                format!("{}TableScan id: {}", prefix, table_id)
+            }
             QueryNode::Join {
                 join_type,
                 conditions,
