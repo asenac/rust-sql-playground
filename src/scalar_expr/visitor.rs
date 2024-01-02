@@ -154,6 +154,8 @@ impl VisitableExpr for ScalarExpr {
             ScalarExpr::InputRef { .. } => 0,
             ScalarExpr::BinaryOp { .. } => 2,
             ScalarExpr::NaryOp { operands, .. } => operands.len(),
+            ScalarExpr::ExistsSubquery { .. } | ScalarExpr::ScalarSubquery { .. } => 0,
+            ScalarExpr::ScalarSubqueryCmp { .. } => 1,
         }
     }
 
@@ -168,7 +170,11 @@ impl VisitableExpr for ScalarExpr {
                 }
             }
             ScalarExpr::NaryOp { operands, .. } => operands[input_idx].clone(),
-            ScalarExpr::Literal { .. } | ScalarExpr::InputRef { .. } => panic!(),
+            ScalarExpr::Literal { .. }
+            | ScalarExpr::InputRef { .. }
+            | ScalarExpr::ExistsSubquery { .. }
+            | ScalarExpr::ScalarSubquery { .. } => panic!(),
+            ScalarExpr::ScalarSubqueryCmp { scalar_operand, .. } => scalar_operand.clone(),
         }
     }
 }
@@ -181,6 +187,9 @@ impl VisitableExpr for ExtendedScalarExpr {
             ExtendedScalarExpr::BinaryOp { .. } => 2,
             ExtendedScalarExpr::Aggregate { operands, .. }
             | ExtendedScalarExpr::NaryOp { operands, .. } => operands.len(),
+            ExtendedScalarExpr::ExistsSubquery { .. } => 0,
+            ExtendedScalarExpr::ScalarSubquery { .. } => 0,
+            ExtendedScalarExpr::ScalarSubqueryCmp { .. } => 1,
         }
     }
 
@@ -196,7 +205,11 @@ impl VisitableExpr for ExtendedScalarExpr {
             }
             ExtendedScalarExpr::Aggregate { operands, .. }
             | ExtendedScalarExpr::NaryOp { operands, .. } => operands[input_idx].clone(),
-            ExtendedScalarExpr::Literal { .. } | ExtendedScalarExpr::InputRef { .. } => panic!(),
+            ExtendedScalarExpr::Literal { .. }
+            | ExtendedScalarExpr::InputRef { .. }
+            | ExtendedScalarExpr::ExistsSubquery { .. }
+            | ExtendedScalarExpr::ScalarSubquery { .. } => panic!(),
+            ExtendedScalarExpr::ScalarSubqueryCmp { scalar_operand, .. } => scalar_operand.clone(),
         }
     }
 }

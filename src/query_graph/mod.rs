@@ -1,6 +1,9 @@
+use itertools::Itertools;
+
 use crate::{
     data_type::DataType,
-    scalar_expr::{AggregateExprRef, ScalarExprRef},
+    scalar_expr::{visitor::visit_expr_pre, AggregateExprRef, ScalarExprRef},
+    visitor_utils::PreOrderVisitationResult,
 };
 use std::{
     cell::RefCell,
@@ -59,6 +62,10 @@ pub enum QueryNode {
     Union {
         inputs: Vec<NodeId>,
     },
+    /// Subgraph root.
+    SubqueryRoot {
+        input: NodeId,
+    },
 }
 
 pub struct QueryGraph {
@@ -72,6 +79,8 @@ pub struct QueryGraph {
     /// For each node, it contains a set with the nodes pointing to it through any of their
     /// inputs.
     parents: HashMap<NodeId, BTreeSet<NodeId>>,
+    /// Subqueries
+    subqueries: Vec<Rc<NodeId>>,
     /// Keeps track of the number of node replacements the query graph has gone through.
     pub gen_number: usize,
     pub property_cache: RefCell<PropertyCache>,
@@ -85,6 +94,7 @@ impl QueryNode {
             Self::TableScan { .. } => 0,
             Self::Join { .. } => 2,
             Self::Union { inputs } => inputs.len(),
+            Self::SubqueryRoot { .. } => 1,
         }
     }
 
@@ -95,7 +105,8 @@ impl QueryNode {
         match self {
             Self::Project { input, .. }
             | Self::Filter { input, .. }
-            | Self::Aggregate { input, .. } => *input,
+            | Self::Aggregate { input, .. }
+            | Self::SubqueryRoot { input } => *input,
             Self::TableScan { .. } => panic!(),
             Self::Join { left, right, .. } => {
                 if input_idx == 0 {
@@ -116,7 +127,8 @@ impl QueryNode {
         match self {
             Self::Project { input, .. }
             | Self::Filter { input, .. }
-            | Self::Aggregate { input, .. } => *input = node_id,
+            | Self::Aggregate { input, .. }
+            | Self::SubqueryRoot { input } => *input = node_id,
             Self::TableScan { .. } => panic!(),
             Self::Join { left, right, .. } => {
                 if input_idx == 0 {
@@ -128,6 +140,53 @@ impl QueryNode {
             Self::Union { inputs } => inputs[input_idx] = node_id,
         }
     }
+
+    /// Visit the scalar expressions within the node.
+    pub fn visit_scalar_expr<F>(&self, visitor: &mut F)
+    where
+        F: FnMut(&ScalarExprRef),
+    {
+        match self {
+            QueryNode::Project { outputs: exprs, .. }
+            | QueryNode::Filter {
+                conditions: exprs, ..
+            }
+            | QueryNode::Join {
+                conditions: exprs, ..
+            } => {
+                for expr in exprs {
+                    visitor(expr);
+                }
+            }
+            QueryNode::TableScan { .. }
+            | QueryNode::Aggregate { .. }
+            | QueryNode::Union { .. }
+            | QueryNode::SubqueryRoot { .. } => {}
+        }
+    }
+
+    /// Returns the subqueries contained in the node
+    pub fn collect_subqueries(&self) -> BTreeSet<NodeId> {
+        let mut subqueries = BTreeSet::new();
+        self.visit_scalar_expr(&mut |expr| {
+            visit_expr_pre(expr, &mut |curr_expr| {
+                use crate::scalar_expr::ScalarExpr;
+                match curr_expr.as_ref() {
+                    ScalarExpr::Literal(_)
+                    | ScalarExpr::InputRef { .. }
+                    | ScalarExpr::BinaryOp { .. }
+                    | ScalarExpr::NaryOp { .. } => {}
+                    ScalarExpr::ScalarSubquery { subquery }
+                    | ScalarExpr::ExistsSubquery { subquery }
+                    | ScalarExpr::ScalarSubqueryCmp { subquery, .. } => {
+                        subqueries.insert(**subquery);
+                    }
+                }
+                PreOrderVisitationResult::VisitInputs
+            });
+        });
+        subqueries
+    }
 }
 
 impl QueryGraph {
@@ -138,6 +197,7 @@ impl QueryGraph {
             next_node_id: 0,
             gen_number: 0,
             parents: HashMap::new(),
+            subqueries: Vec::new(),
             property_cache: RefCell::new(PropertyCache::new()),
         }
     }
@@ -169,6 +229,19 @@ impl QueryGraph {
         self.next_node_id += 1;
         self.nodes.insert(node_id, node);
         node_id
+    }
+
+    pub fn add_subquery(&mut self, input: NodeId) -> Rc<NodeId> {
+        let root_id = Rc::new(self.add_node(QueryNode::SubqueryRoot { input }));
+        self.subqueries.push(root_id.clone());
+        return root_id;
+    }
+
+    pub fn subquery_roots(&self) -> Vec<NodeId> {
+        self.subqueries
+            .iter()
+            .map(|root_id| **root_id)
+            .collect_vec()
     }
 
     /// Finds whether there is an existing node exactly like the given one.
@@ -229,6 +302,7 @@ impl QueryGraph {
         }
 
         self.remove_detached_nodes(node_id);
+        self.garbage_collect_subqueries();
         self.gen_number += 1;
     }
 
@@ -250,6 +324,25 @@ impl QueryGraph {
             .drain()
             .filter(|(x, _)| visited_nodes.contains(x))
             .collect();
+    }
+
+    // Removes subquery plans that are no longer referenced by any subquery
+    // expression.
+    pub fn garbage_collect_subqueries(&mut self) {
+        let mut detached_roots = HashSet::new();
+        self.subqueries.retain(|subquery_root_id| {
+            if std::rc::Rc::<NodeId>::strong_count(&subquery_root_id) > 1 {
+                true
+            } else {
+                // The Root node is only expected to be referenced by subquery
+                // expressions
+                detached_roots.insert(**subquery_root_id);
+                false
+            }
+        });
+        for detached_root in detached_roots {
+            self.remove_detached_nodes(detached_root);
+        }
     }
 }
 
@@ -307,6 +400,7 @@ impl Clone for QueryGraph {
             next_node_id: self.next_node_id,
             gen_number: self.gen_number,
             parents: self.parents.clone(),
+            subqueries: self.subqueries.clone(),
             // Cached metadata is not cloned
             property_cache: RefCell::new(PropertyCache::new()),
         }

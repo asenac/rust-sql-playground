@@ -242,6 +242,11 @@ impl PulledUpPredicates {
                         .into_iter(),
                 );
             }
+            QueryNode::SubqueryRoot { input } => predicates.extend(
+                self.predicates_unchecked(query_graph, *input)
+                    .iter()
+                    .cloned(),
+            ),
         };
 
         predicates

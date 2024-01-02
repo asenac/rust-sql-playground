@@ -100,6 +100,7 @@ fn do_all_parents_reject_null_from_non_preserving(
                             let input_row_type = row_type(query_graph, *input);
                             // 4.) and 5.)
                             if any_condition_rejects_nulls(
+                                query_graph,
                                 &rewrite_map,
                                 &input_row_type,
                                 conditions,
@@ -147,6 +148,7 @@ fn do_all_parents_reject_null_from_non_preserving(
                                     cross_product_row_type(query_graph, node_id).unwrap();
                                 // 4.) and 5.)
                                 if any_condition_rejects_nulls(
+                                    query_graph,
                                     &rewrite_map,
                                     &input_row_type,
                                     conditions,
@@ -232,7 +234,7 @@ fn build_rewrite_map(
         .filter_map(|(i, e)| {
             if let Some(e) = e {
                 // Reduce the expression containing nulls instead of input refs
-                let reduced_expr = reduce_expr_recursively(&e, &non_prev_row_type);
+                let reduced_expr = reduce_expr_recursively(&e, &query_graph, &non_prev_row_type);
                 // If the expression can be reduced to a literal, we can add it to
                 // the replacement map.
                 if reduced_expr.is_literal() {
@@ -260,6 +262,7 @@ fn replace_with_nulls(expr: &ScalarExprRef, row_type: &[DataType]) -> ScalarExpr
 /// Check whether any of the given conditions evaluates to null or false after
 /// applying the replacements in the given map.
 fn any_condition_rejects_nulls(
+    query_graph: &QueryGraph,
     rewrite_map: &HashMap<usize, ScalarExprRef>,
     row_type: &[DataType],
     conditions: &Vec<ScalarExprRef>,
@@ -276,7 +279,7 @@ fn any_condition_rejects_nulls(
             condition,
         );
         // 5.)
-        let reduced_expr = reduce_expr_recursively(&rewritten_expr, row_type);
+        let reduced_expr = reduce_expr_recursively(&rewritten_expr, query_graph, row_type);
         match reduced_expr.as_ref() {
             ScalarExpr::Literal(Literal {
                 value: Value::Bool(false),

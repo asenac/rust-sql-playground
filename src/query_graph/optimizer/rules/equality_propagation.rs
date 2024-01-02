@@ -61,6 +61,7 @@ impl SingleReplacementRule for EqualityPropagationRule {
 
                 let new_left_predicates = if from_right_to_left_allowed {
                     Self::propagate_predicates(
+                        &query_graph,
                         &right_predicates,
                         &right_to_left,
                         &left_predicates,
@@ -72,6 +73,7 @@ impl SingleReplacementRule for EqualityPropagationRule {
                 };
                 let new_right_predicates = if from_left_to_right_allowed {
                     Self::propagate_predicates(
+                        &query_graph,
                         &left_predicates,
                         &left_to_right,
                         &right_predicates,
@@ -165,6 +167,7 @@ impl EqualityPropagationRule {
     /// the rewritten predicate only references columns from the other side using `validate_input_ref`
     /// and that the resulting predicate is not already known.
     fn propagate_predicates<F>(
+        query_graph: &QueryGraph,
         predicates: &Vec<ScalarExprRef>,
         translation_map: &HashMap<ScalarExprRef, ScalarExprRef>,
         other_side_predicates: &Vec<ScalarExprRef>,
@@ -188,7 +191,7 @@ impl EqualityPropagationRule {
             )
             .unwrap();
             let rewritten_predicate =
-                reduce_expr_recursively(&rewritten_predicate, cross_product_row_type);
+                reduce_expr_recursively(&rewritten_predicate, query_graph, cross_product_row_type);
 
             if !other_side_predicates.contains(&rewritten_predicate)
                 && collect_input_dependencies(&rewritten_predicate)

@@ -47,7 +47,9 @@ impl NumColumns {
     fn compute_num_columns_for_node(&self, query_graph: &QueryGraph, node_id: NodeId) -> usize {
         match query_graph.node(node_id) {
             QueryNode::Project { outputs, .. } => outputs.len(),
-            QueryNode::Filter { input, .. } => self.num_columns_unchecked(query_graph, *input),
+            QueryNode::Filter { input, .. } | QueryNode::SubqueryRoot { input } => {
+                self.num_columns_unchecked(query_graph, *input)
+            }
             QueryNode::TableScan { row_type, .. } => row_type.len(),
             QueryNode::Join {
                 join_type,

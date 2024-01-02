@@ -30,7 +30,9 @@ pub fn input_dependencies(query_graph: &QueryGraph, node_id: NodeId) -> HashSet<
                 dependencies.extend(aggregate.operands.iter());
             }
         }
-        QueryNode::Union { .. } => dependencies.extend(0..num_columns(query_graph, node_id)),
+        QueryNode::Union { .. } | QueryNode::SubqueryRoot { .. } => {
+            dependencies.extend(0..num_columns(query_graph, node_id))
+        }
     }
     dependencies
 }

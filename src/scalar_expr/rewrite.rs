@@ -421,7 +421,19 @@ impl RewritableExpr for ScalarExpr {
                 op: op.clone(),
                 operands: inputs.to_vec(),
             },
-            ScalarExpr::Literal { .. } | ScalarExpr::InputRef { .. } => panic!(),
+            ScalarExpr::Literal { .. }
+            | ScalarExpr::InputRef { .. }
+            | ScalarExpr::ExistsSubquery { .. }
+            | ScalarExpr::ScalarSubquery { .. } => panic!(),
+            ScalarExpr::ScalarSubqueryCmp {
+                op,
+                scalar_operand: _,
+                subquery,
+            } => ScalarExpr::ScalarSubqueryCmp {
+                op: op.clone(),
+                scalar_operand: inputs[0].clone(),
+                subquery: subquery.clone(),
+            },
         }
         .into()
     }
@@ -440,10 +452,22 @@ impl RewritableExpr for ExtendedScalarExpr {
                 op: op.clone(),
                 operands: inputs.to_vec(),
             },
-            ExtendedScalarExpr::Literal { .. } | ExtendedScalarExpr::InputRef { .. } => panic!(),
+            ExtendedScalarExpr::Literal { .. }
+            | ExtendedScalarExpr::InputRef { .. }
+            | ExtendedScalarExpr::ExistsSubquery { .. }
+            | ExtendedScalarExpr::ScalarSubquery { .. } => panic!(),
             ExtendedScalarExpr::Aggregate { op, .. } => ExtendedScalarExpr::Aggregate {
                 op: op.clone(),
                 operands: inputs.to_vec(),
+            },
+            ExtendedScalarExpr::ScalarSubqueryCmp {
+                op,
+                scalar_operand: _,
+                subquery,
+            } => ExtendedScalarExpr::ScalarSubqueryCmp {
+                op: op.clone(),
+                scalar_operand: inputs[0].clone(),
+                subquery: subquery.clone(),
             },
         }
         .into()

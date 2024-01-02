@@ -359,6 +359,9 @@ impl Keys {
                     }
                 }
             }
+            QueryNode::SubqueryRoot { input } => {
+                keys.extend(self.keys_unchecked(query_graph, *input).iter().cloned());
+            }
         };
         // Normalize the keys, remove constants
         // TODO(asenac) consider removing the non-normalized version

@@ -1,4 +1,6 @@
 //! JSON serializer for generating visual representations of the plans.
+use std::collections::VecDeque;
+
 use crate::{
     query_graph::{explain::explain_scalar_expr_vec, *},
     scalar_expr::ScalarExpr,
@@ -11,6 +13,7 @@ pub struct JsonSerializer<'a> {
     annotators: Vec<&'a dyn Fn(&QueryGraph, NodeId) -> Option<String>>,
     included_nodes: HashSet<NodeId>,
     graph: Graph,
+    queue: VecDeque<NodeId>,
 }
 
 impl<'a> JsonSerializer<'a> {
@@ -19,6 +22,7 @@ impl<'a> JsonSerializer<'a> {
             annotators,
             included_nodes: HashSet::new(),
             graph: Graph::new(),
+            queue: VecDeque::new(),
         }
     }
 
@@ -28,7 +32,10 @@ impl<'a> JsonSerializer<'a> {
 
     /// Ensure the given subgraph is included in the output graph.
     pub fn add_subgraph(&mut self, query_graph: &QueryGraph, node_id: NodeId) {
-        query_graph.visit_subgraph(self, node_id);
+        self.queue.push_back(node_id);
+        while let Some(node_id) = self.queue.pop_front() {
+            query_graph.visit_subgraph(self, node_id);
+        }
     }
 
     pub fn add_node_replacement(
@@ -100,6 +107,7 @@ impl<'a> QueryGraphPrePostVisitor for JsonSerializer<'a> {
                     .join(", "),
             ),
             QueryNode::Union { .. } => format!("{}Union", prefix),
+            QueryNode::SubqueryRoot { .. } => format!("{}SubqueryRoot", prefix),
         };
         let mut annotations = Vec::new();
         for annotator in self.annotators.iter() {
@@ -119,6 +127,17 @@ impl<'a> QueryGraphPrePostVisitor for JsonSerializer<'a> {
                 from: node_id.to_string(),
                 to: to.to_string(),
                 label: format!("input {}", i),
+            });
+        }
+
+        // Link the current node with the subqueries it references
+        let subqueries = node.collect_subqueries();
+        for subquery_root in subqueries {
+            self.queue.push_back(subquery_root);
+            self.graph.edges.push(Edge {
+                from: node_id.to_string(),
+                to: subquery_root.to_string(),
+                label: format!("subquery({})", subquery_root),
             });
         }
         return PreOrderVisitationResult::VisitInputs;

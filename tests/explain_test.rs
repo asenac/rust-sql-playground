@@ -15,7 +15,7 @@ mod test_queries {
     use itertools::Itertools;
     use rust_sql::{
         data_type::DataType,
-        scalar_expr::{AggregateExpr, AggregateOp, ScalarExprRef},
+        scalar_expr::{AggregateExpr, AggregateOp, ScalarExprRef, ScalarSubqueryCmpOp},
     };
 
     use super::*;
@@ -1600,6 +1600,62 @@ mod test_queries {
             query_graph
         });
     }
+
+    pub(crate) fn subqueries(queries: &mut HashMap<String, QueryGraph>) {
+        queries.insert("scalar_subquery_1".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
+                group_key: Default::default(),
+                aggregates: vec![AggregateExpr {
+                    op: AggregateOp::Min,
+                    operands: vec![0],
+                }
+                .into()],
+                input: table_scan_1,
+            });
+            let subquery = query_graph.add_subquery(aggregate_1);
+            let table_scan_2 = query_graph.table_scan(2, 5);
+            let project_1 = query_graph.project(
+                table_scan_2,
+                vec![ScalarExpr::ScalarSubquery { subquery }.into()],
+            );
+            query_graph.set_entry_node(project_1);
+            query_graph
+        });
+        queries.insert("exists_subquery_1".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let subquery = query_graph.add_subquery(table_scan_1);
+            let table_scan_2 = query_graph.table_scan(2, 5);
+            let project_1 = query_graph.project(
+                table_scan_2,
+                vec![ScalarExpr::ExistsSubquery { subquery }.into()],
+            );
+            query_graph.set_entry_node(project_1);
+            query_graph
+        });
+        // select c0 in (select c3 from t1) from t2
+        queries.insert("scalar_subquery_cmp_1".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let project_1 =
+                query_graph.project(table_scan_1, vec![ScalarExpr::input_ref(3).into()]);
+            let subquery = query_graph.add_subquery(project_1);
+            let table_scan_2 = query_graph.table_scan(2, 5);
+            let project_2 = query_graph.project(
+                table_scan_2,
+                vec![ScalarExpr::ScalarSubqueryCmp {
+                    op: ScalarSubqueryCmpOp::EqAny,
+                    scalar_operand: ScalarExpr::input_ref(0).into(),
+                    subquery,
+                }
+                .into()],
+            );
+            query_graph.set_entry_node(project_2);
+            query_graph
+        });
+    }
 }
 
 fn static_queries() -> HashMap<String, QueryGraph> {
@@ -1779,6 +1835,7 @@ fn static_queries() -> HashMap<String, QueryGraph> {
     test_queries::outer_to_inner_join(&mut queries);
     test_queries::project_normalization(&mut queries);
     test_queries::pulled_up_predicates(&mut queries);
+    test_queries::subqueries(&mut queries);
     test_queries::union_merge(&mut queries);
     test_queries::union_pruning(&mut queries);
 

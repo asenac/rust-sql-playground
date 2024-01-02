@@ -7,6 +7,7 @@ use itertools::Itertools;
 
 use crate::{
     data_type::DataType,
+    query_graph::{NodeId, QueryGraph},
     value::{Literal, Value},
     visitor_utils::PostOrderVisitationResult,
 };
@@ -38,6 +39,21 @@ pub enum NaryOp {
     Concat,
 }
 
+/// Operations that compare scalar values with subqueries.
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
+pub enum ScalarSubqueryCmpOp {
+    EqAny,
+    LtAny,
+    LteAny,
+    GtAny,
+    GteAny,
+    EqAll,
+    LtAll,
+    LteAll,
+    GtAll,
+    GteAll,
+}
+
 /// A _copy-on-write_ representation for the scalar expressions in the query plan.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub enum ScalarExpr {
@@ -53,6 +69,23 @@ pub enum ScalarExpr {
     NaryOp {
         op: NaryOp,
         operands: Vec<Rc<ScalarExpr>>,
+    },
+    /// Scalar subquery: the subquery plan is expected to produce a single row at most.
+    /// Otherwise, a runtime exception is thrown.
+    /// Models subqueries in scalar positions.
+    ScalarSubquery {
+        subquery: Rc<NodeId>,
+    },
+    /// Models EXISTS subqueries.
+    ExistsSubquery {
+        subquery: Rc<NodeId>,
+    },
+    /// Models IN SELECT operations, ie. =ANY(SELECT ...) and the rest of the comparisons
+    /// between a scalar value and a subquery.
+    ScalarSubqueryCmp {
+        op: ScalarSubqueryCmpOp,
+        scalar_operand: Rc<ScalarExpr>,
+        subquery: Rc<NodeId>,
     },
 }
 
@@ -134,6 +167,29 @@ impl fmt::Display for NaryOp {
     }
 }
 
+impl ScalarSubqueryCmpOp {
+    pub fn function_name(&self) -> &str {
+        match self {
+            ScalarSubqueryCmpOp::EqAny => "eq_any",
+            ScalarSubqueryCmpOp::LtAny => "lt_any",
+            ScalarSubqueryCmpOp::LteAny => "lte_any",
+            ScalarSubqueryCmpOp::GtAny => "gt_any",
+            ScalarSubqueryCmpOp::GteAny => "gte_any",
+            ScalarSubqueryCmpOp::EqAll => "eq_all",
+            ScalarSubqueryCmpOp::LtAll => "lt_all",
+            ScalarSubqueryCmpOp::LteAll => "lte_all",
+            ScalarSubqueryCmpOp::GtAll => "gt_all",
+            ScalarSubqueryCmpOp::GteAll => "gte_all",
+        }
+    }
+}
+
+impl fmt::Display for ScalarSubqueryCmpOp {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.function_name())
+    }
+}
+
 /// Handy expression constructors.
 impl ScalarExpr {
     pub fn string_literal(value: String) -> ScalarExpr {
@@ -199,14 +255,17 @@ impl ScalarExpr {
         }
     }
 
-    pub fn data_type(&self, row_type: &[DataType]) -> DataType {
+    pub fn data_type(&self, query_graph: &QueryGraph, row_type: &[DataType]) -> DataType {
         let operand_types = (0..self.num_inputs())
             .map(|i| {
                 let mut stack = Vec::new();
                 visit_expr_post(&self.get_input(i), &mut |expr: &ScalarExprRef| {
                     let num_inputs = expr.num_inputs();
-                    let typ = expr
-                        .data_type_with_operand_types(row_type, &stack[stack.len() - num_inputs..]);
+                    let typ = expr.data_type_with_operand_types(
+                        query_graph,
+                        row_type,
+                        &stack[stack.len() - num_inputs..],
+                    );
                     stack.truncate(stack.len() - num_inputs);
                     stack.push(typ);
                     PostOrderVisitationResult::Continue
@@ -215,11 +274,12 @@ impl ScalarExpr {
             })
             .collect_vec();
 
-        self.data_type_with_operand_types(row_type, &operand_types)
+        self.data_type_with_operand_types(query_graph, row_type, &operand_types)
     }
 
     fn data_type_with_operand_types(
         &self,
+        query_graph: &QueryGraph,
         row_type: &[DataType],
         operand_types: &[DataType],
     ) -> DataType {
@@ -228,6 +288,12 @@ impl ScalarExpr {
             ScalarExpr::InputRef { index } => row_type[*index].clone(),
             ScalarExpr::BinaryOp { op, .. } => op.return_type(operand_types),
             ScalarExpr::NaryOp { op, .. } => op.return_type(operand_types),
+            ScalarExpr::ExistsSubquery { .. } => DataType::Bool,
+            ScalarExpr::ScalarSubqueryCmp { .. } => DataType::Bool,
+            ScalarExpr::ScalarSubquery { subquery } => {
+                let row_type = crate::query_graph::properties::row_type(query_graph, **subquery);
+                row_type[0].clone()
+            }
         }
     }
 }
@@ -247,6 +313,13 @@ impl fmt::Display for ScalarExpr {
                 }
                 write!(f, ")")
             }
+            ScalarExpr::ScalarSubquery { subquery } => write!(f, "scalar_subquery({})", **subquery),
+            ScalarExpr::ExistsSubquery { subquery } => write!(f, "exists_subquery({})", **subquery),
+            ScalarExpr::ScalarSubqueryCmp {
+                op,
+                scalar_operand,
+                subquery,
+            } => write!(f, "{}({}, subquery({}))", op, scalar_operand, **subquery),
         }
     }
 }
@@ -339,19 +412,39 @@ pub enum ExtendedScalarExpr {
         op: AggregateOp,
         operands: Vec<Rc<ExtendedScalarExpr>>,
     },
+    /// Scalar subquery: the subquery plan is expected to produce a single row at most.
+    /// Otherwise, a runtime exception is thrown.
+    /// Models subqueries in scalar positions.
+    ScalarSubquery {
+        subquery: Rc<NodeId>,
+    },
+    /// Models EXISTS subqueries.
+    ExistsSubquery {
+        subquery: Rc<NodeId>,
+    },
+    /// Models IN SELECT operations, ie. =ANY(SELECT ...) and the rest of the comparisons
+    /// between a scalar value and a subquery.
+    ScalarSubqueryCmp {
+        op: ScalarSubqueryCmpOp,
+        scalar_operand: Rc<ExtendedScalarExpr>,
+        subquery: Rc<NodeId>,
+    },
 }
 
 pub type ExtendedScalarExprRef = Rc<ExtendedScalarExpr>;
 
 impl ExtendedScalarExpr {
-    pub fn data_type(&self, row_type: &[DataType]) -> DataType {
+    pub fn data_type(&self, query_graph: &QueryGraph, row_type: &[DataType]) -> DataType {
         let operand_types = (0..self.num_inputs())
             .map(|i| {
                 let mut stack = Vec::new();
                 visit_expr_post(&self.get_input(i), &mut |expr: &ExtendedScalarExprRef| {
                     let num_inputs = expr.num_inputs();
-                    let typ = expr
-                        .data_type_with_operand_types(row_type, &stack[stack.len() - num_inputs..]);
+                    let typ = expr.data_type_with_operand_types(
+                        query_graph,
+                        row_type,
+                        &stack[stack.len() - num_inputs..],
+                    );
                     stack.truncate(stack.len() - num_inputs);
                     stack.push(typ);
                     PostOrderVisitationResult::Continue
@@ -360,11 +453,12 @@ impl ExtendedScalarExpr {
             })
             .collect_vec();
 
-        self.data_type_with_operand_types(row_type, &operand_types)
+        self.data_type_with_operand_types(query_graph, row_type, &operand_types)
     }
 
     fn data_type_with_operand_types(
         &self,
+        query_graph: &QueryGraph,
         row_type: &[DataType],
         operand_types: &[DataType],
     ) -> DataType {
@@ -374,6 +468,12 @@ impl ExtendedScalarExpr {
             ExtendedScalarExpr::BinaryOp { op, .. } => op.return_type(operand_types),
             ExtendedScalarExpr::NaryOp { op, .. } => op.return_type(operand_types),
             ExtendedScalarExpr::Aggregate { op, .. } => op.return_type(operand_types),
+            ExtendedScalarExpr::ScalarSubquery { subquery } => {
+                let row_type = crate::query_graph::properties::row_type(query_graph, **subquery);
+                row_type[0].clone()
+            }
+            ExtendedScalarExpr::ExistsSubquery { .. } => DataType::Bool,
+            ExtendedScalarExpr::ScalarSubqueryCmp { .. } => DataType::Bool,
         }
     }
 }
@@ -416,6 +516,25 @@ impl ToScalarExpr for Rc<ExtendedScalarExpr> {
                     stack.clear();
                     return PostOrderVisitationResult::Abort;
                 }
+                ExtendedScalarExpr::ScalarSubquery { subquery } => ScalarExpr::ScalarSubquery {
+                    subquery: subquery.clone(),
+                },
+                ExtendedScalarExpr::ExistsSubquery { subquery } => ScalarExpr::ExistsSubquery {
+                    subquery: subquery.clone(),
+                },
+                ExtendedScalarExpr::ScalarSubqueryCmp {
+                    op,
+                    scalar_operand: _,
+                    subquery,
+                } => {
+                    let expr = ScalarExpr::ScalarSubqueryCmp {
+                        op: op.clone(),
+                        scalar_operand: stack.last().unwrap().clone(),
+                        subquery: subquery.clone(),
+                    };
+                    stack.truncate(stack.len() - 1);
+                    expr
+                }
             };
             stack.push(extended_expr.into());
             PostOrderVisitationResult::Continue
@@ -456,6 +575,25 @@ impl ToExtendedExpr for Rc<ScalarExpr> {
                         operands: operands.iter().cloned().collect_vec(),
                     };
                     stack.truncate(stack.len() - operands.len());
+                    expr
+                }
+                ScalarExpr::ScalarSubquery { subquery } => ExtendedScalarExpr::ScalarSubquery {
+                    subquery: subquery.clone(),
+                },
+                ScalarExpr::ExistsSubquery { subquery } => ExtendedScalarExpr::ExistsSubquery {
+                    subquery: subquery.clone(),
+                },
+                ScalarExpr::ScalarSubqueryCmp {
+                    op,
+                    scalar_operand: _,
+                    subquery,
+                } => {
+                    let expr = ExtendedScalarExpr::ScalarSubqueryCmp {
+                        op: op.clone(),
+                        scalar_operand: stack.last().unwrap().clone(),
+                        subquery: subquery.clone(),
+                    };
+                    stack.truncate(stack.len() - 1);
                     expr
                 }
             };

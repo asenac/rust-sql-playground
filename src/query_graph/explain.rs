@@ -69,6 +69,11 @@ impl<'a> Explainer<'a> {
         let mut explain = ExplainVisitor::new(self);
         self.query_graph
             .visit_subgraph(&mut explain, self.entry_point);
+        let subquery_roots = self.query_graph.subquery_roots();
+        for subquery_root in subquery_roots {
+            explain.result += "\n";
+            self.query_graph.visit_subgraph(&mut explain, subquery_root);
+        }
         explain.result
     }
 }
@@ -156,6 +161,7 @@ impl<'a> QueryGraphPrePostVisitor for ExplainVisitor<'a> {
                     .join(", "),
             ),
             QueryNode::Union { .. } => format!("{}Union\n", prefix),
+            QueryNode::SubqueryRoot { .. } => format!("{}SubqueryRoot\n", prefix),
         };
         self.result += &node;
 

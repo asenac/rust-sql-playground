@@ -24,7 +24,7 @@ impl SingleReplacementRule for ExpressionReductionRule {
                     *input,
                     outputs
                         .iter()
-                        .map(|e| reduce_expr_recursively(e, &row_type))
+                        .map(|e| reduce_expr_recursively(e, &query_graph, &row_type))
                         .collect_vec(),
                 )
             }
@@ -34,7 +34,7 @@ impl SingleReplacementRule for ExpressionReductionRule {
                     *input,
                     conditions
                         .iter()
-                        .map(|e| reduce_expr_recursively(e, &row_type))
+                        .map(|e| reduce_expr_recursively(e, &query_graph, &row_type))
                         .collect_vec(),
                 )
             }
@@ -55,7 +55,7 @@ impl SingleReplacementRule for ExpressionReductionRule {
                     join_type: join_type.clone(),
                     conditions: conditions
                         .iter()
-                        .map(|e| reduce_expr_recursively(e, &row_type))
+                        .map(|e| reduce_expr_recursively(e, &query_graph, &row_type))
                         .collect_vec(),
                     left: *left,
                     right: *right,

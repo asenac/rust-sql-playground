@@ -83,11 +83,13 @@ impl RowType {
                 let input_row_type = self.row_type_unchecked(query_graph, *input);
                 outputs
                     .iter()
-                    .map(|e| e.data_type(&input_row_type[..]))
+                    .map(|e| e.data_type(query_graph, &input_row_type[..]))
                     .collect_vec()
                     .into()
             }
-            QueryNode::Filter { input, .. } => self.row_type_unchecked(query_graph, *input),
+            QueryNode::Filter { input, .. } | QueryNode::SubqueryRoot { input } => {
+                self.row_type_unchecked(query_graph, *input)
+            }
             QueryNode::TableScan { row_type, .. } => row_type.clone(),
             QueryNode::Join {
                 join_type,
