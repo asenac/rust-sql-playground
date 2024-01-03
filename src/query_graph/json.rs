@@ -7,7 +7,10 @@ use crate::{
     visitor_utils::PreOrderVisitationResult,
 };
 
-use super::{properties::default_annotators, visitor::QueryGraphPrePostVisitor};
+use super::{
+    properties::{default_annotators, subqueries},
+    visitor::QueryGraphPrePostVisitor,
+};
 
 pub struct JsonSerializer<'a> {
     annotators: Vec<&'a dyn Fn(&QueryGraph, NodeId) -> Option<String>>,
@@ -141,9 +144,9 @@ impl<'a> QueryGraphPrePostVisitor for JsonSerializer<'a> {
         }
 
         // Link the current node with the subqueries it references
-        let subqueries = node.collect_subqueries();
-        for subquery_root in subqueries {
-            self.queue.push_back(subquery_root);
+        let subqueries = subqueries(query_graph, node_id);
+        for subquery_root in subqueries.iter() {
+            self.queue.push_back(*subquery_root);
             self.graph.edges.push(Edge {
                 from: node_id.to_string(),
                 to: subquery_root.to_string(),

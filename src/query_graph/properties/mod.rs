@@ -17,6 +17,7 @@ mod keys;
 mod num_columns;
 mod pulled_up_predicates;
 mod row_type;
+mod subqueries;
 
 pub use column_provenance::column_provenance;
 pub use column_provenance::ColumnProvenanceInfo;
@@ -34,6 +35,7 @@ pub use pulled_up_predicates::pulled_up_predicates_annotator;
 pub use row_type::cross_product_row_type;
 pub use row_type::row_type;
 pub use row_type::row_type_annotator;
+pub use subqueries::subqueries;
 
 use super::QueryGraph;
 
@@ -51,12 +53,15 @@ pub fn default_annotators() -> Vec<&'static dyn Fn(&QueryGraph, NodeId) -> Optio
 pub struct PropertyCache {
     /// Properties computed in a bottom-up manner.
     bottom_up_properties: HashMap<NodeId, HashMap<TypeId, Box<dyn Any>>>,
+    /// Properties computed only from the node itself
+    single_node_properties: HashMap<NodeId, HashMap<TypeId, Box<dyn Any>>>,
 }
 
 impl PropertyCache {
     pub fn new() -> Self {
         Self {
             bottom_up_properties: HashMap::new(),
+            single_node_properties: HashMap::new(),
         }
     }
 
@@ -69,7 +74,21 @@ impl PropertyCache {
             .or_insert_with(|| HashMap::new())
     }
 
-    pub fn invalidate_node_properties(&mut self, node_id: NodeId) {
+    /// Properties computed using only information contained in the node.
+    pub fn single_node_properties(
+        &mut self,
+        node_id: NodeId,
+    ) -> &mut HashMap<TypeId, Box<dyn Any>> {
+        self.single_node_properties
+            .entry(node_id)
+            .or_insert_with(|| HashMap::new())
+    }
+
+    pub fn invalidate_bottom_up_properties(&mut self, node_id: NodeId) {
         self.bottom_up_properties.remove(&node_id);
+    }
+
+    pub fn invalidate_single_node_properties(&mut self, node_id: NodeId) {
+        self.single_node_properties.remove(&node_id);
     }
 }

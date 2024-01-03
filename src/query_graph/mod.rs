@@ -158,6 +158,19 @@ impl QueryNode {
         }
     }
 
+    pub fn correlation_id(&self) -> Option<CorrelationId> {
+        match self {
+            QueryNode::Project { .. }
+            | QueryNode::Filter { .. }
+            | QueryNode::TableScan { .. }
+            | QueryNode::Join { .. }
+            | QueryNode::Aggregate { .. }
+            | QueryNode::Union { .. }
+            | QueryNode::SubqueryRoot { .. } => None,
+            QueryNode::Apply { correlation_id, .. } => Some(*correlation_id),
+        }
+    }
+
     /// Visit the scalar expressions within the node.
     pub fn visit_scalar_expr<F>(&self, visitor: &mut F)
     where
@@ -183,7 +196,10 @@ impl QueryNode {
         }
     }
 
-    /// Returns the subqueries contained in the node
+    /// Returns the subqueries contained in the node.
+    ///
+    /// Note: `subqueries` property caches the result of this function. Use
+    /// the property instead.
     pub fn collect_subqueries(&self) -> BTreeSet<NodeId> {
         let mut subqueries = BTreeSet::new();
         self.visit_scalar_expr(&mut |expr| {
@@ -444,15 +460,21 @@ impl QueryGraph {
             }
 
             for idx in prev_size..stack.len() {
-                self.invalidate_node_properties(stack[idx]);
+                self.invalidate_bottom_up_properties(stack[idx]);
             }
         }
     }
 
-    fn invalidate_node_properties(&mut self, node_id: NodeId) {
+    fn invalidate_bottom_up_properties(&mut self, node_id: NodeId) {
         self.property_cache
             .borrow_mut()
-            .invalidate_node_properties(node_id)
+            .invalidate_bottom_up_properties(node_id)
+    }
+
+    fn invalidate_single_node_properties(&mut self, node_id: NodeId) {
+        self.property_cache
+            .borrow_mut()
+            .invalidate_single_node_properties(node_id)
     }
 
     /// Removes the nodes under the given one that are no longer
@@ -461,7 +483,8 @@ impl QueryGraph {
         let mut stack = vec![node_id];
         while let Some(current_id) = stack.pop() {
             if !self.parents.contains_key(&current_id) {
-                self.invalidate_node_properties(current_id);
+                self.invalidate_bottom_up_properties(current_id);
+                self.invalidate_single_node_properties(current_id);
 
                 let current_node = self.nodes.get(&current_id).unwrap();
 
