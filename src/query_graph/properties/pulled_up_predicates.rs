@@ -247,6 +247,29 @@ impl PulledUpPredicates {
                     .iter()
                     .cloned(),
             ),
+            QueryNode::Apply {
+                left,
+                right,
+                apply_type,
+                ..
+            } => {
+                let left_size = num_columns(query_graph, *left);
+                predicates.extend(
+                    self.predicates_unchecked(query_graph, *left)
+                        .iter()
+                        .cloned(),
+                );
+                let right_predicates_filter = match apply_type {
+                    ApplyType::Inner => always_true,
+                    ApplyType::LeftOuter => is_raw_column_equivalence,
+                };
+                predicates.extend(
+                    self.predicates_unchecked(query_graph, *right)
+                        .iter()
+                        .filter(|x| right_predicates_filter(x))
+                        .map(|x| shift_right_input_refs(x, left_size)),
+                );
+            }
         };
 
         predicates

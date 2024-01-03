@@ -7,7 +7,7 @@ use itertools::Itertools;
 
 use crate::{
     data_type::DataType,
-    query_graph::{NodeId, QueryGraph},
+    query_graph::{CorrelationId, NodeId, QueryGraph},
     value::{Literal, Value},
     visitor_utils::PostOrderVisitationResult,
 };
@@ -86,6 +86,11 @@ pub enum ScalarExpr {
         op: ScalarSubqueryCmpOp,
         scalar_operand: Rc<ScalarExpr>,
         subquery: Rc<NodeId>,
+    },
+    CorrelatedInputRef {
+        correlation_id: CorrelationId,
+        index: usize,
+        data_type: DataType,
     },
 }
 
@@ -294,6 +299,7 @@ impl ScalarExpr {
                 let row_type = crate::query_graph::properties::row_type(query_graph, **subquery);
                 row_type[0].clone()
             }
+            ScalarExpr::CorrelatedInputRef { data_type, .. } => data_type.clone(),
         }
     }
 }
@@ -320,6 +326,11 @@ impl fmt::Display for ScalarExpr {
                 scalar_operand,
                 subquery,
             } => write!(f, "{}({}, subquery({}))", op, scalar_operand, **subquery),
+            ScalarExpr::CorrelatedInputRef {
+                correlation_id,
+                index,
+                ..
+            } => write!(f, "cor_{}.ref_{}", correlation_id.0, index),
         }
     }
 }
@@ -429,6 +440,11 @@ pub enum ExtendedScalarExpr {
         scalar_operand: Rc<ExtendedScalarExpr>,
         subquery: Rc<NodeId>,
     },
+    CorrelatedInputRef {
+        correlation_id: CorrelationId,
+        index: usize,
+        data_type: DataType,
+    },
 }
 
 pub type ExtendedScalarExprRef = Rc<ExtendedScalarExpr>;
@@ -474,6 +490,7 @@ impl ExtendedScalarExpr {
             }
             ExtendedScalarExpr::ExistsSubquery { .. } => DataType::Bool,
             ExtendedScalarExpr::ScalarSubqueryCmp { .. } => DataType::Bool,
+            ExtendedScalarExpr::CorrelatedInputRef { data_type, .. } => data_type.clone(),
         }
     }
 }
@@ -535,6 +552,15 @@ impl ToScalarExpr for Rc<ExtendedScalarExpr> {
                     stack.truncate(stack.len() - 1);
                     expr
                 }
+                ExtendedScalarExpr::CorrelatedInputRef {
+                    correlation_id,
+                    index,
+                    data_type,
+                } => ScalarExpr::CorrelatedInputRef {
+                    correlation_id: *correlation_id,
+                    index: *index,
+                    data_type: data_type.clone(),
+                },
             };
             stack.push(extended_expr.into());
             PostOrderVisitationResult::Continue
@@ -596,6 +622,15 @@ impl ToExtendedExpr for Rc<ScalarExpr> {
                     stack.truncate(stack.len() - 1);
                     expr
                 }
+                ScalarExpr::CorrelatedInputRef {
+                    correlation_id,
+                    index,
+                    data_type,
+                } => ExtendedScalarExpr::CorrelatedInputRef {
+                    correlation_id: *correlation_id,
+                    index: *index,
+                    data_type: data_type.clone(),
+                },
             };
             stack.push(extended_expr.into());
             PostOrderVisitationResult::Continue

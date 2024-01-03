@@ -108,6 +108,16 @@ impl<'a> QueryGraphPrePostVisitor for JsonSerializer<'a> {
             ),
             QueryNode::Union { .. } => format!("{}Union", prefix),
             QueryNode::SubqueryRoot { .. } => format!("{}SubqueryRoot", prefix),
+            QueryNode::Apply {
+                correlation_id,
+                apply_type,
+                ..
+            } => {
+                format!(
+                    "{}{} Apply [CorrelationId: {}]",
+                    prefix, apply_type, correlation_id.0,
+                )
+            }
         };
         let mut annotations = Vec::new();
         for annotator in self.annotators.iter() {

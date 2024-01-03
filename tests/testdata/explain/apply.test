@@ -1,0 +1,42 @@
+run
+left_apply_1
+----
+----
+[3] Left Outer Apply [CorrelationId: 0]
+    - Num Columns: 10
+    - Row Type: string, string, string, string, string, string, string, string, string, string
+  [2] TableScan id: 2
+      - Num Columns: 5
+      - Row Type: string, string, string, string, string
+  [1] Filter [eq(ref_0, cor_0.ref_1)]
+      - Num Columns: 5
+      - Row Type: string, string, string, string, string
+      - Pulled Up Predicates: eq(ref_0, cor_0.ref_1)
+    [0] TableScan id: 1
+        - Num Columns: 5
+        - Row Type: string, string, string, string, string
+
+
+Optimized:
+[4] Project [ref_0, ref_1, ref_2, ref_3, ref_4, ref_5, ref_6, ref_7, ref_8, ref_9]
+    - Num Columns: 10
+    - Row Type: string, string, string, string, string, string, string, string, string, string
+  [3] Left Outer Apply [CorrelationId: 0]
+      - Num Columns: 10
+      - Row Type: string, string, string, string, string, string, string, string, string, string
+    [2] TableScan id: 2
+        - Num Columns: 5
+        - Row Type: string, string, string, string, string
+    [1] Filter [eq(ref_0, cor_0.ref_1)]
+        - Num Columns: 5
+        - Row Type: string, string, string, string, string
+        - Pulled Up Predicates: eq(ref_0, cor_0.ref_1)
+      [0] TableScan id: 1
+          - Num Columns: 5
+          - Row Type: string, string, string, string, string
+
+initial {"nodes":[{"id":"3","label":"[3] Left Outer Apply [CorrelationId: 0]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"1","label":"[1] Filter [eq(ref_0, cor_0.ref_1)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, cor_0.ref_1)"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"3","to":"2","label":"input 0"},{"from":"3","to":"1","label":"input 1"},{"from":"1","to":"0","label":"input 0"}]}
+step TopProjectionRule {"nodes":[{"id":"3","label":"[3] Left Outer Apply [CorrelationId: 0]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"1","label":"[1] Filter [eq(ref_0, cor_0.ref_1)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, cor_0.ref_1)"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"4","label":"[4] Project [ref_0, ref_1, ref_2, ref_3, ref_4, ref_5, ref_6, ref_7, ref_8, ref_9]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string"]}],"edges":[{"from":"3","to":"2","label":"input 0"},{"from":"3","to":"1","label":"input 1"},{"from":"1","to":"0","label":"input 0"},{"from":"4","to":"3","label":"input 0"},{"from":"3","to":"4","label":"TopProjectionRule"}]}
+final {"nodes":[{"id":"4","label":"[4] Project [ref_0, ref_1, ref_2, ref_3, ref_4, ref_5, ref_6, ref_7, ref_8, ref_9]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string"]},{"id":"3","label":"[3] Left Outer Apply [CorrelationId: 0]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"1","label":"[1] Filter [eq(ref_0, cor_0.ref_1)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, cor_0.ref_1)"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"4","to":"3","label":"input 0"},{"from":"3","to":"2","label":"input 0"},{"from":"3","to":"1","label":"input 1"},{"from":"1","to":"0","label":"input 0"}]}
+----
+----

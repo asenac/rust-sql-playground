@@ -81,6 +81,11 @@ impl NumColumns {
                     self.num_columns_unchecked(query_graph, inputs[0])
                 }
             }
+            QueryNode::Apply { left, right, .. } => {
+                let left_columns = self.num_columns_unchecked(query_graph, *left);
+                let right_columns = self.num_columns_unchecked(query_graph, *right);
+                left_columns + right_columns
+            }
         }
     }
 }

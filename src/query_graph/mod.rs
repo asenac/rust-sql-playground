@@ -22,6 +22,9 @@ pub mod visitor;
 
 pub type NodeId = usize;
 
+#[derive(Clone, PartialEq, Eq, Copy, Hash, PartialOrd, Ord, Debug)]
+pub struct CorrelationId(pub usize);
+
 #[derive(Clone, PartialEq, Eq, Copy)]
 pub enum JoinType {
     Inner,
@@ -32,6 +35,12 @@ pub enum JoinType {
     Semi,
     /// Anti-join. Only the columns from the left relation are projected.
     Anti,
+}
+
+#[derive(Clone, PartialEq, Eq, Copy)]
+pub enum ApplyType {
+    Inner,
+    LeftOuter,
 }
 
 #[derive(Clone, PartialEq, Eq)]
@@ -66,6 +75,12 @@ pub enum QueryNode {
     SubqueryRoot {
         input: NodeId,
     },
+    Apply {
+        correlation_id: CorrelationId,
+        left: NodeId,
+        right: NodeId,
+        apply_type: ApplyType,
+    },
 }
 
 pub struct QueryGraph {
@@ -81,6 +96,7 @@ pub struct QueryGraph {
     parents: HashMap<NodeId, BTreeSet<NodeId>>,
     /// Subqueries
     subqueries: Vec<Rc<NodeId>>,
+    next_correlation_id: CorrelationId,
     /// Keeps track of the number of node replacements the query graph has gone through.
     pub gen_number: usize,
     pub property_cache: RefCell<PropertyCache>,
@@ -95,6 +111,7 @@ impl QueryNode {
             Self::Join { .. } => 2,
             Self::Union { inputs } => inputs.len(),
             Self::SubqueryRoot { .. } => 1,
+            Self::Apply { .. } => 2,
         }
     }
 
@@ -108,7 +125,7 @@ impl QueryNode {
             | Self::Aggregate { input, .. }
             | Self::SubqueryRoot { input } => *input,
             Self::TableScan { .. } => panic!(),
-            Self::Join { left, right, .. } => {
+            Self::Join { left, right, .. } | Self::Apply { left, right, .. } => {
                 if input_idx == 0 {
                     *left
                 } else {
@@ -130,7 +147,7 @@ impl QueryNode {
             | Self::Aggregate { input, .. }
             | Self::SubqueryRoot { input } => *input = node_id,
             Self::TableScan { .. } => panic!(),
-            Self::Join { left, right, .. } => {
+            Self::Join { left, right, .. } | Self::Apply { left, right, .. } => {
                 if input_idx == 0 {
                     *left = node_id
                 } else {
@@ -161,7 +178,8 @@ impl QueryNode {
             QueryNode::TableScan { .. }
             | QueryNode::Aggregate { .. }
             | QueryNode::Union { .. }
-            | QueryNode::SubqueryRoot { .. } => {}
+            | QueryNode::SubqueryRoot { .. }
+            | QueryNode::Apply { .. } => {}
         }
     }
 
@@ -175,7 +193,8 @@ impl QueryNode {
                     ScalarExpr::Literal(_)
                     | ScalarExpr::InputRef { .. }
                     | ScalarExpr::BinaryOp { .. }
-                    | ScalarExpr::NaryOp { .. } => {}
+                    | ScalarExpr::NaryOp { .. }
+                    | ScalarExpr::CorrelatedInputRef { .. } => {}
                     ScalarExpr::ScalarSubquery { subquery }
                     | ScalarExpr::ExistsSubquery { subquery }
                     | ScalarExpr::ScalarSubqueryCmp { subquery, .. } => {
@@ -198,6 +217,7 @@ impl QueryGraph {
             gen_number: 0,
             parents: HashMap::new(),
             subqueries: Vec::new(),
+            next_correlation_id: CorrelationId(0),
             property_cache: RefCell::new(PropertyCache::new()),
         }
     }
@@ -242,6 +262,12 @@ impl QueryGraph {
             .iter()
             .map(|root_id| **root_id)
             .collect_vec()
+    }
+
+    pub fn new_correlation_id(&mut self) -> CorrelationId {
+        let result = self.next_correlation_id;
+        self.next_correlation_id = CorrelationId(result.0 + 1);
+        result
     }
 
     /// Finds whether there is an existing node exactly like the given one.
@@ -401,6 +427,7 @@ impl Clone for QueryGraph {
             gen_number: self.gen_number,
             parents: self.parents.clone(),
             subqueries: self.subqueries.clone(),
+            next_correlation_id: self.next_correlation_id,
             // Cached metadata is not cloned
             property_cache: RefCell::new(PropertyCache::new()),
         }
@@ -492,6 +519,21 @@ impl JoinType {
 }
 
 impl fmt::Display for JoinType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.name())
+    }
+}
+
+impl ApplyType {
+    pub fn name(&self) -> &str {
+        match self {
+            ApplyType::Inner => "Inner",
+            ApplyType::LeftOuter => "Left Outer",
+        }
+    }
+}
+
+impl fmt::Display for ApplyType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.name())
     }

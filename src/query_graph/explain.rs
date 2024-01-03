@@ -162,6 +162,16 @@ impl<'a> QueryGraphPrePostVisitor for ExplainVisitor<'a> {
             ),
             QueryNode::Union { .. } => format!("{}Union\n", prefix),
             QueryNode::SubqueryRoot { .. } => format!("{}SubqueryRoot\n", prefix),
+            QueryNode::Apply {
+                correlation_id,
+                apply_type,
+                ..
+            } => {
+                format!(
+                    "{}{} Apply [CorrelationId: {}]\n",
+                    prefix, apply_type, correlation_id.0,
+                )
+            }
         };
         self.result += &node;
 

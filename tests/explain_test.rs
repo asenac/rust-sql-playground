@@ -15,6 +15,7 @@ mod test_queries {
     use itertools::Itertools;
     use rust_sql::{
         data_type::DataType,
+        query_graph::ApplyType,
         scalar_expr::{AggregateExpr, AggregateOp, ScalarExprRef, ScalarSubqueryCmpOp},
     };
 
@@ -1656,6 +1657,37 @@ mod test_queries {
             query_graph
         });
     }
+
+    pub(crate) fn apply(queries: &mut HashMap<String, QueryGraph>) {
+        queries.insert("left_apply_1".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let correlation_id = query_graph.new_correlation_id();
+            let filter_1 = query_graph.filter(
+                table_scan_1,
+                vec![ScalarExpr::input_ref(0)
+                    .binary(
+                        BinaryOp::Eq,
+                        ScalarExpr::CorrelatedInputRef {
+                            correlation_id,
+                            index: 1,
+                            data_type: DataType::String,
+                        }
+                        .into(),
+                    )
+                    .into()],
+            );
+            let table_scan_2 = query_graph.table_scan(2, 5);
+            let apply_1 = query_graph.add_node(QueryNode::Apply {
+                correlation_id,
+                left: table_scan_2,
+                right: filter_1,
+                apply_type: ApplyType::LeftOuter,
+            });
+            query_graph.set_entry_node(apply_1);
+            query_graph
+        });
+    }
 }
 
 fn static_queries() -> HashMap<String, QueryGraph> {
@@ -1819,6 +1851,7 @@ fn static_queries() -> HashMap<String, QueryGraph> {
     test_queries::aggregate_project_transpose(&mut queries);
     test_queries::aggregate_pruning(&mut queries);
     test_queries::aggregate_remove(&mut queries);
+    test_queries::apply(&mut queries);
     test_queries::common_aggregate_discovery(&mut queries);
     test_queries::cte_discovery(&mut queries);
     test_queries::expression_reduction(&mut queries);

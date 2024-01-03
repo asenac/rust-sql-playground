@@ -129,6 +129,13 @@ impl RowType {
                     self.row_type_unchecked(query_graph, inputs[0])
                 }
             }
+            QueryNode::Apply { left, right, .. } => self
+                .row_type_unchecked(query_graph, *left)
+                .iter()
+                .chain(self.row_type_unchecked(query_graph, *right).iter())
+                .cloned()
+                .collect_vec()
+                .into(),
         }
     }
 }

@@ -424,7 +424,8 @@ impl RewritableExpr for ScalarExpr {
             ScalarExpr::Literal { .. }
             | ScalarExpr::InputRef { .. }
             | ScalarExpr::ExistsSubquery { .. }
-            | ScalarExpr::ScalarSubquery { .. } => panic!(),
+            | ScalarExpr::ScalarSubquery { .. }
+            | ScalarExpr::CorrelatedInputRef { .. } => panic!(),
             ScalarExpr::ScalarSubqueryCmp {
                 op,
                 scalar_operand: _,
@@ -455,7 +456,8 @@ impl RewritableExpr for ExtendedScalarExpr {
             ExtendedScalarExpr::Literal { .. }
             | ExtendedScalarExpr::InputRef { .. }
             | ExtendedScalarExpr::ExistsSubquery { .. }
-            | ExtendedScalarExpr::ScalarSubquery { .. } => panic!(),
+            | ExtendedScalarExpr::ScalarSubquery { .. }
+            | ExtendedScalarExpr::CorrelatedInputRef { .. } => panic!(),
             ExtendedScalarExpr::Aggregate { op, .. } => ExtendedScalarExpr::Aggregate {
                 op: op.clone(),
                 operands: inputs.to_vec(),

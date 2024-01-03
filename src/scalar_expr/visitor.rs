@@ -156,6 +156,7 @@ impl VisitableExpr for ScalarExpr {
             ScalarExpr::NaryOp { operands, .. } => operands.len(),
             ScalarExpr::ExistsSubquery { .. } | ScalarExpr::ScalarSubquery { .. } => 0,
             ScalarExpr::ScalarSubqueryCmp { .. } => 1,
+            ScalarExpr::CorrelatedInputRef { .. } => 0,
         }
     }
 
@@ -173,7 +174,8 @@ impl VisitableExpr for ScalarExpr {
             ScalarExpr::Literal { .. }
             | ScalarExpr::InputRef { .. }
             | ScalarExpr::ExistsSubquery { .. }
-            | ScalarExpr::ScalarSubquery { .. } => panic!(),
+            | ScalarExpr::ScalarSubquery { .. }
+            | ScalarExpr::CorrelatedInputRef { .. } => panic!(),
             ScalarExpr::ScalarSubqueryCmp { scalar_operand, .. } => scalar_operand.clone(),
         }
     }
@@ -190,6 +192,7 @@ impl VisitableExpr for ExtendedScalarExpr {
             ExtendedScalarExpr::ExistsSubquery { .. } => 0,
             ExtendedScalarExpr::ScalarSubquery { .. } => 0,
             ExtendedScalarExpr::ScalarSubqueryCmp { .. } => 1,
+            ExtendedScalarExpr::CorrelatedInputRef { .. } => 0,
         }
     }
 
@@ -208,7 +211,8 @@ impl VisitableExpr for ExtendedScalarExpr {
             ExtendedScalarExpr::Literal { .. }
             | ExtendedScalarExpr::InputRef { .. }
             | ExtendedScalarExpr::ExistsSubquery { .. }
-            | ExtendedScalarExpr::ScalarSubquery { .. } => panic!(),
+            | ExtendedScalarExpr::ScalarSubquery { .. }
+            | ExtendedScalarExpr::CorrelatedInputRef { .. } => panic!(),
             ExtendedScalarExpr::ScalarSubqueryCmp { scalar_operand, .. } => scalar_operand.clone(),
         }
     }

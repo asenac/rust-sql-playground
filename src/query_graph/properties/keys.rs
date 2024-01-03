@@ -4,7 +4,9 @@ use std::{any::TypeId, cmp::min, collections::HashSet, rc::Rc};
 use itertools::Itertools;
 
 use crate::{
-    query_graph::{visitor::QueryGraphPrePostVisitor, JoinType, NodeId, QueryGraph, QueryNode},
+    query_graph::{
+        visitor::QueryGraphPrePostVisitor, ApplyType, JoinType, NodeId, QueryGraph, QueryNode,
+    },
     scalar_expr::{
         equivalence_class::{extract_equivalence_classes, find_class},
         rewrite::{lift_scalar_expr, normalize_scalar_expr, shift_right_input_refs},
@@ -361,6 +363,35 @@ impl Keys {
             }
             QueryNode::SubqueryRoot { input } => {
                 keys.extend(self.keys_unchecked(query_graph, *input).iter().cloned());
+            }
+            QueryNode::Apply {
+                left,
+                right,
+                apply_type,
+                ..
+            } => {
+                let right_keys = self.keys_unchecked(query_graph, *right);
+                let right_is_empty = right_keys
+                    .iter()
+                    .find(|k| k.upper_bound == Some(0))
+                    .map_or(false, |_| true);
+                if *apply_type == ApplyType::Inner && right_is_empty {
+                    keys.push(KeyBounds {
+                        key: Rc::new(Vec::new()),
+                        lower_bound: 0,
+                        upper_bound: Some(0),
+                    });
+                } else {
+                    // Otherwise, the left keys are preserved in the RHS is unique
+                    let right_is_unique = right_keys
+                        .iter()
+                        .find(|k| k.upper_bound == Some(1))
+                        .map_or(false, |_| true);
+                    if right_is_unique {
+                        let left_keys = self.keys_unchecked(query_graph, *left);
+                        keys.extend(left_keys.iter().cloned());
+                    }
+                }
             }
         };
         // Normalize the keys, remove constants
