@@ -25,11 +25,18 @@ pub(crate) fn common_parent_filters(
         parents
             .iter()
             .map(|parent| {
-                if let QueryNode::Filter { conditions, .. } = query_graph.node(*parent) {
-                    conditions.clone()
-                } else {
-                    Vec::new()
+                if let QueryNode::Filter {
+                    conditions,
+                    correlation_id,
+                    ..
+                } = query_graph.node(*parent)
+                {
+                    // TODO(asenac) extract the predicates that are not correlated
+                    if correlation_id.is_none() {
+                        return conditions.clone();
+                    }
                 }
+                Vec::new()
             })
             .fold(None, |acc: Option<HashSet<ScalarExprRef>>, predicates| {
                 let set: HashSet<ScalarExprRef> = predicates.iter().cloned().collect();
@@ -235,13 +242,18 @@ pub(crate) fn apply_map_to_parents_and_replace_input(
                         );
                         new_proj
                     }
-                    QueryNode::Filter { conditions, input } => {
+                    QueryNode::Filter {
+                        conditions,
+                        input,
+                        correlation_id,
+                    } => {
                         let new_input = *replacements.get(input).unwrap();
-                        let new_filter = query_graph.filter(
+                        let new_filter = query_graph.possibly_correlated_filter(
                             new_input,
                             rewrite_expr_vec(conditions, &mut |e| {
                                 apply_column_map(e, column_map).unwrap()
                             }),
+                            *correlation_id,
                         );
                         new_filter
                     }

@@ -28,14 +28,19 @@ impl SingleReplacementRule for ExpressionReductionRule {
                         .collect_vec(),
                 )
             }
-            QueryNode::Filter { conditions, input } => {
+            QueryNode::Filter {
+                conditions,
+                input,
+                correlation_id,
+            } => {
                 let row_type = row_type(query_graph, *input);
-                query_graph.filter(
+                query_graph.possibly_correlated_filter(
                     *input,
                     conditions
                         .iter()
                         .map(|e| reduce_expr_recursively(e, &query_graph, &row_type))
                         .collect_vec(),
+                    *correlation_id,
                 )
             }
             QueryNode::Join {

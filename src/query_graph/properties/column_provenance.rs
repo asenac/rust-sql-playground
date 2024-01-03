@@ -92,6 +92,7 @@ impl ColumnProvenance {
             QueryNode::Filter {
                 input,
                 conditions: _,
+                correlation_id: _,
             } => {
                 let input_prov = self.column_provenance_unchecked(query_graph, *input);
                 prov.extend(input_prov.iter().map(|prov_info| {

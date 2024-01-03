@@ -73,8 +73,22 @@ impl<'a> QueryGraphPrePostVisitor for JsonSerializer<'a> {
             QueryNode::Project { outputs, .. } => {
                 format!("{}Project [{}]", prefix, explain_scalar_expr_vec(outputs),)
             }
-            QueryNode::Filter { conditions, .. } => {
-                format!("{}Filter [{}]", prefix, explain_scalar_expr_vec(conditions),)
+            QueryNode::Filter {
+                conditions,
+                correlation_id,
+                ..
+            } => {
+                let correlation = if let Some(correlation_id) = correlation_id {
+                    format!(" [CorrelationId: {}]", correlation_id.0,)
+                } else {
+                    String::new()
+                };
+                format!(
+                    "{}Filter{} [{}]",
+                    prefix,
+                    correlation,
+                    explain_scalar_expr_vec(conditions),
+                )
             }
             QueryNode::TableScan { table_id, .. } => {
                 format!("{}TableScan id: {}", prefix, table_id)

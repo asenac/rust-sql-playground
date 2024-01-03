@@ -1737,6 +1737,37 @@ mod test_queries {
             query_graph
         });
     }
+
+    pub(crate) fn correlated_filter(queries: &mut HashMap<String, QueryGraph>) {
+        queries.insert("correlated_filter_1".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let correlation_id = query_graph.new_correlation_id();
+            let filter_1 = query_graph.filter(
+                table_scan_1,
+                vec![ScalarExpr::input_ref(0)
+                    .binary(
+                        BinaryOp::Eq,
+                        ScalarExpr::CorrelatedInputRef {
+                            correlation_id,
+                            index: 1,
+                            data_type: DataType::String,
+                        }
+                        .into(),
+                    )
+                    .into()],
+            );
+            let subquery = query_graph.add_subquery(filter_1);
+            let table_scan_2 = query_graph.table_scan(2, 5);
+            let filter_2 = query_graph.possibly_correlated_filter(
+                table_scan_2,
+                vec![ScalarExpr::ExistsSubquery { subquery }.into()],
+                Some(correlation_id),
+            );
+            query_graph.set_entry_node(filter_2);
+            query_graph
+        });
+    }
 }
 
 fn static_queries() -> HashMap<String, QueryGraph> {
@@ -1902,6 +1933,7 @@ fn static_queries() -> HashMap<String, QueryGraph> {
     test_queries::aggregate_remove(&mut queries);
     test_queries::apply(&mut queries);
     test_queries::common_aggregate_discovery(&mut queries);
+    test_queries::correlated_filter(&mut queries);
     test_queries::cte_discovery(&mut queries);
     test_queries::expression_reduction(&mut queries);
     test_queries::filter_aggregate_transpose(&mut queries);

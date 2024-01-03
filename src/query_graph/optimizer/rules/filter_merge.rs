@@ -13,22 +13,35 @@ impl SingleReplacementRule for FilterMergeRule {
     }
 
     fn apply(&self, query_graph: &mut QueryGraph, node_id: NodeId) -> Option<NodeId> {
-        if let QueryNode::Filter { conditions, input } = query_graph.node(node_id) {
+        if let QueryNode::Filter {
+            conditions,
+            input,
+            correlation_id,
+        } = query_graph.node(node_id)
+        {
             if let QueryNode::Filter {
                 conditions: child_conditions,
                 input: child_input,
+                correlation_id: child_correlation_id,
             } = query_graph.node(*input)
             {
-                return Some(
-                    query_graph.filter(
-                        *child_input,
-                        conditions
-                            .clone()
-                            .into_iter()
-                            .chain(child_conditions.clone().into_iter())
-                            .collect(),
-                    ),
-                );
+                // TODO(asenac) for merging two filters with correlated subqueries
+                // we need to rewrite the expressions for remapping the correlated
+                // references recusively.
+                if correlation_id.is_none() || child_correlation_id.is_none() {
+                    let correlation_id = correlation_id.or(*child_correlation_id);
+                    return Some(
+                        query_graph.possibly_correlated_filter(
+                            *child_input,
+                            conditions
+                                .clone()
+                                .into_iter()
+                                .chain(child_conditions.clone().into_iter())
+                                .collect(),
+                            correlation_id,
+                        ),
+                    );
+                }
             }
         }
         None
@@ -76,7 +89,10 @@ mod tests {
         let merged_filter_id = filter_merge_rule
             .apply(&mut query_graph, filter_id_2)
             .unwrap();
-        if let QueryNode::Filter { input, conditions } = query_graph.node(merged_filter_id) {
+        if let QueryNode::Filter {
+            input, conditions, ..
+        } = query_graph.node(merged_filter_id)
+        {
             assert_eq!(*input, project_id);
             assert_eq!(*conditions, vec![filter_2, filter_1]);
         } else {

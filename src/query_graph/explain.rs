@@ -122,11 +122,23 @@ impl<'a> QueryGraphPrePostVisitor for ExplainVisitor<'a> {
             QueryNode::Project { outputs, .. } => {
                 format!("{}Project [{}]\n", prefix, explain_scalar_expr_vec(outputs),)
             }
-            QueryNode::Filter { conditions, .. } => format!(
-                "{}Filter [{}]\n",
-                prefix,
-                explain_scalar_expr_vec(conditions),
-            ),
+            QueryNode::Filter {
+                conditions,
+                correlation_id,
+                ..
+            } => {
+                let correlation = if let Some(correlation_id) = correlation_id {
+                    format!(" [CorrelationId: {}]", correlation_id.0,)
+                } else {
+                    String::new()
+                };
+                format!(
+                    "{}Filter{} [{}]\n",
+                    prefix,
+                    correlation,
+                    explain_scalar_expr_vec(conditions),
+                )
+            }
             QueryNode::TableScan { table_id, .. } => {
                 format!("{}TableScan id: {}\n", prefix, table_id)
             }

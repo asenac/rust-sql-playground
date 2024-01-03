@@ -52,6 +52,7 @@ pub enum QueryNode {
     Filter {
         conditions: Vec<ScalarExprRef>,
         input: NodeId,
+        correlation_id: Option<CorrelationId>,
     },
     TableScan {
         table_id: usize,
@@ -161,12 +162,12 @@ impl QueryNode {
     pub fn correlation_id(&self) -> Option<CorrelationId> {
         match self {
             QueryNode::Project { .. }
-            | QueryNode::Filter { .. }
             | QueryNode::TableScan { .. }
             | QueryNode::Join { .. }
             | QueryNode::Aggregate { .. }
             | QueryNode::Union { .. }
             | QueryNode::SubqueryRoot { .. } => None,
+            QueryNode::Filter { correlation_id, .. } => *correlation_id,
             QueryNode::Apply { correlation_id, .. } => Some(*correlation_id),
         }
     }
@@ -398,10 +399,23 @@ impl QueryGraph {
     }
 
     pub fn filter(&mut self, input: NodeId, conditions: Vec<ScalarExprRef>) -> NodeId {
+        self.possibly_correlated_filter(input, conditions, None)
+    }
+
+    pub fn possibly_correlated_filter(
+        &mut self,
+        input: NodeId,
+        conditions: Vec<ScalarExprRef>,
+        correlation_id: Option<CorrelationId>,
+    ) -> NodeId {
         if conditions.is_empty() {
             input
         } else {
-            self.add_node(QueryNode::Filter { conditions, input })
+            self.add_node(QueryNode::Filter {
+                conditions,
+                input,
+                correlation_id,
+            })
         }
     }
 

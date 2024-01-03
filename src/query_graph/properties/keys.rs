@@ -168,7 +168,11 @@ impl Keys {
                     }
                 }));
             }
-            QueryNode::Filter { input, conditions } => {
+            QueryNode::Filter {
+                input,
+                conditions,
+                correlation_id: _,
+            } => {
                 // FALSE/NULL predicate -> empty relation
                 if has_false_or_null_predicate(conditions) {
                     keys.push(KeyBounds {

@@ -144,7 +144,11 @@ impl PulledUpPredicates {
                     })
                 }));
             }
-            QueryNode::Filter { conditions, input } => {
+            QueryNode::Filter {
+                conditions,
+                input,
+                correlation_id: _,
+            } => {
                 predicates.extend(
                     self.predicates_unchecked(query_graph, *input)
                         .iter()

@@ -21,19 +21,28 @@ impl SingleReplacementRule for FilterProjectTransposeRule {
     }
 
     fn apply(&self, query_graph: &mut QueryGraph, node_id: NodeId) -> Option<NodeId> {
-        if let QueryNode::Filter { conditions, input } = query_graph.node(node_id) {
-            if let QueryNode::Project {
-                outputs,
-                input: proj_input,
-            } = query_graph.node(*input)
-            {
-                let new_conditions = conditions
-                    .iter()
-                    .map(|c| dereference_scalar_expr(c, outputs))
-                    .collect::<Vec<_>>();
-                let outputs = outputs.clone();
-                let new_filter = query_graph.filter(*proj_input, new_conditions);
-                return Some(query_graph.project(new_filter, outputs));
+        if let QueryNode::Filter {
+            conditions,
+            input,
+            correlation_id,
+        } = query_graph.node(node_id)
+        {
+            // TODO(asenac) We would need to dereference the correlated references in
+            // the subqueries in the conditions, recursively.
+            if correlation_id.is_none() {
+                if let QueryNode::Project {
+                    outputs,
+                    input: proj_input,
+                } = query_graph.node(*input)
+                {
+                    let new_conditions = conditions
+                        .iter()
+                        .map(|c| dereference_scalar_expr(c, outputs))
+                        .collect::<Vec<_>>();
+                    let outputs = outputs.clone();
+                    let new_filter = query_graph.filter(*proj_input, new_conditions);
+                    return Some(query_graph.project(new_filter, outputs));
+                }
             }
         }
         None

@@ -29,7 +29,12 @@ impl SingleReplacementRule for FilterNormalizationRule {
     }
 
     fn apply(&self, query_graph: &mut QueryGraph, node_id: NodeId) -> Option<NodeId> {
-        if let QueryNode::Filter { conditions, input } = query_graph.node(node_id) {
+        if let QueryNode::Filter {
+            conditions,
+            input,
+            correlation_id,
+        } = query_graph.node(node_id)
+        {
             let classes = equivalence_classes(query_graph, *input);
             let predicates = pulled_up_predicates(query_graph, *input);
             let mut replacement_map = to_replacement_map(&classes);
@@ -66,7 +71,11 @@ impl SingleReplacementRule for FilterNormalizationRule {
                 .collect_vec();
 
             if new_conditions != *conditions {
-                return Some(query_graph.filter(*input, new_conditions));
+                return Some(query_graph.possibly_correlated_filter(
+                    *input,
+                    new_conditions,
+                    *correlation_id,
+                ));
             }
         }
         None

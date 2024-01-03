@@ -77,7 +77,11 @@ fn do_all_parents_reject_null_from_non_preserving(
             query_graph.visit_subgraph_upwards_pre(
                 &mut |query_graph, node_id| match query_graph.node(node_id) {
                     QueryNode::Project { .. } => PreOrderVisitationResult::VisitInputs,
-                    QueryNode::Filter { conditions, input } => {
+                    QueryNode::Filter {
+                        conditions,
+                        input,
+                        correlation_id: _,
+                    } => {
                         // For filters:
                         // 1. find the provenance information of input from the non_preserving_node_id
                         // 2. rewrite the column expressions replacing all input refs with nulls
