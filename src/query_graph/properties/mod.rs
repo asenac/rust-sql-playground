@@ -39,6 +39,7 @@ pub use pulled_up_predicates::pulled_up_predicates_annotator;
 pub use row_type::cross_product_row_type;
 pub use row_type::row_type;
 pub use row_type::row_type_annotator;
+pub use subqueries::subgraph_subqueries;
 pub use subqueries::subqueries;
 
 use super::QueryGraph;
