@@ -145,7 +145,14 @@ impl QueryGraph {
     where
         V: QueryGraphPrePostVisitorMut,
     {
-        let mut stack = vec![VisitationStep::new(self.entry_node)];
+        self.visit_subgraph_mut(visitor, self.entry_node)
+    }
+
+    pub fn visit_subgraph_mut<V>(&mut self, visitor: &mut V, node_id: NodeId)
+    where
+        V: QueryGraphPrePostVisitorMut,
+    {
+        let mut stack = vec![VisitationStep::new(node_id)];
         while let Some(step) = stack.last_mut() {
             if step.next_child.is_none() {
                 match visitor.visit_pre(self, &mut step.node) {

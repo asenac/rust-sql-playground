@@ -14,6 +14,7 @@ use std::{
 
 use self::properties::PropertyCache;
 
+pub mod cloner;
 pub mod explain;
 pub mod json;
 pub mod optimizer;
