@@ -120,6 +120,7 @@ impl QueryGraphPrePostVisitor for NumColumns {
         }
     }
 }
+
 #[cfg(test)]
 mod tests {
     use crate::{

@@ -11,6 +11,7 @@ use std::{
 use crate::query_graph::NodeId;
 
 mod column_provenance;
+mod correlated_input_refs;
 mod equivalence_classes;
 mod input_dependencies;
 mod keys;
@@ -21,6 +22,9 @@ mod subqueries;
 
 pub use column_provenance::column_provenance;
 pub use column_provenance::ColumnProvenanceInfo;
+pub use correlated_input_refs::node_correlated_input_refs;
+pub use correlated_input_refs::subgraph_correlated_input_refs;
+pub use correlated_input_refs::subgraph_correlated_input_refs_annotator;
 pub use equivalence_classes::equivalence_classes;
 pub use input_dependencies::input_dependencies;
 pub use keys::empty_key;
@@ -46,6 +50,7 @@ pub fn default_annotators() -> Vec<&'static dyn Fn(&QueryGraph, NodeId) -> Optio
         &row_type_annotator,
         &pulled_up_predicates_annotator,
         &keys_annotator,
+        &subgraph_correlated_input_refs_annotator,
     ]
 }
 
