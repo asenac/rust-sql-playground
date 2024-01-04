@@ -7,7 +7,9 @@ use std::{
 use itertools::Itertools;
 
 use crate::{
-    query_graph::{visitor::QueryGraphPrePostVisitor, CorrelationId, NodeId, QueryGraph},
+    query_graph::{
+        visitor::QueryGraphPrePostVisitor, CorrelationId, NodeId, QueryGraph, QueryNode,
+    },
     scalar_expr::{visitor::visit_expr_pre, ScalarExpr},
     visitor_utils::PreOrderVisitationResult,
 };
@@ -151,8 +153,8 @@ impl SubgraphCorrelatedInputRefs {
             merge_correlated_maps(&*input_correlated_cols, &mut correlated_cols);
         }
         //... but remove ones in the correlation scope the node defines.
-        if let Some(correlation_id) = query_node.correlation_id() {
-            correlated_cols.remove(&correlation_id);
+        if let QueryNode::Apply { correlation, .. } = &query_node {
+            correlated_cols.remove(&correlation.correlation_id);
         }
         Rc::new(correlated_cols)
     }

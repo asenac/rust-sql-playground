@@ -2,7 +2,6 @@ use crate::visitor_utils::{PostOrderVisitationResult, PreOrderVisitationResult};
 
 use super::{visitor::QueryGraphPrePostVisitorMut, NodeId, QueryGraph};
 
-pub(crate) mod correlation_utils;
 pub mod rules;
 pub(crate) mod utils;
 

@@ -39,19 +39,10 @@ pub fn input_dependencies(query_graph: &QueryGraph, node_id: NodeId) -> Rc<HashS
             }
         }
         QueryNode::Filter {
-            conditions: exprs,
-            correlation_id,
-            input,
-        } => {
-            // TODO(asenac) use `subgraph_correlated_input_refs`for correlated filters
-            if correlation_id.is_some() {
-                dependencies.extend(0..num_columns(query_graph, *input))
-            } else {
-                exprs
-                    .iter()
-                    .for_each(|e| store_input_dependencies(e, &mut dependencies))
-            }
-        }
+            conditions: exprs, ..
+        } => exprs
+            .iter()
+            .for_each(|e| store_input_dependencies(e, &mut dependencies)),
         QueryNode::Union { .. } | QueryNode::SubqueryRoot { .. } | QueryNode::Apply { .. } => {
             dependencies.extend(0..num_columns(query_graph, node_id))
         }

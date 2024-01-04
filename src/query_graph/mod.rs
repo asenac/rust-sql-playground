@@ -2,7 +2,10 @@ use itertools::Itertools;
 
 use crate::{
     data_type::DataType,
-    scalar_expr::{visitor::visit_expr_pre, AggregateExprRef, ScalarExprRef},
+    scalar_expr::{
+        rewrite::RewritableExpr, visitor::visit_expr_pre, AggregateExprRef, ScalarExpr,
+        ScalarExprRef, VisitableExpr,
+    },
     visitor_utils::PreOrderVisitationResult,
 };
 use std::{
@@ -44,17 +47,21 @@ pub enum ApplyType {
     LeftOuter,
 }
 
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
+pub struct CorrelationContext<E: VisitableExpr + RewritableExpr> {
+    pub correlation_id: CorrelationId,
+    pub parameters: Vec<Rc<E>>,
+}
+
 #[derive(Clone, PartialEq, Eq)]
 pub enum QueryNode {
     Project {
         outputs: Vec<ScalarExprRef>,
         input: NodeId,
-        correlation_id: Option<CorrelationId>,
     },
     Filter {
         conditions: Vec<ScalarExprRef>,
         input: NodeId,
-        correlation_id: Option<CorrelationId>,
     },
     TableScan {
         table_id: usize,
@@ -79,7 +86,7 @@ pub enum QueryNode {
         input: NodeId,
     },
     Apply {
-        correlation_id: CorrelationId,
+        correlation: CorrelationContext<ScalarExpr>,
         left: NodeId,
         right: NodeId,
         apply_type: ApplyType,
@@ -161,19 +168,6 @@ impl QueryNode {
         }
     }
 
-    pub fn correlation_id(&self) -> Option<CorrelationId> {
-        match self {
-            QueryNode::Project { .. }
-            | QueryNode::TableScan { .. }
-            | QueryNode::Join { .. }
-            | QueryNode::Aggregate { .. }
-            | QueryNode::Union { .. }
-            | QueryNode::SubqueryRoot { .. } => None,
-            QueryNode::Filter { correlation_id, .. } => *correlation_id,
-            QueryNode::Apply { correlation_id, .. } => Some(*correlation_id),
-        }
-    }
-
     /// Visit the scalar expressions within the node.
     pub fn visit_scalar_expr<F>(&self, visitor: &mut F)
     where
@@ -194,8 +188,12 @@ impl QueryNode {
             QueryNode::TableScan { .. }
             | QueryNode::Aggregate { .. }
             | QueryNode::Union { .. }
-            | QueryNode::SubqueryRoot { .. }
-            | QueryNode::Apply { .. } => {}
+            | QueryNode::SubqueryRoot { .. } => {}
+            QueryNode::Apply { correlation, .. } => {
+                for expr in correlation.parameters.iter() {
+                    visitor(expr);
+                }
+            }
         }
     }
 
@@ -207,7 +205,6 @@ impl QueryNode {
         let mut subqueries = BTreeSet::new();
         self.visit_scalar_expr(&mut |expr| {
             visit_expr_pre(expr, &mut |curr_expr| {
-                use crate::scalar_expr::ScalarExpr;
                 match curr_expr.as_ref() {
                     ScalarExpr::Literal(_)
                     | ScalarExpr::InputRef { .. }
@@ -217,7 +214,7 @@ impl QueryNode {
                     ScalarExpr::ScalarSubquery { subquery }
                     | ScalarExpr::ExistsSubquery { subquery }
                     | ScalarExpr::ScalarSubqueryCmp { subquery, .. } => {
-                        subqueries.insert(*subquery);
+                        subqueries.insert(subquery.root);
                     }
                 }
                 PreOrderVisitationResult::VisitInputs
@@ -422,44 +419,15 @@ impl QueryGraph {
     }
 
     pub fn filter(&mut self, input: NodeId, conditions: Vec<ScalarExprRef>) -> NodeId {
-        self.possibly_correlated_filter(input, conditions, None)
-    }
-
-    pub fn possibly_correlated_filter(
-        &mut self,
-        input: NodeId,
-        conditions: Vec<ScalarExprRef>,
-        correlation_id: Option<CorrelationId>,
-    ) -> NodeId {
         if conditions.is_empty() {
             input
         } else {
-            self.add_node(QueryNode::Filter {
-                conditions,
-                input,
-                correlation_id,
-            })
+            self.add_node(QueryNode::Filter { conditions, input })
         }
     }
 
     pub fn project(&mut self, input: NodeId, outputs: Vec<ScalarExprRef>) -> NodeId {
-        self.add_node(QueryNode::Project {
-            outputs,
-            input,
-            correlation_id: None,
-        })
-    }
-    pub fn possibly_correlated_project(
-        &mut self,
-        input: NodeId,
-        outputs: Vec<ScalarExprRef>,
-        correlation_id: Option<CorrelationId>,
-    ) -> NodeId {
-        self.add_node(QueryNode::Project {
-            outputs,
-            input,
-            correlation_id,
-        })
+        self.add_node(QueryNode::Project { outputs, input })
     }
 
     pub fn inner_join(

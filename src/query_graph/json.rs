@@ -70,39 +70,11 @@ impl<'a> QueryGraphPrePostVisitor for JsonSerializer<'a> {
         }
         let prefix = format!("[{}] ", node_id);
         let label = match query_graph.node(node_id) {
-            QueryNode::Project {
-                outputs,
-                correlation_id,
-                ..
-            } => {
-                let correlation = if let Some(correlation_id) = correlation_id {
-                    format!(" [CorrelationId: {}]", correlation_id.0,)
-                } else {
-                    String::new()
-                };
-                format!(
-                    "{}Project{} [{}]",
-                    prefix,
-                    correlation,
-                    explain_scalar_expr_vec(outputs)
-                )
+            QueryNode::Project { outputs, .. } => {
+                format!("{}Project [{}]", prefix, explain_scalar_expr_vec(outputs))
             }
-            QueryNode::Filter {
-                conditions,
-                correlation_id,
-                ..
-            } => {
-                let correlation = if let Some(correlation_id) = correlation_id {
-                    format!(" [CorrelationId: {}]", correlation_id.0,)
-                } else {
-                    String::new()
-                };
-                format!(
-                    "{}Filter{} [{}]",
-                    prefix,
-                    correlation,
-                    explain_scalar_expr_vec(conditions),
-                )
+            QueryNode::Filter { conditions, .. } => {
+                format!("{}Filter [{}]", prefix, explain_scalar_expr_vec(conditions),)
             }
             QueryNode::TableScan { table_id, .. } => {
                 format!("{}TableScan id: {}", prefix, table_id)
@@ -140,13 +112,16 @@ impl<'a> QueryGraphPrePostVisitor for JsonSerializer<'a> {
             QueryNode::Union { .. } => format!("{}Union", prefix),
             QueryNode::SubqueryRoot { .. } => format!("{}SubqueryRoot", prefix),
             QueryNode::Apply {
-                correlation_id,
+                correlation,
                 apply_type,
                 ..
             } => {
                 format!(
-                    "{}{} Apply [CorrelationId: {}]",
-                    prefix, apply_type, correlation_id.0,
+                    "{}{} Apply correlation_id: {}, parameters: [{}]",
+                    prefix,
+                    apply_type,
+                    correlation.correlation_id.0,
+                    explain_scalar_expr_vec(&correlation.parameters),
                 )
             }
         };

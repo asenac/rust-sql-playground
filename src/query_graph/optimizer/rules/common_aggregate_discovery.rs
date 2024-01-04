@@ -79,16 +79,9 @@ impl Rule for CommonAggregateDiscoveryRule {
                     // Aggregate key[ref_0], Aggregates[max(ref_1), max(ref_2]
                     //   Project ref_0, ref_1 + ref_2, ref_1 + ref_3
                     //     Shared node X
-                    while let QueryNode::Project {
-                        outputs,
-                        input,
-                        correlation_id,
-                    } = query_graph.node(normalized_input)
+                    while let QueryNode::Project { outputs, input } =
+                        query_graph.node(normalized_input)
                     {
-                        // TODO(asenac) dereference correlated expressions
-                        if correlation_id.is_some() {
-                            break;
-                        }
                         let extended_outputs =
                             outputs.iter().map(|e| e.to_extended_expr()).collect_vec();
                         for key in group_key.iter_mut() {

@@ -7,17 +7,16 @@ use itertools::Itertools;
 
 use crate::{
     data_type::DataType,
-    query_graph::{CorrelationId, NodeId, QueryGraph},
+    query_graph::{CorrelationContext, CorrelationId, NodeId, QueryGraph},
     value::{Literal, Value},
     visitor_utils::PostOrderVisitationResult,
 };
 
-use self::visitor::visit_expr_post;
+use self::{rewrite::RewritableExpr, visitor::visit_expr_post};
 
 pub mod equivalence_class;
 pub mod reduction;
 pub mod rewrite;
-pub mod rewrite_utils;
 pub mod visitor;
 pub use visitor::VisitableExpr;
 
@@ -55,6 +54,12 @@ pub enum ScalarSubqueryCmpOp {
     GteAll,
 }
 
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
+pub struct Subquery<E: VisitableExpr + RewritableExpr> {
+    pub root: NodeId,
+    pub correlation: Option<CorrelationContext<E>>,
+}
+
 /// A _copy-on-write_ representation for the scalar expressions in the query plan.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub enum ScalarExpr {
@@ -75,18 +80,18 @@ pub enum ScalarExpr {
     /// Otherwise, a runtime exception is thrown.
     /// Models subqueries in scalar positions.
     ScalarSubquery {
-        subquery: NodeId,
+        subquery: Subquery<ScalarExpr>,
     },
     /// Models EXISTS subqueries.
     ExistsSubquery {
-        subquery: NodeId,
+        subquery: Subquery<ScalarExpr>,
     },
     /// Models IN SELECT operations, ie. =ANY(SELECT ...) and the rest of the comparisons
     /// between a scalar value and a subquery.
     ScalarSubqueryCmp {
         op: ScalarSubqueryCmpOp,
         scalar_operand: Rc<ScalarExpr>,
-        subquery: NodeId,
+        subquery: Subquery<ScalarExpr>,
     },
     CorrelatedInputRef {
         correlation_id: CorrelationId,
@@ -297,10 +302,30 @@ impl ScalarExpr {
             ScalarExpr::ExistsSubquery { .. } => DataType::Bool,
             ScalarExpr::ScalarSubqueryCmp { .. } => DataType::Bool,
             ScalarExpr::ScalarSubquery { subquery } => {
-                let row_type = crate::query_graph::properties::row_type(query_graph, *subquery);
+                let row_type = crate::query_graph::properties::row_type(query_graph, subquery.root);
                 row_type[0].clone()
             }
             ScalarExpr::CorrelatedInputRef { data_type, .. } => data_type.clone(),
+        }
+    }
+}
+
+impl<E: VisitableExpr + RewritableExpr + fmt::Display> fmt::Display for Subquery<E> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if let Some(correlation) = self.correlation.as_ref() {
+            write!(
+                f,
+                "correlated_subquery(node: {}, correlation_id: {}, parameters: [{}])",
+                self.root,
+                correlation.correlation_id.0,
+                correlation
+                    .parameters
+                    .iter()
+                    .map(|p| format!("{}", p))
+                    .join(", ")
+            )
+        } else {
+            write!(f, "subquery(node: {})", self.root)
         }
     }
 }
@@ -320,13 +345,17 @@ impl fmt::Display for ScalarExpr {
                 }
                 write!(f, ")")
             }
-            ScalarExpr::ScalarSubquery { subquery } => write!(f, "scalar_subquery({})", *subquery),
-            ScalarExpr::ExistsSubquery { subquery } => write!(f, "exists_subquery({})", *subquery),
+            ScalarExpr::ScalarSubquery { subquery } => {
+                write!(f, "scalar({})", subquery)
+            }
+            ScalarExpr::ExistsSubquery { subquery } => {
+                write!(f, "exists({})", subquery)
+            }
             ScalarExpr::ScalarSubqueryCmp {
                 op,
                 scalar_operand,
                 subquery,
-            } => write!(f, "{}({}, subquery({}))", op, scalar_operand, *subquery),
+            } => write!(f, "{}({}, {})", op, scalar_operand, subquery),
             ScalarExpr::CorrelatedInputRef {
                 correlation_id,
                 index,
@@ -428,18 +457,18 @@ pub enum ExtendedScalarExpr {
     /// Otherwise, a runtime exception is thrown.
     /// Models subqueries in scalar positions.
     ScalarSubquery {
-        subquery: NodeId,
+        subquery: Subquery<ExtendedScalarExpr>,
     },
     /// Models EXISTS subqueries.
     ExistsSubquery {
-        subquery: NodeId,
+        subquery: Subquery<ExtendedScalarExpr>,
     },
     /// Models IN SELECT operations, ie. =ANY(SELECT ...) and the rest of the comparisons
     /// between a scalar value and a subquery.
     ScalarSubqueryCmp {
         op: ScalarSubqueryCmpOp,
         scalar_operand: Rc<ExtendedScalarExpr>,
-        subquery: NodeId,
+        subquery: Subquery<ExtendedScalarExpr>,
     },
     CorrelatedInputRef {
         correlation_id: CorrelationId,
@@ -486,7 +515,7 @@ impl ExtendedScalarExpr {
             ExtendedScalarExpr::NaryOp { op, .. } => op.return_type(operand_types),
             ExtendedScalarExpr::Aggregate { op, .. } => op.return_type(operand_types),
             ExtendedScalarExpr::ScalarSubquery { subquery } => {
-                let row_type = crate::query_graph::properties::row_type(query_graph, *subquery);
+                let row_type = crate::query_graph::properties::row_type(query_graph, subquery.root);
                 row_type[0].clone()
             }
             ExtendedScalarExpr::ExistsSubquery { .. } => DataType::Bool,
@@ -534,23 +563,81 @@ impl ToScalarExpr for Rc<ExtendedScalarExpr> {
                     stack.clear();
                     return PostOrderVisitationResult::Abort;
                 }
-                ExtendedScalarExpr::ScalarSubquery { subquery } => ScalarExpr::ScalarSubquery {
-                    subquery: subquery.clone(),
-                },
-                ExtendedScalarExpr::ExistsSubquery { subquery } => ScalarExpr::ExistsSubquery {
-                    subquery: subquery.clone(),
-                },
+                ExtendedScalarExpr::ScalarSubquery { subquery } => {
+                    let operands = stack[stack.len()
+                        - subquery
+                            .correlation
+                            .as_ref()
+                            .map(|correlation| correlation.parameters.len())
+                            .unwrap_or(0)..]
+                        .iter()
+                        .cloned()
+                        .collect_vec();
+                    stack.truncate(stack.len() - operands.len());
+                    ScalarExpr::ScalarSubquery {
+                        subquery: Subquery {
+                            root: subquery.root,
+                            correlation: subquery.correlation.as_ref().map(|correlation| {
+                                CorrelationContext {
+                                    correlation_id: correlation.correlation_id,
+                                    parameters: operands,
+                                }
+                            }),
+                        },
+                    }
+                }
+                ExtendedScalarExpr::ExistsSubquery { subquery } => {
+                    let operands = stack[stack.len()
+                        - subquery
+                            .correlation
+                            .as_ref()
+                            .map(|correlation| correlation.parameters.len())
+                            .unwrap_or(0)..]
+                        .iter()
+                        .cloned()
+                        .collect_vec();
+                    stack.truncate(stack.len() - operands.len());
+                    ScalarExpr::ExistsSubquery {
+                        subquery: Subquery {
+                            root: subquery.root,
+                            correlation: subquery.correlation.as_ref().map(|correlation| {
+                                CorrelationContext {
+                                    correlation_id: correlation.correlation_id,
+                                    parameters: operands,
+                                }
+                            }),
+                        },
+                    }
+                }
                 ExtendedScalarExpr::ScalarSubqueryCmp {
                     op,
                     scalar_operand: _,
                     subquery,
                 } => {
+                    let num_subquery_params = subquery
+                        .correlation
+                        .as_ref()
+                        .map(|correlation| correlation.parameters.len())
+                        .unwrap_or(0);
+                    let operands = stack[stack.len() - num_subquery_params..]
+                        .iter()
+                        .cloned()
+                        .collect_vec();
+                    let scalar_operand = stack[stack.len() - num_subquery_params - 1].clone();
+                    stack.truncate(stack.len() - num_subquery_params - 1);
                     let expr = ScalarExpr::ScalarSubqueryCmp {
                         op: op.clone(),
-                        scalar_operand: stack.last().unwrap().clone(),
-                        subquery: subquery.clone(),
+                        scalar_operand,
+                        subquery: Subquery {
+                            root: subquery.root,
+                            correlation: subquery.correlation.as_ref().map(|correlation| {
+                                CorrelationContext {
+                                    correlation_id: correlation.correlation_id,
+                                    parameters: operands,
+                                }
+                            }),
+                        },
                     };
-                    stack.truncate(stack.len() - 1);
                     expr
                 }
                 ExtendedScalarExpr::CorrelatedInputRef {
@@ -604,23 +691,81 @@ impl ToExtendedExpr for Rc<ScalarExpr> {
                     stack.truncate(stack.len() - operands.len());
                     expr
                 }
-                ScalarExpr::ScalarSubquery { subquery } => ExtendedScalarExpr::ScalarSubquery {
-                    subquery: subquery.clone(),
-                },
-                ScalarExpr::ExistsSubquery { subquery } => ExtendedScalarExpr::ExistsSubquery {
-                    subquery: subquery.clone(),
-                },
+                ScalarExpr::ScalarSubquery { subquery } => {
+                    let operands = stack[stack.len()
+                        - subquery
+                            .correlation
+                            .as_ref()
+                            .map(|correlation| correlation.parameters.len())
+                            .unwrap_or(0)..]
+                        .iter()
+                        .cloned()
+                        .collect_vec();
+                    stack.truncate(stack.len() - operands.len());
+                    ExtendedScalarExpr::ScalarSubquery {
+                        subquery: Subquery {
+                            root: subquery.root,
+                            correlation: subquery.correlation.as_ref().map(|correlation| {
+                                CorrelationContext {
+                                    correlation_id: correlation.correlation_id,
+                                    parameters: operands,
+                                }
+                            }),
+                        },
+                    }
+                }
+                ScalarExpr::ExistsSubquery { subquery } => {
+                    let operands = stack[stack.len()
+                        - subquery
+                            .correlation
+                            .as_ref()
+                            .map(|correlation| correlation.parameters.len())
+                            .unwrap_or(0)..]
+                        .iter()
+                        .cloned()
+                        .collect_vec();
+                    stack.truncate(stack.len() - operands.len());
+                    ExtendedScalarExpr::ExistsSubquery {
+                        subquery: Subquery {
+                            root: subquery.root,
+                            correlation: subquery.correlation.as_ref().map(|correlation| {
+                                CorrelationContext {
+                                    correlation_id: correlation.correlation_id,
+                                    parameters: operands,
+                                }
+                            }),
+                        },
+                    }
+                }
                 ScalarExpr::ScalarSubqueryCmp {
                     op,
                     scalar_operand: _,
                     subquery,
                 } => {
+                    let num_subquery_params = subquery
+                        .correlation
+                        .as_ref()
+                        .map(|correlation| correlation.parameters.len())
+                        .unwrap_or(0);
+                    let operands = stack[stack.len() - num_subquery_params..]
+                        .iter()
+                        .cloned()
+                        .collect_vec();
+                    let scalar_operand = stack[stack.len() - num_subquery_params - 1].clone();
+                    stack.truncate(stack.len() - num_subquery_params - 1);
                     let expr = ExtendedScalarExpr::ScalarSubqueryCmp {
                         op: op.clone(),
-                        scalar_operand: stack.last().unwrap().clone(),
-                        subquery: subquery.clone(),
+                        scalar_operand,
+                        subquery: Subquery {
+                            root: subquery.root,
+                            correlation: subquery.correlation.as_ref().map(|correlation| {
+                                CorrelationContext {
+                                    correlation_id: correlation.correlation_id,
+                                    parameters: operands,
+                                }
+                            }),
+                        },
                     };
-                    stack.truncate(stack.len() - 1);
                     expr
                 }
                 ScalarExpr::CorrelatedInputRef {

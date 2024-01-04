@@ -154,9 +154,24 @@ impl VisitableExpr for ScalarExpr {
             ScalarExpr::InputRef { .. } => 0,
             ScalarExpr::BinaryOp { .. } => 2,
             ScalarExpr::NaryOp { operands, .. } => operands.len(),
-            ScalarExpr::ExistsSubquery { .. } | ScalarExpr::ScalarSubquery { .. } => 0,
-            ScalarExpr::ScalarSubqueryCmp { .. } => 1,
             ScalarExpr::CorrelatedInputRef { .. } => 0,
+            ScalarExpr::ExistsSubquery { subquery, .. } => subquery
+                .correlation
+                .as_ref()
+                .map(|correlation| correlation.parameters.len())
+                .unwrap_or(0),
+            ScalarExpr::ScalarSubquery { subquery, .. } => subquery
+                .correlation
+                .as_ref()
+                .map(|correlation| correlation.parameters.len())
+                .unwrap_or(0),
+            ScalarExpr::ScalarSubqueryCmp { subquery, .. } => {
+                1 + subquery
+                    .correlation
+                    .as_ref()
+                    .map(|correlation| correlation.parameters.len())
+                    .unwrap_or(0)
+            }
         }
     }
 
@@ -173,10 +188,22 @@ impl VisitableExpr for ScalarExpr {
             ScalarExpr::NaryOp { operands, .. } => operands[input_idx].clone(),
             ScalarExpr::Literal { .. }
             | ScalarExpr::InputRef { .. }
-            | ScalarExpr::ExistsSubquery { .. }
-            | ScalarExpr::ScalarSubquery { .. }
             | ScalarExpr::CorrelatedInputRef { .. } => panic!(),
-            ScalarExpr::ScalarSubqueryCmp { scalar_operand, .. } => scalar_operand.clone(),
+            ScalarExpr::ExistsSubquery { subquery, .. }
+            | ScalarExpr::ScalarSubquery { subquery, .. } => {
+                subquery.correlation.as_ref().unwrap().parameters[input_idx].clone()
+            }
+            ScalarExpr::ScalarSubqueryCmp {
+                scalar_operand,
+                subquery,
+                ..
+            } => {
+                if input_idx == 0 {
+                    scalar_operand.clone()
+                } else {
+                    subquery.correlation.as_ref().unwrap().parameters[input_idx - 1].clone()
+                }
+            }
         }
     }
 }
@@ -189,9 +216,23 @@ impl VisitableExpr for ExtendedScalarExpr {
             ExtendedScalarExpr::BinaryOp { .. } => 2,
             ExtendedScalarExpr::Aggregate { operands, .. }
             | ExtendedScalarExpr::NaryOp { operands, .. } => operands.len(),
-            ExtendedScalarExpr::ExistsSubquery { .. } => 0,
-            ExtendedScalarExpr::ScalarSubquery { .. } => 0,
-            ExtendedScalarExpr::ScalarSubqueryCmp { .. } => 1,
+            ExtendedScalarExpr::ExistsSubquery { subquery, .. } => subquery
+                .correlation
+                .as_ref()
+                .map(|correlation| correlation.parameters.len())
+                .unwrap_or(0),
+            ExtendedScalarExpr::ScalarSubquery { subquery, .. } => subquery
+                .correlation
+                .as_ref()
+                .map(|correlation| correlation.parameters.len())
+                .unwrap_or(0),
+            ExtendedScalarExpr::ScalarSubqueryCmp { subquery, .. } => {
+                1 + subquery
+                    .correlation
+                    .as_ref()
+                    .map(|correlation| correlation.parameters.len())
+                    .unwrap_or(0)
+            }
             ExtendedScalarExpr::CorrelatedInputRef { .. } => 0,
         }
     }
@@ -210,10 +251,22 @@ impl VisitableExpr for ExtendedScalarExpr {
             | ExtendedScalarExpr::NaryOp { operands, .. } => operands[input_idx].clone(),
             ExtendedScalarExpr::Literal { .. }
             | ExtendedScalarExpr::InputRef { .. }
-            | ExtendedScalarExpr::ExistsSubquery { .. }
-            | ExtendedScalarExpr::ScalarSubquery { .. }
             | ExtendedScalarExpr::CorrelatedInputRef { .. } => panic!(),
-            ExtendedScalarExpr::ScalarSubqueryCmp { scalar_operand, .. } => scalar_operand.clone(),
+            ExtendedScalarExpr::ExistsSubquery { subquery, .. }
+            | ExtendedScalarExpr::ScalarSubquery { subquery, .. } => {
+                subquery.correlation.as_ref().unwrap().parameters[input_idx].clone()
+            }
+            ExtendedScalarExpr::ScalarSubqueryCmp {
+                scalar_operand,
+                subquery,
+                ..
+            } => {
+                if input_idx == 0 {
+                    scalar_operand.clone()
+                } else {
+                    subquery.correlation.as_ref().unwrap().parameters[input_idx - 1].clone()
+                }
+            }
         }
     }
 }

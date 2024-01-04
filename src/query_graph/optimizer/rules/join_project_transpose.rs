@@ -36,7 +36,6 @@ impl SingleReplacementRule for JoinProjectTransposeRule {
             if let QueryNode::Project {
                 outputs,
                 input: proj_input,
-                correlation_id: None,
             } = query_graph.node(*left)
             {
                 if let Some((reorder_map, sorted_proj)) = sort_projection(outputs) {
@@ -79,7 +78,6 @@ impl SingleReplacementRule for JoinProjectTransposeRule {
             if let QueryNode::Project {
                 outputs,
                 input: proj_input,
-                correlation_id: None,
             } = query_graph.node(*right)
             {
                 if let Some((reorder_map, sorted_proj)) = sort_projection(outputs) {

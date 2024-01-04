@@ -100,11 +100,7 @@ impl PulledUpPredicates {
     ) -> Rc<Vec<ScalarExprRef>> {
         let mut predicates = Vec::new();
         match query_graph.node(node_id) {
-            QueryNode::Project {
-                outputs,
-                input,
-                correlation_id: _,
-            } => {
+            QueryNode::Project { outputs, input } => {
                 predicates.extend(
                     self.predicates_unchecked(query_graph, *input)
                         .iter()
@@ -148,11 +144,7 @@ impl PulledUpPredicates {
                     })
                 }));
             }
-            QueryNode::Filter {
-                conditions,
-                input,
-                correlation_id: _,
-            } => {
+            QueryNode::Filter { conditions, input } => {
                 predicates.extend(
                     self.predicates_unchecked(query_graph, *input)
                         .iter()

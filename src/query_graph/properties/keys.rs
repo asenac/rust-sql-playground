@@ -146,11 +146,7 @@ impl Keys {
     ) -> Rc<Vec<KeyBounds>> {
         let mut keys = Vec::new();
         match query_graph.node(node_id) {
-            QueryNode::Project {
-                outputs,
-                input,
-                correlation_id: _,
-            } => {
+            QueryNode::Project { outputs, input } => {
                 let input_keys = self.keys_unchecked(query_graph, *input);
                 // Lift the input keys through the projection expressions.
                 keys.extend(input_keys.iter().filter_map(|key| {
@@ -172,11 +168,7 @@ impl Keys {
                     }
                 }));
             }
-            QueryNode::Filter {
-                input,
-                conditions,
-                correlation_id: _,
-            } => {
+            QueryNode::Filter { input, conditions } => {
                 // FALSE/NULL predicate -> empty relation
                 if has_false_or_null_predicate(conditions) {
                     keys.push(KeyBounds {

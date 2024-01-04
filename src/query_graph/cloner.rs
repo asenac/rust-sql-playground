@@ -52,19 +52,11 @@ where
         let num_inputs = cloned_node.num_inputs();
         let inputs = &self.stack[self.stack.len() - num_inputs..];
         match &mut cloned_node {
-            QueryNode::Project {
-                outputs,
-                input,
-                correlation_id: _,
-            } => {
+            QueryNode::Project { outputs, input } => {
                 outputs.iter_mut().for_each(|e| *e = (self.rewrite)(&e));
                 *input = inputs[0];
             }
-            QueryNode::Filter {
-                conditions,
-                input,
-                correlation_id: _,
-            } => {
+            QueryNode::Filter { conditions, input } => {
                 conditions.iter_mut().for_each(|e| *e = (self.rewrite)(e));
                 *input = inputs[0];
             }
@@ -90,7 +82,7 @@ where
             QueryNode::Union { inputs: inputs_ref } => *inputs_ref = inputs.to_vec(),
             QueryNode::SubqueryRoot { input } => *input = inputs[0],
             QueryNode::Apply {
-                correlation_id: _,
+                correlation: _,
                 left,
                 right,
                 apply_type: _,

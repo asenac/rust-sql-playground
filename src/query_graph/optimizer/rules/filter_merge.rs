@@ -1,15 +1,8 @@
-use crate::{
-    query_graph::{
-        optimizer::{
-            correlation_utils::update_correlated_references_in_subqueries, OptRuleType,
-            SingleReplacementRule,
-        },
-        NodeId, QueryGraph, QueryNode,
-    },
-    scalar_expr::{
-        rewrite::rewrite_expr_post,
-        rewrite_utils::{apply_subquery_map, update_correlation_id},
-    },
+use itertools::Itertools;
+
+use crate::query_graph::{
+    optimizer::{OptRuleType, SingleReplacementRule},
+    NodeId, QueryGraph, QueryNode,
 };
 
 /// Optimization rule that fuses two chained Filter nodes, concatenating the filter expressions
@@ -22,50 +15,19 @@ impl SingleReplacementRule for FilterMergeRule {
     }
 
     fn apply(&self, query_graph: &mut QueryGraph, node_id: NodeId) -> Option<NodeId> {
-        if let QueryNode::Filter {
-            conditions,
-            input,
-            correlation_id,
-        } = query_graph.node(node_id)
-        {
+        if let QueryNode::Filter { conditions, input } = query_graph.node(node_id) {
             if let QueryNode::Filter {
                 conditions: child_conditions,
                 input: child_input,
-                correlation_id: child_correlation_id,
             } = query_graph.node(*input)
             {
-                let mut conditions = conditions.clone();
-                let parent_node_conditions_len = conditions.len();
-
-                let new_correlation_id = child_correlation_id.or(*correlation_id);
-                conditions.extend(child_conditions.clone().into_iter());
+                let conditions = conditions
+                    .iter()
+                    .cloned()
+                    .chain(child_conditions.iter().cloned())
+                    .collect_vec();
                 let new_input = *child_input;
-
-                // If both filters may contain correlated subqueries, we need to make
-                // them use a single correlation ID. The subqueries and conditions from
-                // the outer filter node are rewritten to make them refer to the correlation
-                // ID of the inner filter node.
-                if correlation_id.is_some() && child_correlation_id.is_some() {
-                    let correlation_id = correlation_id.unwrap();
-                    let new_correlation_id = new_correlation_id.unwrap();
-                    let subquery_map = update_correlated_references_in_subqueries(
-                        query_graph,
-                        node_id,
-                        correlation_id,
-                        |e| update_correlation_id(e, correlation_id, new_correlation_id),
-                    );
-                    conditions
-                        .iter_mut()
-                        .take(parent_node_conditions_len)
-                        .for_each(|e| {
-                            *e = rewrite_expr_post(&mut |e| apply_subquery_map(e, &subquery_map), e)
-                        });
-                }
-                return Some(query_graph.possibly_correlated_filter(
-                    new_input,
-                    conditions,
-                    new_correlation_id,
-                ));
+                return Some(query_graph.filter(new_input, conditions));
             }
         }
         None

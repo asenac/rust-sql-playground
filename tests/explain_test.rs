@@ -15,8 +15,8 @@ mod test_queries {
     use itertools::Itertools;
     use rust_sql::{
         data_type::DataType,
-        query_graph::ApplyType,
-        scalar_expr::{AggregateExpr, AggregateOp, ScalarExprRef, ScalarSubqueryCmpOp},
+        query_graph::{ApplyType, CorrelationContext},
+        scalar_expr::{AggregateExpr, AggregateOp, ScalarExprRef, ScalarSubqueryCmpOp, Subquery},
     };
 
     use super::*;
@@ -1615,11 +1615,17 @@ mod test_queries {
                 .into()],
                 input: table_scan_1,
             });
-            let subquery = query_graph.add_subquery(aggregate_1);
+            let subquery_root = query_graph.add_subquery(aggregate_1);
             let table_scan_2 = query_graph.table_scan(2, 5);
             let project_1 = query_graph.project(
                 table_scan_2,
-                vec![ScalarExpr::ScalarSubquery { subquery }.into()],
+                vec![ScalarExpr::ScalarSubquery {
+                    subquery: Subquery {
+                        root: subquery_root,
+                        correlation: None,
+                    },
+                }
+                .into()],
             );
             query_graph.set_entry_node(project_1);
             query_graph
@@ -1627,11 +1633,17 @@ mod test_queries {
         queries.insert("exists_subquery_1".to_string(), {
             let mut query_graph = QueryGraph::new();
             let table_scan_1 = query_graph.table_scan(1, 5);
-            let subquery = query_graph.add_subquery(table_scan_1);
+            let subquery_root = query_graph.add_subquery(table_scan_1);
             let table_scan_2 = query_graph.table_scan(2, 5);
             let project_1 = query_graph.project(
                 table_scan_2,
-                vec![ScalarExpr::ExistsSubquery { subquery }.into()],
+                vec![ScalarExpr::ExistsSubquery {
+                    subquery: Subquery {
+                        root: subquery_root,
+                        correlation: None,
+                    },
+                }
+                .into()],
             );
             query_graph.set_entry_node(project_1);
             query_graph
@@ -1642,14 +1654,17 @@ mod test_queries {
             let table_scan_1 = query_graph.table_scan(1, 5);
             let project_1 =
                 query_graph.project(table_scan_1, vec![ScalarExpr::input_ref(3).into()]);
-            let subquery = query_graph.add_subquery(project_1);
+            let subquery_root = query_graph.add_subquery(project_1);
             let table_scan_2 = query_graph.table_scan(2, 5);
             let project_2 = query_graph.project(
                 table_scan_2,
                 vec![ScalarExpr::ScalarSubqueryCmp {
                     op: ScalarSubqueryCmpOp::EqAny,
                     scalar_operand: ScalarExpr::input_ref(0).into(),
-                    subquery,
+                    subquery: Subquery {
+                        root: subquery_root,
+                        correlation: None,
+                    },
                 }
                 .into()],
             );
@@ -1670,7 +1685,7 @@ mod test_queries {
                         BinaryOp::Eq,
                         ScalarExpr::CorrelatedInputRef {
                             correlation_id,
-                            index: 1,
+                            index: 0,
                             data_type: DataType::String,
                         }
                         .into(),
@@ -1679,7 +1694,10 @@ mod test_queries {
             );
             let table_scan_2 = query_graph.table_scan(2, 5);
             let apply_1 = query_graph.add_node(QueryNode::Apply {
-                correlation_id,
+                correlation: CorrelationContext {
+                    correlation_id,
+                    parameters: vec![ScalarExpr::input_ref(1).into()],
+                },
                 left: table_scan_2,
                 right: filter_1,
                 apply_type: ApplyType::LeftOuter,
@@ -1713,7 +1731,7 @@ mod test_queries {
                             BinaryOp::Eq,
                             ScalarExpr::CorrelatedInputRef {
                                 correlation_id: correlation_id_1,
-                                index: 1,
+                                index: 0,
                                 data_type: DataType::String,
                             }
                             .into(),
@@ -1724,7 +1742,7 @@ mod test_queries {
                             BinaryOp::Eq,
                             ScalarExpr::CorrelatedInputRef {
                                 correlation_id: correlation_id_2,
-                                index: 3,
+                                index: 0,
                                 data_type: DataType::String,
                             }
                             .into(),
@@ -1734,14 +1752,20 @@ mod test_queries {
             );
             let table_scan_2 = query_graph.table_scan(2, 5);
             let apply_1 = query_graph.add_node(QueryNode::Apply {
-                correlation_id: correlation_id_1,
+                correlation: CorrelationContext {
+                    correlation_id: correlation_id_1,
+                    parameters: vec![ScalarExpr::input_ref(1).into()],
+                },
                 left: table_scan_2,
                 right: filter_1,
                 apply_type: ApplyType::LeftOuter,
             });
             let table_scan_3 = query_graph.table_scan(3, 5);
             let apply_2 = query_graph.add_node(QueryNode::Apply {
-                correlation_id: correlation_id_2,
+                correlation: CorrelationContext {
+                    correlation_id: correlation_id_2,
+                    parameters: vec![ScalarExpr::input_ref(3).into()],
+                },
                 left: table_scan_3,
                 right: apply_1,
                 apply_type: ApplyType::Inner,
@@ -1776,19 +1800,27 @@ mod test_queries {
                         BinaryOp::Eq,
                         ScalarExpr::CorrelatedInputRef {
                             correlation_id,
-                            index: 1,
+                            index: 0,
                             data_type: DataType::String,
                         }
                         .into(),
                     )
                     .into()],
             );
-            let subquery = query_graph.add_subquery(filter_1);
+            let subquery_root = query_graph.add_subquery(filter_1);
             let table_scan_2 = query_graph.table_scan(2, 5);
-            let filter_2 = query_graph.possibly_correlated_filter(
+            let filter_2 = query_graph.filter(
                 table_scan_2,
-                vec![ScalarExpr::ExistsSubquery { subquery }.into()],
-                Some(correlation_id),
+                vec![ScalarExpr::ExistsSubquery {
+                    subquery: Subquery {
+                        root: subquery_root,
+                        correlation: Some(CorrelationContext {
+                            correlation_id,
+                            parameters: vec![ScalarExpr::input_ref(1).into()],
+                        }),
+                    },
+                }
+                .into()],
             );
             query_graph.set_entry_node(filter_2);
             query_graph
@@ -1804,19 +1836,27 @@ mod test_queries {
                         BinaryOp::Eq,
                         ScalarExpr::CorrelatedInputRef {
                             correlation_id,
-                            index: 1,
+                            index: 0,
                             data_type: DataType::String,
                         }
                         .into(),
                     )
                     .into()],
             );
-            let subquery = query_graph.add_subquery(filter_1);
+            let subquery_root = query_graph.add_subquery(filter_1);
             let table_scan_2 = query_graph.table_scan(2, 5);
-            let filter_2 = query_graph.possibly_correlated_filter(
+            let filter_2 = query_graph.filter(
                 table_scan_2,
-                vec![ScalarExpr::ExistsSubquery { subquery }.into()],
-                Some(correlation_id),
+                vec![ScalarExpr::ExistsSubquery {
+                    subquery: Subquery {
+                        root: subquery_root,
+                        correlation: Some(CorrelationContext {
+                            correlation_id: correlation_id,
+                            parameters: vec![ScalarExpr::input_ref(1).into()],
+                        }),
+                    },
+                }
+                .into()],
             );
             let table_scan_3 = query_graph.table_scan(3, 5);
             let correlation_id_2 = query_graph.new_correlation_id();
@@ -1827,21 +1867,26 @@ mod test_queries {
                         BinaryOp::Eq,
                         ScalarExpr::CorrelatedInputRef {
                             correlation_id: correlation_id_2,
-                            index: 1,
+                            index: 0,
                             data_type: DataType::String,
                         }
                         .into(),
                     )
                     .into()],
             );
-            let subquery_2 = query_graph.add_subquery(filter_3);
-            let filter_4 = query_graph.possibly_correlated_filter(
+            let subquery_root_2 = query_graph.add_subquery(filter_3);
+            let filter_4 = query_graph.filter(
                 filter_2,
                 vec![ScalarExpr::ExistsSubquery {
-                    subquery: subquery_2,
+                    subquery: Subquery {
+                        root: subquery_root_2,
+                        correlation: Some(CorrelationContext {
+                            correlation_id: correlation_id_2,
+                            parameters: vec![ScalarExpr::input_ref(1).into()],
+                        }),
+                    },
                 }
                 .into()],
-                Some(correlation_id_2),
             );
             query_graph.set_entry_node(filter_4);
             query_graph
@@ -1857,19 +1902,27 @@ mod test_queries {
                         BinaryOp::Eq,
                         ScalarExpr::CorrelatedInputRef {
                             correlation_id,
-                            index: 1,
+                            index: 0,
                             data_type: DataType::String,
                         }
                         .into(),
                     )
                     .into()],
             );
-            let subquery = query_graph.add_subquery(filter_1);
+            let subquery_root = query_graph.add_subquery(filter_1);
             let table_scan_2 = query_graph.table_scan(2, 5);
-            let filter_2 = query_graph.possibly_correlated_filter(
+            let filter_2 = query_graph.filter(
                 table_scan_2,
-                vec![ScalarExpr::ExistsSubquery { subquery }.into()],
-                Some(correlation_id),
+                vec![ScalarExpr::ExistsSubquery {
+                    subquery: Subquery {
+                        root: subquery_root,
+                        correlation: Some(CorrelationContext {
+                            correlation_id: correlation_id,
+                            parameters: vec![ScalarExpr::input_ref(1).into()],
+                        }),
+                    },
+                }
+                .into()],
             );
             let correlation_id_2 = query_graph.new_correlation_id();
             let filter_3 = query_graph.filter(
@@ -1879,21 +1932,26 @@ mod test_queries {
                         BinaryOp::Eq,
                         ScalarExpr::CorrelatedInputRef {
                             correlation_id: correlation_id_2,
-                            index: 1,
+                            index: 0,
                             data_type: DataType::String,
                         }
                         .into(),
                     )
                     .into()],
             );
-            let subquery_2 = query_graph.add_subquery(filter_3);
-            let filter_4 = query_graph.possibly_correlated_filter(
+            let subquery_root_2 = query_graph.add_subquery(filter_3);
+            let filter_4 = query_graph.filter(
                 filter_2,
                 vec![ScalarExpr::ExistsSubquery {
-                    subquery: subquery_2,
+                    subquery: Subquery {
+                        root: subquery_root_2,
+                        correlation: Some(CorrelationContext {
+                            correlation_id: correlation_id_2,
+                            parameters: vec![ScalarExpr::input_ref(1).into()],
+                        }),
+                    },
                 }
                 .into()],
-                Some(correlation_id_2),
             );
             query_graph.set_entry_node(filter_4);
             query_graph
@@ -1909,22 +1967,30 @@ mod test_queries {
                         BinaryOp::Eq,
                         ScalarExpr::CorrelatedInputRef {
                             correlation_id,
-                            index: 1,
+                            index: 0,
                             data_type: DataType::String,
                         }
                         .into(),
                     )
                     .into()],
             );
-            let subquery = query_graph.add_subquery(filter_1);
+            let subquery_root = query_graph.add_subquery(filter_1);
             let table_scan_2 = query_graph.table_scan(2, 5);
             let union_ = query_graph.add_node(QueryNode::Union {
                 inputs: vec![table_scan_2, table_scan_2],
             });
-            let filter_2 = query_graph.possibly_correlated_filter(
+            let filter_2 = query_graph.filter(
                 union_,
-                vec![ScalarExpr::ExistsSubquery { subquery }.into()],
-                Some(correlation_id),
+                vec![ScalarExpr::ExistsSubquery {
+                    subquery: Subquery {
+                        root: subquery_root,
+                        correlation: Some(CorrelationContext {
+                            correlation_id: correlation_id,
+                            parameters: vec![ScalarExpr::input_ref(1).into()],
+                        }),
+                    },
+                }
+                .into()],
             );
             let project = query_graph.project(filter_2, vec![ScalarExpr::input_ref(2).into()]);
             query_graph.set_entry_node(project);
@@ -1944,19 +2010,27 @@ mod test_queries {
                         BinaryOp::Eq,
                         ScalarExpr::CorrelatedInputRef {
                             correlation_id,
-                            index: 1,
+                            index: 0,
                             data_type: DataType::String,
                         }
                         .into(),
                     )
                     .into()],
             );
-            let subquery = query_graph.add_subquery(filter_1);
+            let subquery_root = query_graph.add_subquery(filter_1);
             let table_scan_2 = query_graph.table_scan(2, 5);
-            let project_2 = query_graph.possibly_correlated_project(
+            let project_2 = query_graph.project(
                 table_scan_2,
-                vec![ScalarExpr::ExistsSubquery { subquery }.into()],
-                Some(correlation_id),
+                vec![ScalarExpr::ExistsSubquery {
+                    subquery: Subquery {
+                        root: subquery_root,
+                        correlation: Some(CorrelationContext {
+                            correlation_id,
+                            parameters: vec![ScalarExpr::input_ref(1).into()],
+                        }),
+                    },
+                }
+                .into()],
             );
             query_graph.set_entry_node(project_2);
             query_graph
@@ -1972,22 +2046,30 @@ mod test_queries {
                         BinaryOp::Eq,
                         ScalarExpr::CorrelatedInputRef {
                             correlation_id,
-                            index: 1,
+                            index: 0,
                             data_type: DataType::String,
                         }
                         .into(),
                     )
                     .into()],
             );
-            let subquery = query_graph.add_subquery(filter_1);
+            let subquery_root = query_graph.add_subquery(filter_1);
             let table_scan_2 = query_graph.table_scan(2, 5);
             let union_ = query_graph.add_node(QueryNode::Union {
                 inputs: vec![table_scan_2, table_scan_2],
             });
-            let project_2 = query_graph.possibly_correlated_project(
+            let project_2 = query_graph.project(
                 union_,
-                vec![ScalarExpr::ExistsSubquery { subquery }.into()],
-                Some(correlation_id),
+                vec![ScalarExpr::ExistsSubquery {
+                    subquery: Subquery {
+                        root: subquery_root,
+                        correlation: Some(CorrelationContext {
+                            correlation_id,
+                            parameters: vec![ScalarExpr::input_ref(1).into()],
+                        }),
+                    },
+                }
+                .into()],
             );
             query_graph.set_entry_node(project_2);
             query_graph

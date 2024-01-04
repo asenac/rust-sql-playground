@@ -21,18 +21,10 @@ impl SingleReplacementRule for FilterProjectTransposeRule {
     }
 
     fn apply(&self, query_graph: &mut QueryGraph, node_id: NodeId) -> Option<NodeId> {
-        if let QueryNode::Filter {
-            conditions,
-            input,
-            correlation_id: None,
-        } = query_graph.node(node_id)
-        {
-            // TODO(asenac) We would need to dereference the correlated references in
-            // the subqueries in the conditions, recursively.
+        if let QueryNode::Filter { conditions, input } = query_graph.node(node_id) {
             if let QueryNode::Project {
                 outputs,
                 input: proj_input,
-                correlation_id: None,
             } = query_graph.node(*input)
             {
                 let new_conditions = conditions

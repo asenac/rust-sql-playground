@@ -119,37 +119,13 @@ impl<'a> QueryGraphPrePostVisitor for ExplainVisitor<'a> {
         }
         let prefix = format!("{}[{}] ", line_prefix, node_id);
         let node = match query_graph.node(node_id) {
-            QueryNode::Project {
-                outputs,
-                correlation_id,
-                ..
-            } => {
-                let correlation = if let Some(correlation_id) = correlation_id {
-                    format!(" [CorrelationId: {}]", correlation_id.0,)
-                } else {
-                    String::new()
-                };
-                format!(
-                    "{}Project{} [{}]\n",
-                    prefix,
-                    correlation,
-                    explain_scalar_expr_vec(outputs)
-                )
+            QueryNode::Project { outputs, .. } => {
+                format!("{}Project [{}]\n", prefix, explain_scalar_expr_vec(outputs))
             }
-            QueryNode::Filter {
-                conditions,
-                correlation_id,
-                ..
-            } => {
-                let correlation = if let Some(correlation_id) = correlation_id {
-                    format!(" [CorrelationId: {}]", correlation_id.0,)
-                } else {
-                    String::new()
-                };
+            QueryNode::Filter { conditions, .. } => {
                 format!(
-                    "{}Filter{} [{}]\n",
+                    "{}Filter [{}]\n",
                     prefix,
-                    correlation,
                     explain_scalar_expr_vec(conditions),
                 )
             }
@@ -189,13 +165,16 @@ impl<'a> QueryGraphPrePostVisitor for ExplainVisitor<'a> {
             QueryNode::Union { .. } => format!("{}Union\n", prefix),
             QueryNode::SubqueryRoot { .. } => format!("{}SubqueryRoot\n", prefix),
             QueryNode::Apply {
-                correlation_id,
+                correlation,
                 apply_type,
                 ..
             } => {
                 format!(
-                    "{}{} Apply [CorrelationId: {}]\n",
-                    prefix, apply_type, correlation_id.0,
+                    "{}{} Apply correlation_id: {}, parameters: [{}]\n",
+                    prefix,
+                    apply_type,
+                    correlation.correlation_id.0,
+                    explain_scalar_expr_vec(&correlation.parameters),
                 )
             }
         };
