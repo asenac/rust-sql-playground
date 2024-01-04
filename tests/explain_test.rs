@@ -1687,6 +1687,19 @@ mod test_queries {
             query_graph.set_entry_node(apply_1);
             query_graph
         });
+        queries.insert("left_apply_2".to_string(), {
+            let mut query_graph = queries.get("left_apply_1").unwrap().clone();
+            let project = query_graph.project(
+                query_graph.entry_node,
+                vec![
+                    ScalarExpr::input_ref(4).into(),
+                    ScalarExpr::input_ref(6).into(),
+                    ScalarExpr::input_ref(7).into(),
+                ],
+            );
+            query_graph.set_entry_node(project);
+            query_graph
+        });
         queries.insert("nested_apply_1".to_string(), {
             let mut query_graph = QueryGraph::new();
             let table_scan_1 = query_graph.table_scan(1, 5);
@@ -1734,6 +1747,19 @@ mod test_queries {
                 apply_type: ApplyType::Inner,
             });
             query_graph.set_entry_node(apply_2);
+            query_graph
+        });
+        queries.insert("nested_apply_2".to_string(), {
+            let mut query_graph = queries.get("nested_apply_1").unwrap().clone();
+            let project = query_graph.project(
+                query_graph.entry_node,
+                vec![
+                    ScalarExpr::input_ref(4).into(),
+                    ScalarExpr::input_ref(6).into(),
+                    ScalarExpr::input_ref(7).into(),
+                ],
+            );
+            query_graph.set_entry_node(project);
             query_graph
         });
     }

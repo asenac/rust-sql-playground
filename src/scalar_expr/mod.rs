@@ -17,6 +17,7 @@ use self::visitor::visit_expr_post;
 pub mod equivalence_class;
 pub mod reduction;
 pub mod rewrite;
+pub mod rewrite_utils;
 pub mod visitor;
 pub use visitor::VisitableExpr;
 

@@ -9,7 +9,11 @@ use crate::{
         properties::{subgraph_correlated_input_refs, subgraph_subqueries, subqueries},
         CorrelationId, NodeId, QueryGraph, QueryNode,
     },
-    scalar_expr::{rewrite::rewrite_expr_post, ScalarExpr, ScalarExprRef},
+    scalar_expr::{
+        rewrite::rewrite_expr_post,
+        rewrite_utils::{apply_subquery_map, update_correlation_id},
+        ScalarExprRef,
+    },
 };
 
 /// Optimization rule that fuses two chained Filter nodes, concatenating the filter expressions
@@ -130,72 +134,6 @@ fn subqueries_in_dependency_order(
         i = i + 1;
     }
     stack
-}
-
-/// If the given expression is a correlated reference pointing to `old_correlation_id`,
-/// it is rewritten to make it point to `new_correlation_id`.
-fn update_correlation_id(
-    expr: &ScalarExprRef,
-    old_correlation_id: CorrelationId,
-    new_correlation_id: CorrelationId,
-) -> Option<ScalarExprRef> {
-    if let ScalarExpr::CorrelatedInputRef {
-        correlation_id,
-        index,
-        data_type,
-    } = expr.as_ref()
-    {
-        if *correlation_id == old_correlation_id {
-            return Some(
-                ScalarExpr::CorrelatedInputRef {
-                    correlation_id: new_correlation_id,
-                    index: *index,
-                    data_type: data_type.clone(),
-                }
-                .into(),
-            );
-        }
-    }
-    None
-}
-
-/// If the given expression is a subquery expression, it updates the ID of the
-/// subquery root node using the given map.
-fn apply_subquery_map(
-    expr: &ScalarExprRef,
-    subquery_map: &HashMap<NodeId, NodeId>,
-) -> Option<ScalarExprRef> {
-    match expr.as_ref() {
-        ScalarExpr::ScalarSubquery { subquery } => {
-            subquery_map.get(&subquery).map(|new_subquery| {
-                ScalarExpr::ScalarSubquery {
-                    subquery: *new_subquery,
-                }
-                .into()
-            })
-        }
-        ScalarExpr::ExistsSubquery { subquery } => {
-            subquery_map.get(&subquery).map(|new_subquery| {
-                ScalarExpr::ExistsSubquery {
-                    subquery: *new_subquery,
-                }
-                .into()
-            })
-        }
-        ScalarExpr::ScalarSubqueryCmp {
-            op,
-            scalar_operand,
-            subquery,
-        } => subquery_map.get(&subquery).map(|new_subquery| {
-            ScalarExpr::ScalarSubqueryCmp {
-                op: op.clone(),
-                scalar_operand: scalar_operand.clone(),
-                subquery: *new_subquery,
-            }
-            .into()
-        }),
-        _ => None,
-    }
 }
 
 #[cfg(test)]
