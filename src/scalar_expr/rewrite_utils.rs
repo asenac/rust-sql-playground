@@ -96,3 +96,43 @@ pub fn update_correlation_id(
     }
     None
 }
+
+pub fn apply_column_map_to_correlated_reference(
+    expr: &ScalarExprRef,
+    correlation_id: CorrelationId,
+    column_map: &HashMap<usize, usize>,
+) -> Option<ScalarExprRef> {
+    if let ScalarExpr::CorrelatedInputRef {
+        correlation_id: input_correlation_id,
+        index,
+        data_type,
+    } = expr.as_ref()
+    {
+        if *input_correlation_id == correlation_id {
+            return Some(
+                ScalarExpr::CorrelatedInputRef {
+                    correlation_id,
+                    index: *column_map.get(index).unwrap(),
+                    data_type: data_type.clone(),
+                }
+                .into(),
+            );
+        }
+    }
+    None
+}
+
+pub fn apply_column_map_to_input_ref(
+    expr: &ScalarExprRef,
+    column_map: &HashMap<usize, usize>,
+) -> Option<ScalarExprRef> {
+    if let ScalarExpr::InputRef { index } = expr.as_ref() {
+        return Some(
+            ScalarExpr::InputRef {
+                index: *column_map.get(index).unwrap(),
+            }
+            .into(),
+        );
+    }
+    None
+}

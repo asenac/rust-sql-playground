@@ -4,9 +4,13 @@ use std::collections::{HashMap, HashSet};
 
 use itertools::Itertools;
 
-use super::*;
+use super::{correlation_utils::store_input_dependencies_in_possibly_correlated_node, *};
+use crate::query_graph::QueryNode;
 use crate::{
-    query_graph::{properties::num_columns, visitor::QueryGraphPrePostVisitor, QueryNode},
+    query_graph::{
+        optimizer::correlation_utils::apply_column_map_to_possibly_correlated_filter,
+        properties::num_columns, visitor::QueryGraphPrePostVisitor,
+    },
     scalar_expr::{
         rewrite::{apply_column_map, rewrite_expr_vec},
         visitor::store_input_dependencies,
@@ -89,9 +93,18 @@ pub(crate) fn required_columns_from_parents(
                         }
                         PreOrderVisitationResult::DoNotVisitInputs
                     }
-                    QueryNode::Filter { conditions, .. } => {
+                    QueryNode::Filter {
+                        conditions,
+                        correlation_id,
+                        ..
+                    } => {
                         for filter_expr in conditions.iter() {
-                            store_input_dependencies(filter_expr, &mut required_columns);
+                            store_input_dependencies_in_possibly_correlated_node(
+                                query_graph,
+                                filter_expr,
+                                *correlation_id,
+                                &mut required_columns,
+                            );
                         }
                         PreOrderVisitationResult::VisitInputs
                     }
@@ -247,15 +260,20 @@ pub(crate) fn apply_map_to_parents_and_replace_input(
                         input,
                         correlation_id,
                     } => {
+                        // Clone members to make the borrow checker happy
+                        let current_node_id = *current_node_id;
+                        let correlation_id = correlation_id.clone();
                         let new_input = *replacements.get(input).unwrap();
-                        let new_filter = query_graph.possibly_correlated_filter(
+                        let conditions = conditions.clone();
+
+                        apply_column_map_to_possibly_correlated_filter(
+                            query_graph,
+                            current_node_id,
+                            conditions,
                             new_input,
-                            rewrite_expr_vec(conditions, &mut |e| {
-                                apply_column_map(e, column_map).unwrap()
-                            }),
-                            *correlation_id,
-                        );
-                        new_filter
+                            correlation_id,
+                            column_map,
+                        )
                     }
                     _ => panic!("expected aggregate, project or filter node"),
                 };
