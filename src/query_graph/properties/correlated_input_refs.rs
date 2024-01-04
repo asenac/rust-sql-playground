@@ -14,8 +14,6 @@ use crate::{
     visitor_utils::PreOrderVisitationResult,
 };
 
-use super::subqueries;
-
 struct CorrelatedInputRefsTag;
 
 /// Returns a set with the correlated input refs the node contains, if any.
@@ -39,28 +37,43 @@ pub fn node_correlated_input_refs(
     let query_node = query_graph.node(node_id);
     query_node.visit_scalar_expr(&mut |expr| {
         visit_expr_pre(expr, &mut |curr_expr| {
-            if let ScalarExpr::CorrelatedInputRef {
-                correlation_id,
-                index,
-                ..
-            } = curr_expr.as_ref()
-            {
-                correlated_cols
-                    .entry(*correlation_id)
-                    .or_insert_with(|| BTreeSet::new())
-                    .insert(*index);
+            match curr_expr.as_ref() {
+                ScalarExpr::CorrelatedInputRef {
+                    correlation_id,
+                    index,
+                    ..
+                } => {
+                    correlated_cols
+                        .entry(*correlation_id)
+                        .or_insert_with(|| BTreeSet::new())
+                        .insert(*index);
+                }
+                ScalarExpr::ExistsSubquery { subquery }
+                | ScalarExpr::ScalarSubquery { subquery }
+                | ScalarExpr::ScalarSubqueryCmp { subquery, .. } => {
+                    let subquery_correlated_input_refs =
+                        subgraph_correlated_input_refs(query_graph, subquery.root);
+                    merge_correlated_maps(
+                        subquery_correlated_input_refs
+                            .iter()
+                            // Remove the references that correspond to parameters of the subquery
+                            .filter(|(correlation_id, _)| {
+                                subquery
+                                    .correlation
+                                    .as_ref()
+                                    .map(|correlation| {
+                                        correlation.correlation_id != **correlation_id
+                                    })
+                                    .unwrap_or(false)
+                            }),
+                        &mut correlated_cols,
+                    );
+                }
+                _ => (),
             }
             PreOrderVisitationResult::VisitInputs
         });
     });
-
-    // Add the correlated input refs in the subqueries the node may contain
-    let subqueries = subqueries(query_graph, node_id);
-    for subquery_root in subqueries.iter() {
-        let subquery_correlated_input_refs =
-            subgraph_correlated_input_refs(query_graph, *subquery_root);
-        merge_correlated_maps(&*subquery_correlated_input_refs, &mut correlated_cols);
-    }
 
     // Store the property in the cache
     let correlated_cols = Rc::new(correlated_cols);
@@ -150,7 +163,7 @@ impl SubgraphCorrelatedInputRefs {
         for input in 0..query_node.num_inputs() {
             let input_correlated_cols = self
                 .subgraph_correlated_input_refs_unchecked(query_graph, query_node.get_input(input));
-            merge_correlated_maps(&*input_correlated_cols, &mut correlated_cols);
+            merge_correlated_maps(input_correlated_cols.iter(), &mut correlated_cols);
         }
         //... but remove ones in the correlation scope the node defines.
         if let QueryNode::Apply { correlation, .. } = &query_node {
@@ -191,11 +204,11 @@ impl QueryGraphPrePostVisitor for SubgraphCorrelatedInputRefs {
     }
 }
 
-fn merge_correlated_maps(
-    src: &HashMap<CorrelationId, BTreeSet<usize>>,
-    dst: &mut HashMap<CorrelationId, BTreeSet<usize>>,
-) {
-    for (correlation_id, columns) in src.iter() {
+fn merge_correlated_maps<'a, I>(src: I, dst: &mut HashMap<CorrelationId, BTreeSet<usize>>)
+where
+    I: Iterator<Item = (&'a CorrelationId, &'a BTreeSet<usize>)>,
+{
+    for (correlation_id, columns) in src {
         dst.entry(*correlation_id)
             .or_insert_with(|| BTreeSet::new())
             .extend(columns.iter());
