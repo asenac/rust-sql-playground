@@ -30,6 +30,7 @@ impl SingleReplacementRule for AggregateProjectTransposeRule {
             if let QueryNode::Project {
                 outputs,
                 input: proj_input,
+                correlation_id,
             } = query_graph.node(*input)
             {
                 if let Some((reorder_map, sorted_proj)) = sort_projection(outputs) {
@@ -74,7 +75,11 @@ impl SingleReplacementRule for AggregateProjectTransposeRule {
                         .map(|i| ScalarExpr::input_ref(i).into())
                         .collect_vec();
 
-                    let new_project = query_graph.project(*proj_input, sorted_proj);
+                    let new_project = query_graph.possibly_correlated_project(
+                        *proj_input,
+                        sorted_proj,
+                        *correlation_id,
+                    );
                     let new_aggregate = query_graph.add_node(QueryNode::Aggregate {
                         group_key: new_group_key,
                         aggregates: new_aggregates,

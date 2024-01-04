@@ -110,7 +110,11 @@ impl ColumnProvenance {
                     .into()
                 }));
             }
-            QueryNode::Project { input, outputs } => {
+            QueryNode::Project {
+                input,
+                outputs,
+                correlation_id: _,
+            } => {
                 let input_prov = self.column_provenance_unchecked(query_graph, *input);
                 prov.extend(input_prov.iter().map(|prov_info| {
                     let lifting_map = prov_info

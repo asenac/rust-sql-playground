@@ -15,7 +15,12 @@ impl SingleReplacementRule for RemovePassthroughProjectRule {
     }
 
     fn apply(&self, query_graph: &mut QueryGraph, node_id: NodeId) -> Option<NodeId> {
-        if let QueryNode::Project { outputs, input } = query_graph.node(node_id) {
+        if let QueryNode::Project {
+            outputs,
+            input,
+            correlation_id: None,
+        } = query_graph.node(node_id)
+        {
             if query_graph.num_parents(node_id) > 0
                 && outputs.len() == num_columns(query_graph, *input)
                 && outputs

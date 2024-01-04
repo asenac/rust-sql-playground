@@ -145,3 +145,36 @@ pub(crate) fn apply_column_map_to_possibly_correlated_filter(
     let new_filter = query_graph.possibly_correlated_filter(input, conditions, correlation_id);
     new_filter
 }
+
+pub(crate) fn apply_column_map_to_possibly_correlated_project(
+    query_graph: &mut QueryGraph,
+    project_node_id: NodeId,
+    outputs: Vec<ScalarExprRef>,
+    input: NodeId,
+    correlation_id: Option<CorrelationId>,
+    column_map: &HashMap<NodeId, NodeId>,
+) -> NodeId {
+    let mut outputs = outputs;
+    // For correlated filters, we need to update the correlated references in
+    // the contained subqueries.
+    let subquery_map = if let Some(correlation_id) = correlation_id {
+        update_correlated_references_in_subqueries(
+            query_graph,
+            project_node_id,
+            correlation_id,
+            |e| apply_column_map_to_correlated_reference(e, correlation_id, column_map),
+        )
+    } else {
+        HashMap::new()
+    };
+    outputs.iter_mut().for_each(|e| {
+        *e = rewrite_expr_post(
+            &mut |e| {
+                apply_column_map_to_input_ref(e, column_map)
+                    .or_else(|| apply_subquery_map(e, &subquery_map))
+            },
+            e,
+        )
+    });
+    query_graph.possibly_correlated_project(input, outputs, correlation_id)
+}

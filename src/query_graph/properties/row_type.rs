@@ -79,7 +79,11 @@ impl RowType {
         node_id: NodeId,
     ) -> Rc<Vec<DataType>> {
         match query_graph.node(node_id) {
-            QueryNode::Project { outputs, input } => {
+            QueryNode::Project {
+                outputs,
+                input,
+                correlation_id: _,
+            } => {
                 let input_row_type = self.row_type_unchecked(query_graph, *input);
                 outputs
                     .iter()

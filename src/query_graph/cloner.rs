@@ -52,7 +52,11 @@ where
         let num_inputs = cloned_node.num_inputs();
         let inputs = &self.stack[self.stack.len() - num_inputs..];
         match &mut cloned_node {
-            QueryNode::Project { outputs, input } => {
+            QueryNode::Project {
+                outputs,
+                input,
+                correlation_id: _,
+            } => {
                 outputs.iter_mut().for_each(|e| *e = (self.rewrite)(&e));
                 *input = inputs[0];
             }

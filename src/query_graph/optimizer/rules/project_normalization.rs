@@ -20,7 +20,12 @@ impl SingleReplacementRule for ProjectNormalizationRule {
     }
 
     fn apply(&self, query_graph: &mut QueryGraph, node_id: NodeId) -> Option<NodeId> {
-        if let QueryNode::Project { outputs, input } = query_graph.node(node_id) {
+        if let QueryNode::Project {
+            outputs,
+            input,
+            correlation_id,
+        } = query_graph.node(node_id)
+        {
             let classes = equivalence_classes(query_graph, *input);
             let predicates = pulled_up_predicates(query_graph, *input);
             let mut replacement_map = to_replacement_map(&classes);
@@ -36,7 +41,11 @@ impl SingleReplacementRule for ProjectNormalizationRule {
                 .collect::<Vec<_>>();
 
             if new_outputs.iter().zip(outputs.iter()).any(|(x, y)| x != y) {
-                return Some(query_graph.project(*input, new_outputs));
+                return Some(query_graph.possibly_correlated_project(
+                    *input,
+                    new_outputs,
+                    *correlation_id,
+                ));
             }
         }
         None

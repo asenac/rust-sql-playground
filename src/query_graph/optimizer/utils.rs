@@ -5,17 +5,14 @@ use std::collections::{HashMap, HashSet};
 use itertools::Itertools;
 
 use super::{correlation_utils::store_input_dependencies_in_possibly_correlated_node, *};
+use crate::query_graph::optimizer::correlation_utils::apply_column_map_to_possibly_correlated_project;
 use crate::query_graph::QueryNode;
 use crate::{
     query_graph::{
         optimizer::correlation_utils::apply_column_map_to_possibly_correlated_filter,
         properties::num_columns, visitor::QueryGraphPrePostVisitor,
     },
-    scalar_expr::{
-        rewrite::{apply_column_map, rewrite_expr_vec},
-        visitor::store_input_dependencies,
-        AggregateExpr, ScalarExprRef,
-    },
+    scalar_expr::{AggregateExpr, ScalarExprRef},
 };
 
 /// Get the filters that are common to all parents on the given node.
@@ -87,9 +84,18 @@ pub(crate) fn required_columns_from_parents(
                         }
                         PreOrderVisitationResult::DoNotVisitInputs
                     }
-                    QueryNode::Project { outputs, .. } => {
+                    QueryNode::Project {
+                        outputs,
+                        correlation_id,
+                        ..
+                    } => {
                         for proj_expr in outputs.iter() {
-                            store_input_dependencies(proj_expr, &mut required_columns);
+                            store_input_dependencies_in_possibly_correlated_node(
+                                query_graph,
+                                proj_expr,
+                                *correlation_id,
+                                &mut required_columns,
+                            );
                         }
                         PreOrderVisitationResult::DoNotVisitInputs
                     }
@@ -245,33 +251,35 @@ pub(crate) fn apply_map_to_parents_and_replace_input(
                         });
                         new_agg
                     }
-                    QueryNode::Project { outputs, input } => {
+                    QueryNode::Project {
+                        outputs,
+                        input,
+                        correlation_id,
+                    } => {
                         let new_input = *replacements.get(input).unwrap();
-                        let new_proj = query_graph.project(
+
+                        apply_column_map_to_possibly_correlated_project(
+                            query_graph,
+                            *current_node_id,
+                            outputs.clone(),
                             new_input,
-                            rewrite_expr_vec(outputs, &mut |e| {
-                                apply_column_map(e, column_map).unwrap()
-                            }),
-                        );
-                        new_proj
+                            *correlation_id,
+                            column_map,
+                        )
                     }
                     QueryNode::Filter {
                         conditions,
                         input,
                         correlation_id,
                     } => {
-                        // Clone members to make the borrow checker happy
-                        let current_node_id = *current_node_id;
-                        let correlation_id = correlation_id.clone();
                         let new_input = *replacements.get(input).unwrap();
-                        let conditions = conditions.clone();
 
                         apply_column_map_to_possibly_correlated_filter(
                             query_graph,
-                            current_node_id,
-                            conditions,
+                            *current_node_id,
+                            conditions.clone(),
                             new_input,
-                            correlation_id,
+                            *correlation_id,
                             column_map,
                         )
                     }

@@ -119,8 +119,22 @@ impl<'a> QueryGraphPrePostVisitor for ExplainVisitor<'a> {
         }
         let prefix = format!("{}[{}] ", line_prefix, node_id);
         let node = match query_graph.node(node_id) {
-            QueryNode::Project { outputs, .. } => {
-                format!("{}Project [{}]\n", prefix, explain_scalar_expr_vec(outputs),)
+            QueryNode::Project {
+                outputs,
+                correlation_id,
+                ..
+            } => {
+                let correlation = if let Some(correlation_id) = correlation_id {
+                    format!(" [CorrelationId: {}]", correlation_id.0,)
+                } else {
+                    String::new()
+                };
+                format!(
+                    "{}Project{} [{}]\n",
+                    prefix,
+                    correlation,
+                    explain_scalar_expr_vec(outputs)
+                )
             }
             QueryNode::Filter {
                 conditions,

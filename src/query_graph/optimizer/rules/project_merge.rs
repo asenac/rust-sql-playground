@@ -14,10 +14,16 @@ impl SingleReplacementRule for ProjectMergeRule {
     }
 
     fn apply(&self, query_graph: &mut QueryGraph, node_id: NodeId) -> Option<NodeId> {
-        if let QueryNode::Project { input, outputs } = query_graph.node(node_id) {
+        if let QueryNode::Project {
+            input,
+            outputs,
+            correlation_id: None,
+        } = query_graph.node(node_id)
+        {
             if let QueryNode::Project {
                 input: child_input,
                 outputs: child_outputs,
+                correlation_id: None,
             } = query_graph.node(*input)
             {
                 return Some(

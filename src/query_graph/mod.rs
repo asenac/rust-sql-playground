@@ -49,6 +49,7 @@ pub enum QueryNode {
     Project {
         outputs: Vec<ScalarExprRef>,
         input: NodeId,
+        correlation_id: Option<CorrelationId>,
     },
     Filter {
         conditions: Vec<ScalarExprRef>,
@@ -442,7 +443,23 @@ impl QueryGraph {
     }
 
     pub fn project(&mut self, input: NodeId, outputs: Vec<ScalarExprRef>) -> NodeId {
-        self.add_node(QueryNode::Project { outputs, input })
+        self.add_node(QueryNode::Project {
+            outputs,
+            input,
+            correlation_id: None,
+        })
+    }
+    pub fn possibly_correlated_project(
+        &mut self,
+        input: NodeId,
+        outputs: Vec<ScalarExprRef>,
+        correlation_id: Option<CorrelationId>,
+    ) -> NodeId {
+        self.add_node(QueryNode::Project {
+            outputs,
+            input,
+            correlation_id,
+        })
     }
 
     pub fn inner_join(

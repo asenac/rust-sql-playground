@@ -18,14 +18,19 @@ impl SingleReplacementRule for ExpressionReductionRule {
 
     fn apply(&self, query_graph: &mut QueryGraph, node_id: NodeId) -> Option<NodeId> {
         let new_node = match query_graph.node(node_id) {
-            QueryNode::Project { outputs, input } => {
+            QueryNode::Project {
+                outputs,
+                input,
+                correlation_id,
+            } => {
                 let row_type = row_type(query_graph, *input);
-                query_graph.project(
+                query_graph.possibly_correlated_project(
                     *input,
                     outputs
                         .iter()
                         .map(|e| reduce_expr_recursively(e, &query_graph, &row_type))
                         .collect_vec(),
+                    *correlation_id,
                 )
             }
             QueryNode::Filter {
