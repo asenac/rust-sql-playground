@@ -1,6 +1,15 @@
-use crate::query_graph::{
-    optimizer::{OptRuleType, SingleReplacementRule},
-    NodeId, QueryGraph, QueryNode,
+use std::{collections::HashMap, rc::Rc};
+
+use itertools::Itertools;
+
+use crate::{
+    query_graph::{
+        cloner::deep_clone,
+        optimizer::{OptRuleType, SingleReplacementRule},
+        properties::{subgraph_correlated_input_refs, subgraph_subqueries, subqueries},
+        CorrelationId, NodeId, QueryGraph, QueryNode,
+    },
+    scalar_expr::{rewrite::rewrite_expr_post, ScalarExpr, ScalarExprRef},
 };
 
 /// Optimization rule that fuses two chained Filter nodes, concatenating the filter expressions
@@ -25,26 +34,149 @@ impl SingleReplacementRule for FilterMergeRule {
                 correlation_id: child_correlation_id,
             } = query_graph.node(*input)
             {
-                // TODO(asenac) for merging two filters with correlated subqueries
-                // we need to rewrite the expressions for remapping the correlated
-                // references recusively.
-                if correlation_id.is_none() || child_correlation_id.is_none() {
-                    let correlation_id = correlation_id.or(*child_correlation_id);
-                    return Some(
-                        query_graph.possibly_correlated_filter(
-                            *child_input,
-                            conditions
-                                .clone()
-                                .into_iter()
-                                .chain(child_conditions.clone().into_iter())
-                                .collect(),
-                            correlation_id,
-                        ),
+                let mut conditions = conditions.clone();
+                let parent_node_conditions_len = conditions.len();
+
+                let new_correlation_id = child_correlation_id.or(*correlation_id);
+                conditions.extend(child_conditions.clone().into_iter());
+                let new_input = *child_input;
+
+                if correlation_id.is_some() && child_correlation_id.is_some() {
+                    let subquery_map = update_correlation_id_in_subqueries(
+                        query_graph,
+                        node_id,
+                        correlation_id.unwrap(),
+                        new_correlation_id.unwrap(),
                     );
+                    conditions
+                        .iter_mut()
+                        .take(parent_node_conditions_len)
+                        .for_each(|e| {
+                            *e = rewrite_expr_post(&mut |e| apply_subquery_map(e, &subquery_map), e)
+                        });
                 }
+                return Some(query_graph.possibly_correlated_filter(
+                    new_input,
+                    conditions,
+                    new_correlation_id,
+                ));
             }
         }
         None
+    }
+}
+
+fn update_correlation_id_in_subqueries(
+    query_graph: &mut QueryGraph,
+    node_id: NodeId,
+    old_correlation_id: CorrelationId,
+    new_correlation_id: CorrelationId,
+) -> HashMap<NodeId, Rc<NodeId>> {
+    let mut stack = subqueries(query_graph, node_id)
+        .iter()
+        .filter(|subquery_root_id| {
+            subgraph_correlated_input_refs(query_graph, **subquery_root_id)
+                .contains_key(&old_correlation_id)
+        })
+        .cloned()
+        .collect_vec();
+    let mut i = 0;
+    while i < stack.len() {
+        stack.extend(
+            subgraph_subqueries(query_graph, stack[i])
+                .iter()
+                .filter(|subquery_root_id| {
+                    subgraph_correlated_input_refs(query_graph, **subquery_root_id)
+                        .contains_key(&old_correlation_id)
+                })
+                .cloned(),
+        );
+        i = i + 1;
+    }
+    let mut subquery_map = HashMap::new();
+    for subquery_root_id in stack.iter().rev() {
+        // Skip the subquery root
+        let subquery_plan = query_graph.node(*subquery_root_id).get_input(0);
+        let new_subquery_plan =
+            deep_clone(query_graph, subquery_plan, &|_, _| false, &mut |expr| {
+                rewrite_expr_post(
+                    &mut |expr: &ScalarExprRef| {
+                        if let ScalarExpr::CorrelatedInputRef {
+                            correlation_id,
+                            index,
+                            data_type,
+                        } = expr.as_ref()
+                        {
+                            if *correlation_id == old_correlation_id {
+                                return Some(
+                                    ScalarExpr::CorrelatedInputRef {
+                                        correlation_id: new_correlation_id,
+                                        index: *index,
+                                        data_type: data_type.clone(),
+                                    }
+                                    .into(),
+                                );
+                            }
+                        }
+                        apply_subquery_map(expr, &subquery_map)
+                    },
+                    expr,
+                )
+            });
+        let new_subquery_root_id = query_graph.add_subquery(new_subquery_plan);
+        subquery_map.insert(*subquery_root_id, new_subquery_root_id);
+    }
+    subquery_map
+}
+
+fn apply_subquery_map(
+    expr: &ScalarExprRef,
+    subquery_map: &HashMap<NodeId, Rc<NodeId>>,
+) -> Option<ScalarExprRef> {
+    match expr.as_ref() {
+        ScalarExpr::ScalarSubquery { subquery } => {
+            if let Some(new_subquery) = subquery_map.get(&subquery) {
+                Some(
+                    ScalarExpr::ScalarSubquery {
+                        subquery: new_subquery.clone(),
+                    }
+                    .into(),
+                )
+            } else {
+                None
+            }
+        }
+        ScalarExpr::ExistsSubquery { subquery } => {
+            if let Some(new_subquery) = subquery_map.get(&subquery) {
+                Some(
+                    ScalarExpr::ExistsSubquery {
+                        subquery: new_subquery.clone(),
+                    }
+                    .into(),
+                )
+            } else {
+                None
+            }
+        }
+        ScalarExpr::ScalarSubqueryCmp {
+            op,
+            scalar_operand,
+            subquery,
+        } => {
+            if let Some(new_subquery) = subquery_map.get(&subquery) {
+                Some(
+                    ScalarExpr::ScalarSubqueryCmp {
+                        op: op.clone(),
+                        scalar_operand: scalar_operand.clone(),
+                        subquery: new_subquery.clone(),
+                    }
+                    .into(),
+                )
+            } else {
+                None
+            }
+        }
+        _ => None,
     }
 }
 

@@ -270,7 +270,17 @@ impl QueryGraph {
     }
 
     pub fn add_subquery(&mut self, input: NodeId) -> Rc<NodeId> {
-        let root_id = Rc::new(self.add_node(QueryNode::SubqueryRoot { input }));
+        // If the subquery root exists, the ref counted id must exist
+        let subquery_root = QueryNode::SubqueryRoot { input };
+        if let Some(existing_node_id) = self.find_node(&subquery_root) {
+            return self
+                .subqueries
+                .iter()
+                .find(|id| ***id == existing_node_id)
+                .unwrap()
+                .clone();
+        }
+        let root_id = Rc::new(self.add_node(subquery_root));
         self.subqueries.push(root_id.clone());
         return root_id;
     }

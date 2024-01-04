@@ -159,7 +159,7 @@ mod tests {
         );
         query_graph.set_entry_node(project_id);
 
-        let cloned_project_id = deep_clone(&mut query_graph, project_id, &|_, _| true, &mut |e| {
+        let cloned_project_id = deep_clone(&mut query_graph, project_id, &|_, _| false, &mut |e| {
             e.clone()
         });
         assert_eq!(cloned_project_id, project_id);
