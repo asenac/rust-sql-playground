@@ -22,15 +22,11 @@ impl Rule for CteDiscoveryRule {
             .enumerate()
             .filter_map(|(i, orig_node_id)| {
                 let node = query_graph.node(*orig_node_id);
-                if let Some(replacement_node_id) = node_ids
+                node_ids
                     .iter()
                     .take(i)
                     .find(|replacement_node_id| query_graph.node(**replacement_node_id) == node)
-                {
-                    Some((*orig_node_id, *replacement_node_id))
-                } else {
-                    None
-                }
+                    .map(|replacement_node_id| (*orig_node_id, *replacement_node_id))
             })
             .collect_vec();
         if replacements.is_empty() {
