@@ -130,20 +130,6 @@ Optimized:
         - Num Columns: 5
         - Row Type: string, string, string, string, string
 
-[7] SubqueryRoot
-    - Num Columns: 5
-    - Row Type: string, string, string, string, string
-    - Pulled Up Predicates: eq(ref_0, cor_1.ref_1)
-    - Correlated References: cor_1.ref_1
-  [6] Filter [eq(ref_0, cor_1.ref_1)]
-      - Num Columns: 5
-      - Row Type: string, string, string, string, string
-      - Pulled Up Predicates: eq(ref_0, cor_1.ref_1)
-      - Correlated References: cor_1.ref_1
-    [5] TableScan id: 3
-        - Num Columns: 5
-        - Row Type: string, string, string, string, string
-
 [11] SubqueryRoot
     - Num Columns: 5
     - Row Type: string, string, string, string, string
@@ -154,7 +140,9 @@ Optimized:
       - Row Type: string, string, string, string, string
       - Pulled Up Predicates: eq(ref_0, cor_0.ref_1)
       - Correlated References: cor_0.ref_1
-    Recurring node 5
+    [5] TableScan id: 3
+        - Num Columns: 5
+        - Row Type: string, string, string, string, string
 
 initial {"nodes":[{"id":"8","label":"[8] Filter [CorrelationId: 1] [exists_subquery(7)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: exists_subquery(2), exists_subquery(7)"]},{"id":"4","label":"[4] Filter [CorrelationId: 0] [exists_subquery(2)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: exists_subquery(2)"]},{"id":"3","label":"[3] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"7","label":"[7] SubqueryRoot","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, cor_1.ref_1)","Correlated References: cor_1.ref_1"]},{"id":"6","label":"[6] Filter [eq(ref_0, cor_1.ref_1)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, cor_1.ref_1)","Correlated References: cor_1.ref_1"]},{"id":"5","label":"[5] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"2","label":"[2] SubqueryRoot","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, cor_0.ref_1)","Correlated References: cor_0.ref_1"]},{"id":"1","label":"[1] Filter [eq(ref_0, cor_0.ref_1)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, cor_0.ref_1)","Correlated References: cor_0.ref_1"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"8","to":"4","label":"input 0"},{"from":"8","to":"7","label":"subquery(7)"},{"from":"4","to":"3","label":"input 0"},{"from":"4","to":"2","label":"subquery(2)"},{"from":"7","to":"6","label":"input 0"},{"from":"6","to":"5","label":"input 0"},{"from":"2","to":"1","label":"input 0"},{"from":"1","to":"0","label":"input 0"}]}
 step TopProjectionRule {"nodes":[{"id":"8","label":"[8] Filter [CorrelationId: 1] [exists_subquery(7)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: exists_subquery(2), exists_subquery(7)"]},{"id":"4","label":"[4] Filter [CorrelationId: 0] [exists_subquery(2)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: exists_subquery(2)"]},{"id":"3","label":"[3] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"7","label":"[7] SubqueryRoot","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, cor_1.ref_1)","Correlated References: cor_1.ref_1"]},{"id":"6","label":"[6] Filter [eq(ref_0, cor_1.ref_1)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, cor_1.ref_1)","Correlated References: cor_1.ref_1"]},{"id":"5","label":"[5] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"2","label":"[2] SubqueryRoot","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, cor_0.ref_1)","Correlated References: cor_0.ref_1"]},{"id":"1","label":"[1] Filter [eq(ref_0, cor_0.ref_1)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, cor_0.ref_1)","Correlated References: cor_0.ref_1"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"9","label":"[9] Project [ref_0, ref_1, ref_2, ref_3, ref_4]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: exists_subquery(2), exists_subquery(7)"]}],"edges":[{"from":"8","to":"4","label":"input 0"},{"from":"8","to":"7","label":"subquery(7)"},{"from":"4","to":"3","label":"input 0"},{"from":"4","to":"2","label":"subquery(2)"},{"from":"7","to":"6","label":"input 0"},{"from":"6","to":"5","label":"input 0"},{"from":"2","to":"1","label":"input 0"},{"from":"1","to":"0","label":"input 0"},{"from":"9","to":"8","label":"input 0"},{"from":"8","to":"9","label":"TopProjectionRule"}]}
@@ -233,18 +221,6 @@ Optimized:
     [0] TableScan id: 1
         - Num Columns: 5
         - Row Type: string, string, string, string, string
-
-[6] SubqueryRoot
-    - Num Columns: 5
-    - Row Type: string, string, string, string, string
-    - Pulled Up Predicates: eq(ref_0, cor_1.ref_1)
-    - Correlated References: cor_1.ref_1
-  [5] Filter [eq(ref_0, cor_1.ref_1)]
-      - Num Columns: 5
-      - Row Type: string, string, string, string, string
-      - Pulled Up Predicates: eq(ref_0, cor_1.ref_1)
-      - Correlated References: cor_1.ref_1
-    Recurring node 0
 
 initial {"nodes":[{"id":"7","label":"[7] Filter [CorrelationId: 1] [exists_subquery(6)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: exists_subquery(2), exists_subquery(6)"]},{"id":"4","label":"[4] Filter [CorrelationId: 0] [exists_subquery(2)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: exists_subquery(2)"]},{"id":"3","label":"[3] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"6","label":"[6] SubqueryRoot","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, cor_1.ref_1)","Correlated References: cor_1.ref_1"]},{"id":"5","label":"[5] Filter [eq(ref_0, cor_1.ref_1)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, cor_1.ref_1)","Correlated References: cor_1.ref_1"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"2","label":"[2] SubqueryRoot","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, cor_0.ref_1)","Correlated References: cor_0.ref_1"]},{"id":"1","label":"[1] Filter [eq(ref_0, cor_0.ref_1)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, cor_0.ref_1)","Correlated References: cor_0.ref_1"]}],"edges":[{"from":"7","to":"4","label":"input 0"},{"from":"7","to":"6","label":"subquery(6)"},{"from":"4","to":"3","label":"input 0"},{"from":"4","to":"2","label":"subquery(2)"},{"from":"6","to":"5","label":"input 0"},{"from":"5","to":"0","label":"input 0"},{"from":"2","to":"1","label":"input 0"},{"from":"1","to":"0","label":"input 0"}]}
 step TopProjectionRule {"nodes":[{"id":"7","label":"[7] Filter [CorrelationId: 1] [exists_subquery(6)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: exists_subquery(2), exists_subquery(6)"]},{"id":"4","label":"[4] Filter [CorrelationId: 0] [exists_subquery(2)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: exists_subquery(2)"]},{"id":"3","label":"[3] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"6","label":"[6] SubqueryRoot","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, cor_1.ref_1)","Correlated References: cor_1.ref_1"]},{"id":"5","label":"[5] Filter [eq(ref_0, cor_1.ref_1)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, cor_1.ref_1)","Correlated References: cor_1.ref_1"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"2","label":"[2] SubqueryRoot","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, cor_0.ref_1)","Correlated References: cor_0.ref_1"]},{"id":"1","label":"[1] Filter [eq(ref_0, cor_0.ref_1)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, cor_0.ref_1)","Correlated References: cor_0.ref_1"]},{"id":"8","label":"[8] Project [ref_0, ref_1, ref_2, ref_3, ref_4]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: exists_subquery(2), exists_subquery(6)"]}],"edges":[{"from":"7","to":"4","label":"input 0"},{"from":"7","to":"6","label":"subquery(6)"},{"from":"4","to":"3","label":"input 0"},{"from":"4","to":"2","label":"subquery(2)"},{"from":"6","to":"5","label":"input 0"},{"from":"5","to":"0","label":"input 0"},{"from":"2","to":"1","label":"input 0"},{"from":"1","to":"0","label":"input 0"},{"from":"8","to":"7","label":"input 0"},{"from":"7","to":"8","label":"TopProjectionRule"}]}

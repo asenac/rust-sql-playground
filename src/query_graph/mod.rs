@@ -12,7 +12,7 @@ use std::{
     rc::Rc,
 };
 
-use self::properties::PropertyCache;
+use self::properties::{subgraph_subqueries, PropertyCache};
 
 pub mod cloner;
 pub mod explain;
@@ -97,7 +97,7 @@ pub struct QueryGraph {
     /// inputs.
     parents: HashMap<NodeId, BTreeSet<NodeId>>,
     /// Subqueries
-    subqueries: Vec<Rc<NodeId>>,
+    subqueries: Vec<NodeId>,
     next_correlation_id: CorrelationId,
     /// Keeps track of the number of node replacements the query graph has gone through.
     pub gen_number: usize,
@@ -216,7 +216,7 @@ impl QueryNode {
                     ScalarExpr::ScalarSubquery { subquery }
                     | ScalarExpr::ExistsSubquery { subquery }
                     | ScalarExpr::ScalarSubqueryCmp { subquery, .. } => {
-                        subqueries.insert(**subquery);
+                        subqueries.insert(*subquery);
                     }
                 }
                 PreOrderVisitationResult::VisitInputs
@@ -269,27 +269,19 @@ impl QueryGraph {
         node_id
     }
 
-    pub fn add_subquery(&mut self, input: NodeId) -> Rc<NodeId> {
+    pub fn add_subquery(&mut self, input: NodeId) -> NodeId {
         // If the subquery root exists, the ref counted id must exist
         let subquery_root = QueryNode::SubqueryRoot { input };
         if let Some(existing_node_id) = self.find_node(&subquery_root) {
-            return self
-                .subqueries
-                .iter()
-                .find(|id| ***id == existing_node_id)
-                .unwrap()
-                .clone();
+            return existing_node_id;
         }
-        let root_id = Rc::new(self.add_node(subquery_root));
-        self.subqueries.push(root_id.clone());
+        let root_id = self.add_node(subquery_root);
+        self.subqueries.push(root_id);
         return root_id;
     }
 
     pub fn subquery_roots(&self) -> Vec<NodeId> {
-        self.subqueries
-            .iter()
-            .map(|root_id| **root_id)
-            .collect_vec()
+        self.subqueries.iter().map(|root_id| *root_id).collect_vec()
     }
 
     pub fn new_correlation_id(&mut self) -> CorrelationId {
@@ -383,20 +375,40 @@ impl QueryGraph {
     // Removes subquery plans that are no longer referenced by any subquery
     // expression.
     pub fn garbage_collect_subqueries(&mut self) {
+        let referenced_subqueries = self.collect_referenced_subqueries();
         let mut detached_roots = HashSet::new();
         self.subqueries.retain(|subquery_root_id| {
-            if std::rc::Rc::<NodeId>::strong_count(&subquery_root_id) > 1 {
+            if referenced_subqueries.contains(subquery_root_id) {
                 true
             } else {
                 // The Root node is only expected to be referenced by subquery
                 // expressions
-                detached_roots.insert(**subquery_root_id);
+                detached_roots.insert(*subquery_root_id);
                 false
             }
         });
         for detached_root in detached_roots {
             self.remove_detached_nodes(detached_root);
         }
+    }
+
+    /// Recursively collects all the subqueries referenced by expressions
+    /// hanging from the entry node.
+    fn collect_referenced_subqueries(&self) -> HashSet<NodeId> {
+        let mut referenced_subqueries = HashSet::new();
+        let mut stack = subgraph_subqueries(self, self.entry_node)
+            .iter()
+            .cloned()
+            .collect_vec();
+        while let Some(subgraph_root_id) = stack.pop() {
+            referenced_subqueries.insert(subgraph_root_id);
+            stack.extend(
+                subgraph_subqueries(self, subgraph_root_id)
+                    .iter()
+                    .collect_vec(),
+            );
+        }
+        referenced_subqueries
     }
 }
 

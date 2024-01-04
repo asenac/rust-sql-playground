@@ -1,4 +1,4 @@
-use std::{collections::HashMap, rc::Rc};
+use std::collections::HashMap;
 
 use itertools::Itertools;
 
@@ -71,7 +71,7 @@ fn update_correlation_id_in_subqueries(
     node_id: NodeId,
     old_correlation_id: CorrelationId,
     new_correlation_id: CorrelationId,
-) -> HashMap<NodeId, Rc<NodeId>> {
+) -> HashMap<NodeId, NodeId> {
     let mut stack = subqueries(query_graph, node_id)
         .iter()
         .filter(|subquery_root_id| {
@@ -131,14 +131,14 @@ fn update_correlation_id_in_subqueries(
 
 fn apply_subquery_map(
     expr: &ScalarExprRef,
-    subquery_map: &HashMap<NodeId, Rc<NodeId>>,
+    subquery_map: &HashMap<NodeId, NodeId>,
 ) -> Option<ScalarExprRef> {
     match expr.as_ref() {
         ScalarExpr::ScalarSubquery { subquery } => {
             if let Some(new_subquery) = subquery_map.get(&subquery) {
                 Some(
                     ScalarExpr::ScalarSubquery {
-                        subquery: new_subquery.clone(),
+                        subquery: *new_subquery,
                     }
                     .into(),
                 )
@@ -150,7 +150,7 @@ fn apply_subquery_map(
             if let Some(new_subquery) = subquery_map.get(&subquery) {
                 Some(
                     ScalarExpr::ExistsSubquery {
-                        subquery: new_subquery.clone(),
+                        subquery: *new_subquery,
                     }
                     .into(),
                 )
@@ -168,7 +168,7 @@ fn apply_subquery_map(
                     ScalarExpr::ScalarSubqueryCmp {
                         op: op.clone(),
                         scalar_operand: scalar_operand.clone(),
-                        subquery: new_subquery.clone(),
+                        subquery: *new_subquery,
                     }
                     .into(),
                 )

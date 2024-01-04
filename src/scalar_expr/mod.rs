@@ -74,18 +74,18 @@ pub enum ScalarExpr {
     /// Otherwise, a runtime exception is thrown.
     /// Models subqueries in scalar positions.
     ScalarSubquery {
-        subquery: Rc<NodeId>,
+        subquery: NodeId,
     },
     /// Models EXISTS subqueries.
     ExistsSubquery {
-        subquery: Rc<NodeId>,
+        subquery: NodeId,
     },
     /// Models IN SELECT operations, ie. =ANY(SELECT ...) and the rest of the comparisons
     /// between a scalar value and a subquery.
     ScalarSubqueryCmp {
         op: ScalarSubqueryCmpOp,
         scalar_operand: Rc<ScalarExpr>,
-        subquery: Rc<NodeId>,
+        subquery: NodeId,
     },
     CorrelatedInputRef {
         correlation_id: CorrelationId,
@@ -296,7 +296,7 @@ impl ScalarExpr {
             ScalarExpr::ExistsSubquery { .. } => DataType::Bool,
             ScalarExpr::ScalarSubqueryCmp { .. } => DataType::Bool,
             ScalarExpr::ScalarSubquery { subquery } => {
-                let row_type = crate::query_graph::properties::row_type(query_graph, **subquery);
+                let row_type = crate::query_graph::properties::row_type(query_graph, *subquery);
                 row_type[0].clone()
             }
             ScalarExpr::CorrelatedInputRef { data_type, .. } => data_type.clone(),
@@ -319,13 +319,13 @@ impl fmt::Display for ScalarExpr {
                 }
                 write!(f, ")")
             }
-            ScalarExpr::ScalarSubquery { subquery } => write!(f, "scalar_subquery({})", **subquery),
-            ScalarExpr::ExistsSubquery { subquery } => write!(f, "exists_subquery({})", **subquery),
+            ScalarExpr::ScalarSubquery { subquery } => write!(f, "scalar_subquery({})", *subquery),
+            ScalarExpr::ExistsSubquery { subquery } => write!(f, "exists_subquery({})", *subquery),
             ScalarExpr::ScalarSubqueryCmp {
                 op,
                 scalar_operand,
                 subquery,
-            } => write!(f, "{}({}, subquery({}))", op, scalar_operand, **subquery),
+            } => write!(f, "{}({}, subquery({}))", op, scalar_operand, *subquery),
             ScalarExpr::CorrelatedInputRef {
                 correlation_id,
                 index,
@@ -427,18 +427,18 @@ pub enum ExtendedScalarExpr {
     /// Otherwise, a runtime exception is thrown.
     /// Models subqueries in scalar positions.
     ScalarSubquery {
-        subquery: Rc<NodeId>,
+        subquery: NodeId,
     },
     /// Models EXISTS subqueries.
     ExistsSubquery {
-        subquery: Rc<NodeId>,
+        subquery: NodeId,
     },
     /// Models IN SELECT operations, ie. =ANY(SELECT ...) and the rest of the comparisons
     /// between a scalar value and a subquery.
     ScalarSubqueryCmp {
         op: ScalarSubqueryCmpOp,
         scalar_operand: Rc<ExtendedScalarExpr>,
-        subquery: Rc<NodeId>,
+        subquery: NodeId,
     },
     CorrelatedInputRef {
         correlation_id: CorrelationId,
@@ -485,7 +485,7 @@ impl ExtendedScalarExpr {
             ExtendedScalarExpr::NaryOp { op, .. } => op.return_type(operand_types),
             ExtendedScalarExpr::Aggregate { op, .. } => op.return_type(operand_types),
             ExtendedScalarExpr::ScalarSubquery { subquery } => {
-                let row_type = crate::query_graph::properties::row_type(query_graph, **subquery);
+                let row_type = crate::query_graph::properties::row_type(query_graph, *subquery);
                 row_type[0].clone()
             }
             ExtendedScalarExpr::ExistsSubquery { .. } => DataType::Bool,
