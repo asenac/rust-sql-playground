@@ -170,10 +170,9 @@ impl<'a> QueryGraphPrePostVisitor for ExplainVisitor<'a> {
                 ..
             } => {
                 format!(
-                    "{}{} Apply correlation_id: {}, parameters: [{}]\n",
+                    "{}{} Apply parameters: [{}]\n",
                     prefix,
                     apply_type,
-                    correlation.correlation_id.0,
                     explain_scalar_expr_vec(&correlation.parameters),
                 )
             }

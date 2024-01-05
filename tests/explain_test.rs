@@ -1677,14 +1677,13 @@ mod test_queries {
         queries.insert("left_apply_1".to_string(), {
             let mut query_graph = QueryGraph::new();
             let table_scan_1 = query_graph.table_scan(1, 5);
-            let correlation_id = query_graph.new_correlation_id();
             let filter_1 = query_graph.filter(
                 table_scan_1,
                 vec![ScalarExpr::input_ref(0)
                     .binary(
                         BinaryOp::Eq,
                         ScalarExpr::CorrelatedInputRef {
-                            correlation_id,
+                            context_offset: 0,
                             index: 0,
                             data_type: DataType::String,
                         }
@@ -1695,7 +1694,6 @@ mod test_queries {
             let table_scan_2 = query_graph.table_scan(2, 5);
             let apply_1 = query_graph.add_node(QueryNode::Apply {
                 correlation: CorrelationContext {
-                    correlation_id,
                     parameters: vec![ScalarExpr::input_ref(1).into()],
                 },
                 left: table_scan_2,
@@ -1721,8 +1719,6 @@ mod test_queries {
         queries.insert("nested_apply_1".to_string(), {
             let mut query_graph = QueryGraph::new();
             let table_scan_1 = query_graph.table_scan(1, 5);
-            let correlation_id_1 = query_graph.new_correlation_id();
-            let correlation_id_2 = query_graph.new_correlation_id();
             let filter_1 = query_graph.filter(
                 table_scan_1,
                 vec![
@@ -1730,7 +1726,7 @@ mod test_queries {
                         .binary(
                             BinaryOp::Eq,
                             ScalarExpr::CorrelatedInputRef {
-                                correlation_id: correlation_id_1,
+                                context_offset: 0,
                                 index: 0,
                                 data_type: DataType::String,
                             }
@@ -1741,7 +1737,7 @@ mod test_queries {
                         .binary(
                             BinaryOp::Eq,
                             ScalarExpr::CorrelatedInputRef {
-                                correlation_id: correlation_id_2,
+                                context_offset: 1,
                                 index: 0,
                                 data_type: DataType::String,
                             }
@@ -1753,7 +1749,6 @@ mod test_queries {
             let table_scan_2 = query_graph.table_scan(2, 5);
             let apply_1 = query_graph.add_node(QueryNode::Apply {
                 correlation: CorrelationContext {
-                    correlation_id: correlation_id_1,
                     parameters: vec![ScalarExpr::input_ref(1).into()],
                 },
                 left: table_scan_2,
@@ -1763,7 +1758,6 @@ mod test_queries {
             let table_scan_3 = query_graph.table_scan(3, 5);
             let apply_2 = query_graph.add_node(QueryNode::Apply {
                 correlation: CorrelationContext {
-                    correlation_id: correlation_id_2,
                     parameters: vec![ScalarExpr::input_ref(3).into()],
                 },
                 left: table_scan_3,
@@ -1792,14 +1786,13 @@ mod test_queries {
         queries.insert("correlated_filter_1".to_string(), {
             let mut query_graph = QueryGraph::new();
             let table_scan_1 = query_graph.table_scan(1, 5);
-            let correlation_id = query_graph.new_correlation_id();
             let filter_1 = query_graph.filter(
                 table_scan_1,
                 vec![ScalarExpr::input_ref(0)
                     .binary(
                         BinaryOp::Eq,
                         ScalarExpr::CorrelatedInputRef {
-                            correlation_id,
+                            context_offset: 0,
                             index: 0,
                             data_type: DataType::String,
                         }
@@ -1815,7 +1808,6 @@ mod test_queries {
                     subquery: Subquery {
                         root: subquery_root,
                         correlation: Some(CorrelationContext {
-                            correlation_id,
                             parameters: vec![ScalarExpr::input_ref(1).into()],
                         }),
                     },
@@ -1828,14 +1820,13 @@ mod test_queries {
         queries.insert("correlated_filter_2".to_string(), {
             let mut query_graph = QueryGraph::new();
             let table_scan_1 = query_graph.table_scan(1, 5);
-            let correlation_id = query_graph.new_correlation_id();
             let filter_1 = query_graph.filter(
                 table_scan_1,
                 vec![ScalarExpr::input_ref(0)
                     .binary(
                         BinaryOp::Eq,
                         ScalarExpr::CorrelatedInputRef {
-                            correlation_id,
+                            context_offset: 0,
                             index: 0,
                             data_type: DataType::String,
                         }
@@ -1851,7 +1842,6 @@ mod test_queries {
                     subquery: Subquery {
                         root: subquery_root,
                         correlation: Some(CorrelationContext {
-                            correlation_id: correlation_id,
                             parameters: vec![ScalarExpr::input_ref(1).into()],
                         }),
                     },
@@ -1859,14 +1849,13 @@ mod test_queries {
                 .into()],
             );
             let table_scan_3 = query_graph.table_scan(3, 5);
-            let correlation_id_2 = query_graph.new_correlation_id();
             let filter_3 = query_graph.filter(
                 table_scan_3,
                 vec![ScalarExpr::input_ref(0)
                     .binary(
                         BinaryOp::Eq,
                         ScalarExpr::CorrelatedInputRef {
-                            correlation_id: correlation_id_2,
+                            context_offset: 0,
                             index: 0,
                             data_type: DataType::String,
                         }
@@ -1881,7 +1870,6 @@ mod test_queries {
                     subquery: Subquery {
                         root: subquery_root_2,
                         correlation: Some(CorrelationContext {
-                            correlation_id: correlation_id_2,
                             parameters: vec![ScalarExpr::input_ref(1).into()],
                         }),
                     },
@@ -1894,14 +1882,13 @@ mod test_queries {
         queries.insert("correlated_filter_3".to_string(), {
             let mut query_graph = QueryGraph::new();
             let table_scan_1 = query_graph.table_scan(1, 5);
-            let correlation_id = query_graph.new_correlation_id();
             let filter_1 = query_graph.filter(
                 table_scan_1,
                 vec![ScalarExpr::input_ref(0)
                     .binary(
                         BinaryOp::Eq,
                         ScalarExpr::CorrelatedInputRef {
-                            correlation_id,
+                            context_offset: 0,
                             index: 0,
                             data_type: DataType::String,
                         }
@@ -1917,21 +1904,19 @@ mod test_queries {
                     subquery: Subquery {
                         root: subquery_root,
                         correlation: Some(CorrelationContext {
-                            correlation_id: correlation_id,
                             parameters: vec![ScalarExpr::input_ref(1).into()],
                         }),
                     },
                 }
                 .into()],
             );
-            let correlation_id_2 = query_graph.new_correlation_id();
             let filter_3 = query_graph.filter(
                 table_scan_1,
                 vec![ScalarExpr::input_ref(0)
                     .binary(
                         BinaryOp::Eq,
                         ScalarExpr::CorrelatedInputRef {
-                            correlation_id: correlation_id_2,
+                            context_offset: 0,
                             index: 0,
                             data_type: DataType::String,
                         }
@@ -1946,7 +1931,6 @@ mod test_queries {
                     subquery: Subquery {
                         root: subquery_root_2,
                         correlation: Some(CorrelationContext {
-                            correlation_id: correlation_id_2,
                             parameters: vec![ScalarExpr::input_ref(1).into()],
                         }),
                     },
@@ -1959,14 +1943,13 @@ mod test_queries {
         queries.insert("correlated_filter_pruning".to_string(), {
             let mut query_graph = QueryGraph::new();
             let table_scan_1 = query_graph.table_scan(1, 5);
-            let correlation_id = query_graph.new_correlation_id();
             let filter_1 = query_graph.filter(
                 table_scan_1,
                 vec![ScalarExpr::input_ref(0)
                     .binary(
                         BinaryOp::Eq,
                         ScalarExpr::CorrelatedInputRef {
-                            correlation_id,
+                            context_offset: 0,
                             index: 0,
                             data_type: DataType::String,
                         }
@@ -1985,7 +1968,6 @@ mod test_queries {
                     subquery: Subquery {
                         root: subquery_root,
                         correlation: Some(CorrelationContext {
-                            correlation_id: correlation_id,
                             parameters: vec![ScalarExpr::input_ref(1).into()],
                         }),
                     },
@@ -2002,14 +1984,13 @@ mod test_queries {
         queries.insert("correlated_project_1".to_string(), {
             let mut query_graph = QueryGraph::new();
             let table_scan_1 = query_graph.table_scan(1, 5);
-            let correlation_id = query_graph.new_correlation_id();
             let filter_1 = query_graph.filter(
                 table_scan_1,
                 vec![ScalarExpr::input_ref(0)
                     .binary(
                         BinaryOp::Eq,
                         ScalarExpr::CorrelatedInputRef {
-                            correlation_id,
+                            context_offset: 0,
                             index: 0,
                             data_type: DataType::String,
                         }
@@ -2025,7 +2006,6 @@ mod test_queries {
                     subquery: Subquery {
                         root: subquery_root,
                         correlation: Some(CorrelationContext {
-                            correlation_id,
                             parameters: vec![ScalarExpr::input_ref(1).into()],
                         }),
                     },
@@ -2038,14 +2018,13 @@ mod test_queries {
         queries.insert("correlated_project_pruning".to_string(), {
             let mut query_graph = QueryGraph::new();
             let table_scan_1 = query_graph.table_scan(1, 5);
-            let correlation_id = query_graph.new_correlation_id();
             let filter_1 = query_graph.filter(
                 table_scan_1,
                 vec![ScalarExpr::input_ref(0)
                     .binary(
                         BinaryOp::Eq,
                         ScalarExpr::CorrelatedInputRef {
-                            correlation_id,
+                            context_offset: 0,
                             index: 0,
                             data_type: DataType::String,
                         }
@@ -2064,7 +2043,6 @@ mod test_queries {
                     subquery: Subquery {
                         root: subquery_root,
                         correlation: Some(CorrelationContext {
-                            correlation_id,
                             parameters: vec![ScalarExpr::input_ref(1).into()],
                         }),
                     },

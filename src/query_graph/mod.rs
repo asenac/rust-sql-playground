@@ -26,9 +26,6 @@ pub mod visitor;
 
 pub type NodeId = usize;
 
-#[derive(Clone, PartialEq, Eq, Copy, Hash, PartialOrd, Ord, Debug)]
-pub struct CorrelationId(pub usize);
-
 #[derive(Clone, PartialEq, Eq, Copy)]
 pub enum JoinType {
     Inner,
@@ -49,7 +46,6 @@ pub enum ApplyType {
 
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct CorrelationContext<E: VisitableExpr + RewritableExpr> {
-    pub correlation_id: CorrelationId,
     pub parameters: Vec<Rc<E>>,
 }
 
@@ -106,7 +102,6 @@ pub struct QueryGraph {
     parents: HashMap<NodeId, BTreeSet<NodeId>>,
     /// Subqueries
     subqueries: Vec<NodeId>,
-    next_correlation_id: CorrelationId,
     /// Keeps track of the number of node replacements the query graph has gone through.
     pub gen_number: usize,
     pub property_cache: RefCell<PropertyCache>,
@@ -233,7 +228,6 @@ impl QueryGraph {
             gen_number: 0,
             parents: HashMap::new(),
             subqueries: Vec::new(),
-            next_correlation_id: CorrelationId(0),
             property_cache: RefCell::new(PropertyCache::new()),
         }
     }
@@ -279,12 +273,6 @@ impl QueryGraph {
 
     pub fn subquery_roots(&self) -> Vec<NodeId> {
         self.subqueries.iter().map(|root_id| *root_id).collect_vec()
-    }
-
-    pub fn new_correlation_id(&mut self) -> CorrelationId {
-        let result = self.next_correlation_id;
-        self.next_correlation_id = CorrelationId(result.0 + 1);
-        result
     }
 
     /// Finds whether there is an existing node exactly like the given one.
@@ -464,7 +452,6 @@ impl Clone for QueryGraph {
             gen_number: self.gen_number,
             parents: self.parents.clone(),
             subqueries: self.subqueries.clone(),
-            next_correlation_id: self.next_correlation_id,
             // Cached metadata is not cloned
             property_cache: RefCell::new(PropertyCache::new()),
         }

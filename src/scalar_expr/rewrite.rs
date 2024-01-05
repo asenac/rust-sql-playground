@@ -427,22 +427,16 @@ impl RewritableExpr for ScalarExpr {
             ScalarExpr::ExistsSubquery { subquery } => ScalarExpr::ExistsSubquery {
                 subquery: Subquery {
                     root: subquery.root,
-                    correlation: subquery.correlation.as_ref().map(|correlation| {
-                        CorrelationContext {
-                            correlation_id: correlation.correlation_id,
-                            parameters: inputs.iter().cloned().collect_vec(),
-                        }
+                    correlation: subquery.correlation.as_ref().map(|_| CorrelationContext {
+                        parameters: inputs.iter().cloned().collect_vec(),
                     }),
                 },
             },
             ScalarExpr::ScalarSubquery { subquery } => ScalarExpr::ScalarSubquery {
                 subquery: Subquery {
                     root: subquery.root,
-                    correlation: subquery.correlation.as_ref().map(|correlation| {
-                        CorrelationContext {
-                            correlation_id: correlation.correlation_id,
-                            parameters: inputs.iter().cloned().collect_vec(),
-                        }
+                    correlation: subquery.correlation.as_ref().map(|_| CorrelationContext {
+                        parameters: inputs.iter().cloned().collect_vec(),
                     }),
                 },
             },
@@ -455,11 +449,8 @@ impl RewritableExpr for ScalarExpr {
                 scalar_operand: inputs[0].clone(),
                 subquery: Subquery {
                     root: subquery.root,
-                    correlation: subquery.correlation.as_ref().map(|correlation| {
-                        CorrelationContext {
-                            correlation_id: correlation.correlation_id,
-                            parameters: inputs.iter().skip(1).cloned().collect_vec(),
-                        }
+                    correlation: subquery.correlation.as_ref().map(|_| CorrelationContext {
+                        parameters: inputs.iter().skip(1).cloned().collect_vec(),
                     }),
                 },
             },
@@ -491,22 +482,16 @@ impl RewritableExpr for ExtendedScalarExpr {
             ExtendedScalarExpr::ExistsSubquery { subquery } => ExtendedScalarExpr::ExistsSubquery {
                 subquery: Subquery {
                     root: subquery.root,
-                    correlation: subquery.correlation.as_ref().map(|correlation| {
-                        CorrelationContext {
-                            correlation_id: correlation.correlation_id,
-                            parameters: inputs.iter().cloned().collect_vec(),
-                        }
+                    correlation: subquery.correlation.as_ref().map(|_| CorrelationContext {
+                        parameters: inputs.iter().cloned().collect_vec(),
                     }),
                 },
             },
             ExtendedScalarExpr::ScalarSubquery { subquery } => ExtendedScalarExpr::ScalarSubquery {
                 subquery: Subquery {
                     root: subquery.root,
-                    correlation: subquery.correlation.as_ref().map(|correlation| {
-                        CorrelationContext {
-                            correlation_id: correlation.correlation_id,
-                            parameters: inputs.iter().cloned().collect_vec(),
-                        }
+                    correlation: subquery.correlation.as_ref().map(|_| CorrelationContext {
+                        parameters: inputs.iter().cloned().collect_vec(),
                     }),
                 },
             },
@@ -519,11 +504,8 @@ impl RewritableExpr for ExtendedScalarExpr {
                 scalar_operand: inputs[0].clone(),
                 subquery: Subquery {
                     root: subquery.root,
-                    correlation: subquery.correlation.as_ref().map(|correlation| {
-                        CorrelationContext {
-                            correlation_id: correlation.correlation_id,
-                            parameters: inputs.iter().skip(1).cloned().collect_vec(),
-                        }
+                    correlation: subquery.correlation.as_ref().map(|_| CorrelationContext {
+                        parameters: inputs.iter().skip(1).cloned().collect_vec(),
                     }),
                 },
             },

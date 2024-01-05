@@ -7,7 +7,7 @@ use itertools::Itertools;
 
 use crate::{
     data_type::DataType,
-    query_graph::{CorrelationContext, CorrelationId, NodeId, QueryGraph},
+    query_graph::{CorrelationContext, NodeId, QueryGraph},
     value::{Literal, Value},
     visitor_utils::PostOrderVisitationResult,
 };
@@ -94,7 +94,9 @@ pub enum ScalarExpr {
         subquery: Subquery<ScalarExpr>,
     },
     CorrelatedInputRef {
-        correlation_id: CorrelationId,
+        /// The offset of the correlated context, with 0 being the closet one.
+        context_offset: usize,
+        /// The index of the parameter of the correlated context.
         index: usize,
         data_type: DataType,
     },
@@ -315,9 +317,8 @@ impl<E: VisitableExpr + RewritableExpr + fmt::Display> fmt::Display for Subquery
         if let Some(correlation) = self.correlation.as_ref() {
             write!(
                 f,
-                "correlated_subquery(node: {}, correlation_id: {}, parameters: [{}])",
+                "correlated_subquery(node: {}, parameters: [{}])",
                 self.root,
-                correlation.correlation_id.0,
                 correlation
                     .parameters
                     .iter()
@@ -357,10 +358,10 @@ impl fmt::Display for ScalarExpr {
                 subquery,
             } => write!(f, "{}({}, {})", op, scalar_operand, subquery),
             ScalarExpr::CorrelatedInputRef {
-                correlation_id,
+                context_offset,
                 index,
                 ..
-            } => write!(f, "cor_{}.ref_{}", correlation_id.0, index),
+            } => write!(f, "ctx_{}.ref_{}", context_offset, index),
         }
     }
 }
@@ -471,7 +472,7 @@ pub enum ExtendedScalarExpr {
         subquery: Subquery<ExtendedScalarExpr>,
     },
     CorrelatedInputRef {
-        correlation_id: CorrelationId,
+        context_offset: usize,
         index: usize,
         data_type: DataType,
     },
@@ -577,9 +578,8 @@ impl ToScalarExpr for Rc<ExtendedScalarExpr> {
                     ScalarExpr::ScalarSubquery {
                         subquery: Subquery {
                             root: subquery.root,
-                            correlation: subquery.correlation.as_ref().map(|correlation| {
+                            correlation: subquery.correlation.as_ref().map(|_| {
                                 CorrelationContext {
-                                    correlation_id: correlation.correlation_id,
                                     parameters: operands,
                                 }
                             }),
@@ -600,9 +600,8 @@ impl ToScalarExpr for Rc<ExtendedScalarExpr> {
                     ScalarExpr::ExistsSubquery {
                         subquery: Subquery {
                             root: subquery.root,
-                            correlation: subquery.correlation.as_ref().map(|correlation| {
+                            correlation: subquery.correlation.as_ref().map(|_| {
                                 CorrelationContext {
-                                    correlation_id: correlation.correlation_id,
                                     parameters: operands,
                                 }
                             }),
@@ -630,9 +629,8 @@ impl ToScalarExpr for Rc<ExtendedScalarExpr> {
                         scalar_operand,
                         subquery: Subquery {
                             root: subquery.root,
-                            correlation: subquery.correlation.as_ref().map(|correlation| {
+                            correlation: subquery.correlation.as_ref().map(|_| {
                                 CorrelationContext {
-                                    correlation_id: correlation.correlation_id,
                                     parameters: operands,
                                 }
                             }),
@@ -641,11 +639,11 @@ impl ToScalarExpr for Rc<ExtendedScalarExpr> {
                     expr
                 }
                 ExtendedScalarExpr::CorrelatedInputRef {
-                    correlation_id,
+                    context_offset,
                     index,
                     data_type,
                 } => ScalarExpr::CorrelatedInputRef {
-                    correlation_id: *correlation_id,
+                    context_offset: *context_offset,
                     index: *index,
                     data_type: data_type.clone(),
                 },
@@ -705,9 +703,8 @@ impl ToExtendedExpr for Rc<ScalarExpr> {
                     ExtendedScalarExpr::ScalarSubquery {
                         subquery: Subquery {
                             root: subquery.root,
-                            correlation: subquery.correlation.as_ref().map(|correlation| {
+                            correlation: subquery.correlation.as_ref().map(|_| {
                                 CorrelationContext {
-                                    correlation_id: correlation.correlation_id,
                                     parameters: operands,
                                 }
                             }),
@@ -728,9 +725,8 @@ impl ToExtendedExpr for Rc<ScalarExpr> {
                     ExtendedScalarExpr::ExistsSubquery {
                         subquery: Subquery {
                             root: subquery.root,
-                            correlation: subquery.correlation.as_ref().map(|correlation| {
+                            correlation: subquery.correlation.as_ref().map(|_| {
                                 CorrelationContext {
-                                    correlation_id: correlation.correlation_id,
                                     parameters: operands,
                                 }
                             }),
@@ -758,9 +754,8 @@ impl ToExtendedExpr for Rc<ScalarExpr> {
                         scalar_operand,
                         subquery: Subquery {
                             root: subquery.root,
-                            correlation: subquery.correlation.as_ref().map(|correlation| {
+                            correlation: subquery.correlation.as_ref().map(|_| {
                                 CorrelationContext {
-                                    correlation_id: correlation.correlation_id,
                                     parameters: operands,
                                 }
                             }),
@@ -769,11 +764,11 @@ impl ToExtendedExpr for Rc<ScalarExpr> {
                     expr
                 }
                 ScalarExpr::CorrelatedInputRef {
-                    correlation_id,
+                    context_offset,
                     index,
                     data_type,
                 } => ExtendedScalarExpr::CorrelatedInputRef {
-                    correlation_id: *correlation_id,
+                    context_offset: *context_offset,
                     index: *index,
                     data_type: data_type.clone(),
                 },

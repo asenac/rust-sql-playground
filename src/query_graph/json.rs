@@ -117,10 +117,9 @@ impl<'a> QueryGraphPrePostVisitor for JsonSerializer<'a> {
                 ..
             } => {
                 format!(
-                    "{}{} Apply correlation_id: {}, parameters: [{}]",
+                    "{}{} Apply parameters: [{}]",
                     prefix,
                     apply_type,
-                    correlation.correlation_id.0,
                     explain_scalar_expr_vec(&correlation.parameters),
                 )
             }

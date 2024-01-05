@@ -7,9 +7,7 @@ use std::{
 use itertools::Itertools;
 
 use crate::{
-    query_graph::{
-        visitor::QueryGraphPrePostVisitor, CorrelationId, NodeId, QueryGraph, QueryNode,
-    },
+    query_graph::{visitor::QueryGraphPrePostVisitor, NodeId, QueryGraph, QueryNode},
     scalar_expr::{visitor::visit_expr_pre, ScalarExpr},
     visitor_utils::PreOrderVisitationResult,
 };
@@ -20,7 +18,7 @@ struct CorrelatedInputRefsTag;
 pub fn node_correlated_input_refs(
     query_graph: &QueryGraph,
     node_id: NodeId,
-) -> Rc<HashMap<CorrelationId, BTreeSet<usize>>> {
+) -> Rc<HashMap<usize, BTreeSet<usize>>> {
     let type_id = TypeId::of::<CorrelatedInputRefsTag>();
     if let Some(cached) = query_graph
         .property_cache
@@ -29,7 +27,7 @@ pub fn node_correlated_input_refs(
         .get(&type_id)
     {
         return cached
-            .downcast_ref::<Rc<HashMap<CorrelationId, BTreeSet<usize>>>>()
+            .downcast_ref::<Rc<HashMap<usize, BTreeSet<usize>>>>()
             .unwrap()
             .clone();
     }
@@ -39,12 +37,12 @@ pub fn node_correlated_input_refs(
         visit_expr_pre(expr, &mut |curr_expr| {
             match curr_expr.as_ref() {
                 ScalarExpr::CorrelatedInputRef {
-                    correlation_id,
+                    context_offset,
                     index,
                     ..
                 } => {
                     correlated_cols
-                        .entry(*correlation_id)
+                        .entry(*context_offset)
                         .or_insert_with(|| BTreeSet::new())
                         .insert(*index);
                 }
@@ -53,21 +51,23 @@ pub fn node_correlated_input_refs(
                 | ScalarExpr::ScalarSubqueryCmp { subquery, .. } => {
                     let subquery_correlated_input_refs =
                         subgraph_correlated_input_refs(query_graph, subquery.root);
-                    merge_correlated_maps(
-                        subquery_correlated_input_refs
-                            .iter()
-                            // Remove the references that correspond to parameters of the subquery
-                            .filter(|(correlation_id, _)| {
-                                subquery
-                                    .correlation
-                                    .as_ref()
-                                    .map(|correlation| {
-                                        correlation.correlation_id != **correlation_id
-                                    })
-                                    .unwrap_or(false)
-                            }),
-                        &mut correlated_cols,
-                    );
+                    if subquery.correlation.is_some() {
+                        let subquery_external_correlated_input_refs =
+                            subquery_correlated_input_refs
+                                .iter()
+                                .filter(|(offset, _)| **offset > 0)
+                                .map(|(offset, columns)| (offset - 1, columns.clone()))
+                                .collect::<HashMap<usize, BTreeSet<usize>>>();
+                        merge_correlated_maps(
+                            subquery_external_correlated_input_refs.iter(),
+                            &mut correlated_cols,
+                        );
+                    } else {
+                        merge_correlated_maps(
+                            subquery_correlated_input_refs.iter(),
+                            &mut correlated_cols,
+                        );
+                    }
                 }
                 _ => (),
             }
@@ -90,7 +90,7 @@ pub fn node_correlated_input_refs(
 pub fn subgraph_correlated_input_refs(
     query_graph: &QueryGraph,
     node_id: NodeId,
-) -> Rc<HashMap<CorrelationId, BTreeSet<usize>>> {
+) -> Rc<HashMap<usize, BTreeSet<usize>>> {
     SubgraphCorrelatedInputRefs::subgraph_correlated_input_refs(query_graph, node_id)
 }
 
@@ -102,10 +102,10 @@ pub fn subgraph_correlated_input_refs_annotator(
     let correlated_cols = correlated_cols
         .iter()
         .sorted()
-        .map(|(correlation_id, columns)| {
+        .map(|(offset, columns)| {
             columns
                 .iter()
-                .map(|column| format!("cor_{}.ref_{}", correlation_id.0, column))
+                .map(|column| format!("ctx_{}.ref_{}", *offset, column))
         })
         .flatten()
         .join(", ");
@@ -122,7 +122,7 @@ impl SubgraphCorrelatedInputRefs {
     fn subgraph_correlated_input_refs(
         query_graph: &QueryGraph,
         node_id: NodeId,
-    ) -> Rc<HashMap<CorrelationId, BTreeSet<usize>>> {
+    ) -> Rc<HashMap<usize, BTreeSet<usize>>> {
         let mut visitor = SubgraphCorrelatedInputRefs {};
         query_graph.visit_subgraph(&mut visitor, node_id);
         visitor.subgraph_correlated_input_refs_unchecked(query_graph, node_id)
@@ -132,14 +132,14 @@ impl SubgraphCorrelatedInputRefs {
         &self,
         query_graph: &QueryGraph,
         node_id: NodeId,
-    ) -> Rc<HashMap<CorrelationId, BTreeSet<usize>>> {
+    ) -> Rc<HashMap<usize, BTreeSet<usize>>> {
         query_graph
             .property_cache
             .borrow_mut()
             .node_bottom_up_properties(node_id)
             .get(&Self::metadata_type_id())
             .unwrap()
-            .downcast_ref::<Rc<HashMap<CorrelationId, BTreeSet<usize>>>>()
+            .downcast_ref::<Rc<HashMap<usize, BTreeSet<usize>>>>()
             .unwrap()
             .clone()
     }
@@ -152,9 +152,9 @@ impl SubgraphCorrelatedInputRefs {
         &self,
         query_graph: &QueryGraph,
         node_id: NodeId,
-    ) -> Rc<HashMap<CorrelationId, BTreeSet<usize>>> {
+    ) -> Rc<HashMap<usize, BTreeSet<usize>>> {
         // The correlated input refs in the node itself...
-        let mut correlated_cols: HashMap<CorrelationId, BTreeSet<usize>> =
+        let mut correlated_cols: HashMap<usize, BTreeSet<usize>> =
             node_correlated_input_refs(query_graph, node_id)
                 .as_ref()
                 .clone();
@@ -166,8 +166,12 @@ impl SubgraphCorrelatedInputRefs {
             merge_correlated_maps(input_correlated_cols.iter(), &mut correlated_cols);
         }
         //... but remove ones in the correlation scope the node defines.
-        if let QueryNode::Apply { correlation, .. } = &query_node {
-            correlated_cols.remove(&correlation.correlation_id);
+        if let QueryNode::Apply { .. } = &query_node {
+            correlated_cols = correlated_cols
+                .into_iter()
+                .filter(|(offset, _)| *offset > 0)
+                .map(|(offset, columns)| (offset - 1, columns))
+                .collect();
         }
         Rc::new(correlated_cols)
     }
@@ -204,12 +208,12 @@ impl QueryGraphPrePostVisitor for SubgraphCorrelatedInputRefs {
     }
 }
 
-fn merge_correlated_maps<'a, I>(src: I, dst: &mut HashMap<CorrelationId, BTreeSet<usize>>)
+fn merge_correlated_maps<'a, I>(src: I, dst: &mut HashMap<usize, BTreeSet<usize>>)
 where
-    I: Iterator<Item = (&'a CorrelationId, &'a BTreeSet<usize>)>,
+    I: Iterator<Item = (&'a usize, &'a BTreeSet<usize>)>,
 {
-    for (correlation_id, columns) in src {
-        dst.entry(*correlation_id)
+    for (context_offset, columns) in src {
+        dst.entry(*context_offset)
             .or_insert_with(|| BTreeSet::new())
             .extend(columns.iter());
     }
