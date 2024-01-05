@@ -1,3 +1,5 @@
+use itertools::Itertools;
+
 use crate::visitor_utils::{PostOrderVisitationResult, PreOrderVisitationResult};
 
 use super::{visitor::QueryGraphPrePostVisitorMut, NodeId, QueryGraph};
@@ -128,17 +130,48 @@ impl Optimizer {
 
     /// Optimize the given query graph by applying the rules in this optimizer instance.
     pub fn optimize(&self, context: &mut OptimizerContext, query_graph: &mut QueryGraph) {
+        self.optimization_loop(context, query_graph, |query_graph| query_graph.entry_node);
+
+        // Optimize the subqueries in the query graph
+        // Note: optimizing a subquery may result on some other subquery being removed.
+        let mut last_subquery: Option<usize> = None;
+        while let Some(next_subquery) = query_graph
+            .subqueries
+            .iter()
+            .find(|i| last_subquery.is_none() || **i > last_subquery.unwrap())
+            .cloned()
+        {
+            self.optimization_loop(context, query_graph, |query_graph| {
+                query_graph.node(next_subquery).get_input(0)
+            });
+            last_subquery = Some(next_subquery);
+        }
+    }
+
+    pub fn optimization_loop<F>(
+        &self,
+        context: &mut OptimizerContext,
+        query_graph: &mut QueryGraph,
+        get_node_id: F,
+    ) where
+        F: Fn(&QueryGraph) -> NodeId,
+    {
         // TODO(asenac) add mechanism to detect infinite loops due to bugs
         loop {
             let last_gen_number = query_graph.gen_number;
 
-            self.apply_root_only_rules(context, query_graph);
+            let mut node_id = get_node_id(query_graph);
+            if node_id == query_graph.entry_node {
+                // TODO(asenac) RootOnly vs. AnyRoot rules
+                self.apply_root_only_rules(context, query_graph, &mut node_id);
+            }
 
             let mut visitor = OptimizationVisitor {
                 optimizer: self,
                 context,
             };
-            query_graph.visit_mut(&mut visitor);
+
+            query_graph.visit_subgraph_mut(&mut visitor, node_id);
 
             if last_gen_number == query_graph.gen_number {
                 // Fix-point was reached. A full plan traversal without modifications.
@@ -147,16 +180,24 @@ impl Optimizer {
         }
     }
 
-    fn apply_root_only_rules(&self, context: &mut OptimizerContext, query_graph: &mut QueryGraph) {
+    fn apply_root_only_rules(
+        &self,
+        context: &mut OptimizerContext,
+        query_graph: &mut QueryGraph,
+        node_id: &mut NodeId,
+    ) {
         for rule in self
             .root_only_rules
             .iter()
             .map(|id| self.rules.get(*id).unwrap())
         {
-            if let Some(replacements) = rule.apply(query_graph, query_graph.entry_node) {
+            if let Some(replacements) = rule.apply(query_graph, *node_id) {
                 Self::notify_replacements(context, &**rule, query_graph, &replacements);
                 for (original_node, replacement_node) in replacements {
                     query_graph.replace_node(original_node, replacement_node);
+                    if original_node == *node_id {
+                        *node_id = replacement_node;
+                    }
                 }
             }
         }
