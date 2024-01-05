@@ -123,3 +123,70 @@ step UnionPruningRule {"nodes":[{"id":"8","label":"[8] Project [exists(correlate
 final {"nodes":[{"id":"11","label":"[11] Project [exists(correlated_subquery(node: 7, parameters: [ref_0]))]","annotations":["Num Columns: 1","Row Type: bool"]},{"id":"10","label":"[10] Union","annotations":["Num Columns: 1","Row Type: string"]},{"id":"9","label":"[9] Project [ref_1]","annotations":["Num Columns: 1","Row Type: string"]},{"id":"3","label":"[3] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"7","label":"[7] SubqueryRoot","annotations":["Num Columns: 0","Row Type: ","Correlated References: ctx_0.ref_0"]},{"id":"6","label":"[6] Project []","annotations":["Num Columns: 0","Row Type: ","Correlated References: ctx_0.ref_0"]},{"id":"1","label":"[1] Filter [eq(ref_0, ctx_0.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0)","Correlated References: ctx_0.ref_0"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"11","to":"10","label":"input 0"},{"from":"11","to":"7","label":"subquery(7)"},{"from":"10","to":"9","label":"input 0"},{"from":"10","to":"9","label":"input 1"},{"from":"9","to":"3","label":"input 0"},{"from":"7","to":"6","label":"input 0"},{"from":"6","to":"1","label":"input 0"},{"from":"1","to":"0","label":"input 0"}]}
 ----
 ----
+
+run
+correlated_project_2
+----
+----
+[5] Project [exists(correlated_subquery(node: 3, parameters: [ref_1, ref_2]))]
+    - Num Columns: 1
+    - Row Type: bool
+  [4] TableScan id: 2
+      - Num Columns: 5
+      - Row Type: string, string, string, string, string
+
+[3] SubqueryRoot
+    - Num Columns: 5
+    - Row Type: string, string, string, string, string
+    - Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_0.ref_1)
+    - Correlated References: ctx_0.ref_0, ctx_0.ref_1
+  [2] Filter [eq(ref_1, ctx_0.ref_1)]
+      - Num Columns: 5
+      - Row Type: string, string, string, string, string
+      - Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_0.ref_1)
+      - Correlated References: ctx_0.ref_0, ctx_0.ref_1
+    [1] Filter [eq(ref_0, ctx_0.ref_0)]
+        - Num Columns: 5
+        - Row Type: string, string, string, string, string
+        - Pulled Up Predicates: eq(ref_0, ctx_0.ref_0)
+        - Correlated References: ctx_0.ref_0
+      [0] TableScan id: 1
+          - Num Columns: 5
+          - Row Type: string, string, string, string, string
+
+
+Optimized:
+[8] Project [exists(correlated_subquery(node: 7, parameters: [ref_1, ref_2]))]
+    - Num Columns: 1
+    - Row Type: bool
+  [4] TableScan id: 2
+      - Num Columns: 5
+      - Row Type: string, string, string, string, string
+
+[7] SubqueryRoot
+    - Num Columns: 0
+    - Row Type: 
+    - Correlated References: ctx_0.ref_0, ctx_0.ref_1
+  [6] Project []
+      - Num Columns: 0
+      - Row Type: 
+      - Correlated References: ctx_0.ref_0, ctx_0.ref_1
+    [2] Filter [eq(ref_1, ctx_0.ref_1)]
+        - Num Columns: 5
+        - Row Type: string, string, string, string, string
+        - Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_0.ref_1)
+        - Correlated References: ctx_0.ref_0, ctx_0.ref_1
+      [1] Filter [eq(ref_0, ctx_0.ref_0)]
+          - Num Columns: 5
+          - Row Type: string, string, string, string, string
+          - Pulled Up Predicates: eq(ref_0, ctx_0.ref_0)
+          - Correlated References: ctx_0.ref_0
+        [0] TableScan id: 1
+            - Num Columns: 5
+            - Row Type: string, string, string, string, string
+
+initial {"nodes":[{"id":"5","label":"[5] Project [exists(correlated_subquery(node: 3, parameters: [ref_1, ref_2]))]","annotations":["Num Columns: 1","Row Type: bool"]},{"id":"4","label":"[4] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"3","label":"[3] SubqueryRoot","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_0.ref_1)","Correlated References: ctx_0.ref_0, ctx_0.ref_1"]},{"id":"2","label":"[2] Filter [eq(ref_1, ctx_0.ref_1)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_0.ref_1)","Correlated References: ctx_0.ref_0, ctx_0.ref_1"]},{"id":"1","label":"[1] Filter [eq(ref_0, ctx_0.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0)","Correlated References: ctx_0.ref_0"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"5","to":"4","label":"input 0"},{"from":"5","to":"3","label":"subquery(3)"},{"from":"3","to":"2","label":"input 0"},{"from":"2","to":"1","label":"input 0"},{"from":"1","to":"0","label":"input 0"}]}
+step ExpressionReductionRule {"nodes":[{"id":"5","label":"[5] Project [exists(correlated_subquery(node: 3, parameters: [ref_1, ref_2]))]","annotations":["Num Columns: 1","Row Type: bool"]},{"id":"4","label":"[4] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"3","label":"[3] SubqueryRoot","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_0.ref_1)","Correlated References: ctx_0.ref_0, ctx_0.ref_1"]},{"id":"2","label":"[2] Filter [eq(ref_1, ctx_0.ref_1)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_0.ref_1)","Correlated References: ctx_0.ref_0, ctx_0.ref_1"]},{"id":"1","label":"[1] Filter [eq(ref_0, ctx_0.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0)","Correlated References: ctx_0.ref_0"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"8","label":"[8] Project [exists(correlated_subquery(node: 7, parameters: [ref_1, ref_2]))]","annotations":["Num Columns: 1","Row Type: bool"]}],"edges":[{"from":"5","to":"4","label":"input 0"},{"from":"5","to":"3","label":"subquery(3)"},{"from":"3","to":"2","label":"input 0"},{"from":"2","to":"1","label":"input 0"},{"from":"1","to":"0","label":"input 0"},{"from":"8","to":"4","label":"input 0"},{"from":"8","to":"7","label":"subquery(7)"},{"from":"5","to":"8","label":"ExpressionReductionRule"}]}
+final {"nodes":[{"id":"8","label":"[8] Project [exists(correlated_subquery(node: 7, parameters: [ref_1, ref_2]))]","annotations":["Num Columns: 1","Row Type: bool"]},{"id":"4","label":"[4] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"7","label":"[7] SubqueryRoot","annotations":["Num Columns: 0","Row Type: ","Correlated References: ctx_0.ref_0, ctx_0.ref_1"]},{"id":"6","label":"[6] Project []","annotations":["Num Columns: 0","Row Type: ","Correlated References: ctx_0.ref_0, ctx_0.ref_1"]},{"id":"2","label":"[2] Filter [eq(ref_1, ctx_0.ref_1)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_0.ref_1)","Correlated References: ctx_0.ref_0, ctx_0.ref_1"]},{"id":"1","label":"[1] Filter [eq(ref_0, ctx_0.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0)","Correlated References: ctx_0.ref_0"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"8","to":"4","label":"input 0"},{"from":"8","to":"7","label":"subquery(7)"},{"from":"7","to":"6","label":"input 0"},{"from":"6","to":"2","label":"input 0"},{"from":"2","to":"1","label":"input 0"},{"from":"1","to":"0","label":"input 0"}]}
+----
+----

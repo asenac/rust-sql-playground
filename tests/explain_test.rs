@@ -2130,6 +2130,57 @@ mod test_queries {
             query_graph.set_entry_node(project_2);
             query_graph
         });
+        queries.insert("correlated_project_2".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let filter_1 = query_graph.filter(
+                table_scan_1,
+                vec![ScalarExpr::input_ref(0)
+                    .binary(
+                        BinaryOp::Eq,
+                        ScalarExpr::CorrelatedInputRef {
+                            context_offset: 0,
+                            index: 0,
+                            data_type: DataType::String,
+                        }
+                        .into(),
+                    )
+                    .into()],
+            );
+            let filter_2 = query_graph.filter(
+                filter_1,
+                vec![ScalarExpr::input_ref(1)
+                    .binary(
+                        BinaryOp::Eq,
+                        ScalarExpr::CorrelatedInputRef {
+                            context_offset: 0,
+                            index: 1,
+                            data_type: DataType::String,
+                        }
+                        .into(),
+                    )
+                    .into()],
+            );
+            let subquery_root = query_graph.add_subquery(filter_2);
+            let table_scan_2 = query_graph.table_scan(2, 5);
+            let project_2 = query_graph.project(
+                table_scan_2,
+                vec![ScalarExpr::ExistsSubquery {
+                    subquery: Subquery {
+                        root: subquery_root,
+                        correlation: Some(CorrelationContext {
+                            parameters: vec![
+                                ScalarExpr::input_ref(1).into(),
+                                ScalarExpr::input_ref(2).into(),
+                            ],
+                        }),
+                    },
+                }
+                .into()],
+            );
+            query_graph.set_entry_node(project_2);
+            query_graph
+        });
     }
 }
 
