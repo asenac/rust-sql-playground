@@ -1780,6 +1780,84 @@ mod test_queries {
             query_graph.set_entry_node(project);
             query_graph
         });
+        queries.insert("nested_apply_3".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let filter_1 = query_graph.filter(
+                table_scan_1,
+                vec![
+                    ScalarExpr::input_ref(0)
+                        .binary(
+                            BinaryOp::Eq,
+                            ScalarExpr::CorrelatedInputRef {
+                                context_offset: 0,
+                                index: 0,
+                                data_type: DataType::String,
+                            }
+                            .into(),
+                        )
+                        .into(),
+                    ScalarExpr::input_ref(1)
+                        .binary(
+                            BinaryOp::Eq,
+                            ScalarExpr::CorrelatedInputRef {
+                                context_offset: 1,
+                                index: 0,
+                                data_type: DataType::String,
+                            }
+                            .into(),
+                        )
+                        .into(),
+                    ScalarExpr::input_ref(2)
+                        .binary(
+                            BinaryOp::Eq,
+                            ScalarExpr::CorrelatedInputRef {
+                                context_offset: 1,
+                                index: 1,
+                                data_type: DataType::String,
+                            }
+                            .into(),
+                        )
+                        .into(),
+                ],
+            );
+            let table_scan_2 = query_graph.table_scan(2, 5);
+            let apply_1 = query_graph.add_node(QueryNode::Apply {
+                correlation: CorrelationContext {
+                    parameters: vec![ScalarExpr::input_ref(1).into()],
+                },
+                left: table_scan_2,
+                right: filter_1,
+                apply_type: ApplyType::LeftOuter,
+            });
+            let table_scan_3 = query_graph.table_scan(3, 5);
+            let apply_2 = query_graph.add_node(QueryNode::Apply {
+                correlation: CorrelationContext {
+                    parameters: vec![
+                        ScalarExpr::input_ref(3).into(),
+                        ScalarExpr::input_ref(4).into(),
+                    ],
+                },
+                left: table_scan_3,
+                right: apply_1,
+                apply_type: ApplyType::Inner,
+            });
+            query_graph.set_entry_node(apply_2);
+            query_graph
+        });
+        queries.insert("nested_apply_4".to_string(), {
+            let mut query_graph = queries.get("nested_apply_3").unwrap().clone();
+            let project = query_graph.project(
+                query_graph.entry_node,
+                vec![
+                    ScalarExpr::input_ref(4).into(),
+                    ScalarExpr::input_ref(6).into(),
+                    ScalarExpr::input_ref(7).into(),
+                ],
+            );
+            query_graph.set_entry_node(project);
+            query_graph
+        });
     }
 
     pub(crate) fn correlated_filter(queries: &mut HashMap<String, QueryGraph>) {
