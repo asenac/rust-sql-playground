@@ -2,9 +2,12 @@
 
 use itertools::Itertools;
 
-use crate::{data_type::DataType, query_graph::QueryGraph};
+use crate::{
+    data_type::DataType,
+    query_graph::{properties::num_columns, QueryGraph},
+};
 
-use super::{rewrite::rewrite_expr_pre_post, NaryOp, ScalarExpr, ScalarExprRef};
+use super::{rewrite::rewrite_expr_pre_post, NaryOp, ScalarExpr, ScalarExprRef, Subquery};
 
 /// Reduce the given expression recursively. Keeps trying until the expression cannot
 /// be reduced any further.
@@ -73,5 +76,45 @@ pub fn reduce_expr(
             return Some(ScalarExpr::null_literal(expr.data_type(query_graph, row_type)).into());
         }
     }
+    None
+}
+
+pub fn reduce_and_prune_exists_subplans_recursively(
+    expr: &ScalarExprRef,
+    query_graph: &mut QueryGraph,
+    row_type: &[DataType],
+) -> ScalarExprRef {
+    rewrite_expr_pre_post(
+        &mut |curr_expr: &ScalarExprRef| {
+            prune_exists_subplan(curr_expr, query_graph)
+                .or_else(|| reduce_expr(curr_expr, query_graph, row_type))
+        },
+        &expr,
+    )
+}
+
+pub fn prune_exists_subplan(
+    expr: &ScalarExprRef,
+    query_graph: &mut QueryGraph,
+) -> Option<ScalarExprRef> {
+    if let ScalarExpr::ExistsSubquery { subquery } = expr.as_ref() {
+        if num_columns(query_graph, subquery.root) > 0 {
+            // Skip the root node
+            let subquery_plan = query_graph.node(subquery.root).get_input(0);
+            let correlation = subquery.correlation.clone();
+            let project = query_graph.project(subquery_plan, vec![]);
+            let new_subquery_root = query_graph.add_subquery(project);
+            return Some(
+                ScalarExpr::ExistsSubquery {
+                    subquery: Subquery {
+                        root: new_subquery_root,
+                        correlation,
+                    },
+                }
+                .into(),
+            );
+        }
+    }
+
     None
 }

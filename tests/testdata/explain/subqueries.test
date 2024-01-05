@@ -71,24 +71,27 @@ exists_subquery_1
 
 
 Optimized:
-[3] Project [exists(subquery(node: 1))]
+[6] Project [exists(subquery(node: 5))]
     - Num Columns: 1
     - Row Type: bool
-    - Pulled Up Predicates: raw_eq(ref_0, exists(subquery(node: 1)))
+    - Pulled Up Predicates: raw_eq(ref_0, exists(subquery(node: 5)))
   [2] TableScan id: 2
       - Num Columns: 5
       - Row Type: string, string, string, string, string
 
-[1] SubqueryRoot
-    - Num Columns: 5
-    - Row Type: string, string, string, string, string
-  [0] TableScan id: 1
-      - Num Columns: 5
-      - Row Type: string, string, string, string, string
+[5] SubqueryRoot
+    - Num Columns: 0
+    - Row Type: 
+  [4] Project []
+      - Num Columns: 0
+      - Row Type: 
+    [0] TableScan id: 1
+        - Num Columns: 5
+        - Row Type: string, string, string, string, string
 
 initial {"nodes":[{"id":"3","label":"[3] Project [exists(subquery(node: 1))]","annotations":["Num Columns: 1","Row Type: bool","Pulled Up Predicates: raw_eq(ref_0, exists(subquery(node: 1)))"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"1","label":"[1] SubqueryRoot","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"3","to":"2","label":"input 0"},{"from":"3","to":"1","label":"subquery(1)"},{"from":"1","to":"0","label":"input 0"}]}
-
-final {"nodes":[{"id":"3","label":"[3] Project [exists(subquery(node: 1))]","annotations":["Num Columns: 1","Row Type: bool","Pulled Up Predicates: raw_eq(ref_0, exists(subquery(node: 1)))"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"1","label":"[1] SubqueryRoot","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"3","to":"2","label":"input 0"},{"from":"3","to":"1","label":"subquery(1)"},{"from":"1","to":"0","label":"input 0"}]}
+step ExpressionReductionRule {"nodes":[{"id":"3","label":"[3] Project [exists(subquery(node: 1))]","annotations":["Num Columns: 1","Row Type: bool","Pulled Up Predicates: raw_eq(ref_0, exists(subquery(node: 1)))"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"1","label":"[1] SubqueryRoot","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"6","label":"[6] Project [exists(subquery(node: 5))]","annotations":["Num Columns: 1","Row Type: bool","Pulled Up Predicates: raw_eq(ref_0, exists(subquery(node: 5)))"]}],"edges":[{"from":"3","to":"2","label":"input 0"},{"from":"3","to":"1","label":"subquery(1)"},{"from":"1","to":"0","label":"input 0"},{"from":"6","to":"2","label":"input 0"},{"from":"6","to":"5","label":"subquery(5)"},{"from":"3","to":"6","label":"ExpressionReductionRule"}]}
+final {"nodes":[{"id":"6","label":"[6] Project [exists(subquery(node: 5))]","annotations":["Num Columns: 1","Row Type: bool","Pulled Up Predicates: raw_eq(ref_0, exists(subquery(node: 5)))"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"5","label":"[5] SubqueryRoot","annotations":["Num Columns: 0","Row Type: "]},{"id":"4","label":"[4] Project []","annotations":["Num Columns: 0","Row Type: "]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"6","to":"2","label":"input 0"},{"from":"6","to":"5","label":"subquery(5)"},{"from":"5","to":"4","label":"input 0"},{"from":"4","to":"0","label":"input 0"}]}
 ----
 ----
 

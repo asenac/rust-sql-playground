@@ -6,7 +6,7 @@ use crate::{
         properties::row_type,
         NodeId, QueryGraph, QueryNode,
     },
-    scalar_expr::reduction::reduce_expr_recursively,
+    scalar_expr::reduction::reduce_and_prune_exists_subplans_recursively,
 };
 
 pub struct ExpressionReductionRule;
@@ -20,23 +20,21 @@ impl SingleReplacementRule for ExpressionReductionRule {
         let new_node = match query_graph.node(node_id) {
             QueryNode::Project { outputs, input } => {
                 let row_type = row_type(query_graph, *input);
-                query_graph.project(
-                    *input,
-                    outputs
-                        .iter()
-                        .map(|e| reduce_expr_recursively(e, &query_graph, &row_type))
-                        .collect_vec(),
-                )
+                let input = *input;
+                let mut outputs = outputs.clone();
+                outputs.iter_mut().for_each(|e| {
+                    *e = reduce_and_prune_exists_subplans_recursively(e, query_graph, &row_type)
+                });
+                query_graph.project(input, outputs)
             }
             QueryNode::Filter { conditions, input } => {
                 let row_type = row_type(query_graph, *input);
-                query_graph.filter(
-                    *input,
-                    conditions
-                        .iter()
-                        .map(|e| reduce_expr_recursively(e, &query_graph, &row_type))
-                        .collect_vec(),
-                )
+                let input = *input;
+                let mut conditions = conditions.clone();
+                conditions.iter_mut().for_each(|e| {
+                    *e = reduce_and_prune_exists_subplans_recursively(e, query_graph, &row_type)
+                });
+                query_graph.filter(input, conditions)
             }
             QueryNode::Join {
                 join_type,
@@ -51,14 +49,18 @@ impl SingleReplacementRule for ExpressionReductionRule {
                     .chain(right_row_type.iter())
                     .cloned()
                     .collect_vec();
+                let left = *left;
+                let right = *right;
+                let join_type = join_type.clone();
+                let mut conditions = conditions.clone();
+                conditions.iter_mut().for_each(|e| {
+                    *e = reduce_and_prune_exists_subplans_recursively(e, query_graph, &row_type)
+                });
                 query_graph.add_node(QueryNode::Join {
-                    join_type: join_type.clone(),
-                    conditions: conditions
-                        .iter()
-                        .map(|e| reduce_expr_recursively(e, &query_graph, &row_type))
-                        .collect_vec(),
-                    left: *left,
-                    right: *right,
+                    join_type,
+                    conditions,
+                    left,
+                    right,
                 })
             }
             _ => node_id,
