@@ -1293,6 +1293,89 @@ mod test_queries {
             query_graph.set_entry_node(union_1);
             query_graph
         });
+        queries.insert("common_aggregate_discovery_subquery_1".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
+                group_key: Default::default(),
+                aggregates: vec![AggregateExpr {
+                    op: AggregateOp::Max,
+                    operands: vec![3],
+                }
+                .into()],
+                input: table_scan_1,
+            });
+            let aggregate_2 = query_graph.add_node(QueryNode::Aggregate {
+                group_key: Default::default(),
+                aggregates: vec![AggregateExpr {
+                    op: AggregateOp::Min,
+                    operands: vec![4],
+                }
+                .into()],
+                input: table_scan_1,
+            });
+            let subquery_root = query_graph.add_subquery(aggregate_2);
+            let project = query_graph.project(
+                aggregate_1,
+                vec![
+                    ScalarExpr::input_ref(0).into(),
+                    ScalarExpr::ScalarSubquery {
+                        subquery: Subquery {
+                            root: subquery_root,
+                            correlation: None,
+                        },
+                    }
+                    .into(),
+                ],
+            );
+            query_graph.set_entry_node(project);
+            query_graph
+        });
+        queries.insert("common_aggregate_discovery_subquery_2".to_string(), {
+            let mut query_graph = QueryGraph::new();
+            let table_scan_1 = query_graph.table_scan(1, 5);
+            let aggregate_1 = query_graph.add_node(QueryNode::Aggregate {
+                group_key: Default::default(),
+                aggregates: vec![AggregateExpr {
+                    op: AggregateOp::Max,
+                    operands: vec![3],
+                }
+                .into()],
+                input: table_scan_1,
+            });
+            let aggregate_2 = query_graph.add_node(QueryNode::Aggregate {
+                group_key: Default::default(),
+                aggregates: vec![AggregateExpr {
+                    op: AggregateOp::Min,
+                    operands: vec![4],
+                }
+                .into()],
+                input: table_scan_1,
+            });
+            let subquery_root_1 = query_graph.add_subquery(aggregate_1);
+            let subquery_root_2 = query_graph.add_subquery(aggregate_2);
+            let project = query_graph.project(
+                table_scan_1,
+                vec![
+                    ScalarExpr::ScalarSubquery {
+                        subquery: Subquery {
+                            root: subquery_root_1,
+                            correlation: None,
+                        },
+                    }
+                    .into(),
+                    ScalarExpr::ScalarSubquery {
+                        subquery: Subquery {
+                            root: subquery_root_2,
+                            correlation: None,
+                        },
+                    }
+                    .into(),
+                ],
+            );
+            query_graph.set_entry_node(project);
+            query_graph
+        });
     }
 
     pub(crate) fn outer_to_inner_join(queries: &mut HashMap<String, QueryGraph>) {
