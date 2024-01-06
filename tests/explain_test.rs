@@ -1941,6 +1941,17 @@ mod test_queries {
             query_graph.set_entry_node(project);
             query_graph
         });
+        queries.insert("filter_left_apply_transpose_1".to_string(), {
+            let mut query_graph = queries.get("left_apply_1").unwrap().clone();
+            let filter = query_graph.filter(
+                query_graph.node(QueryGraph::ROOT_NODE_ID).get_input(0),
+                vec![ScalarExpr::input_ref(0)
+                    .binary(BinaryOp::Eq, ScalarExpr::input_ref(1).into())
+                    .into()],
+            );
+            query_graph.set_entry_node(filter);
+            query_graph
+        });
     }
 
     pub(crate) fn correlated_filter(queries: &mut HashMap<String, QueryGraph>) {
