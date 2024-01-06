@@ -1,5 +1,3 @@
-use itertools::Itertools;
-
 use crate::visitor_utils::{PostOrderVisitationResult, PreOrderVisitationResult};
 
 use super::{visitor::QueryGraphPrePostVisitorMut, NodeId, QueryGraph};
@@ -193,8 +191,8 @@ impl Optimizer {
         {
             if let Some(replacements) = rule.apply(query_graph, *node_id) {
                 Self::notify_replacements(context, &**rule, query_graph, &replacements);
+                query_graph.replace_nodes(&replacements);
                 for (original_node, replacement_node) in replacements {
-                    query_graph.replace_node(original_node, replacement_node);
                     if original_node == *node_id {
                         *node_id = replacement_node;
                     }
@@ -233,11 +231,10 @@ impl Optimizer {
         for rule in rules.iter().map(|id| self.rules.get(*id).unwrap()) {
             if let Some(replacements) = rule.apply(query_graph, *node_id) {
                 Optimizer::notify_replacements(context, &**rule, query_graph, &replacements);
+                // Replace the node in the graph and apply the remaining rules to the
+                // returned one.
+                query_graph.replace_nodes(&replacements);
                 for (original_node, replacement_node) in replacements {
-                    // Replace the node in the graph and apply the remaining rules to the
-                    // returned one.
-                    query_graph.replace_node(original_node, replacement_node);
-
                     if original_node == *node_id {
                         // Make the visitation logic aware of the replacement, so the inputs of
                         // the new node are visited during the pre-order part of the visitation.

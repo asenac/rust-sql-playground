@@ -10,12 +10,12 @@ use crate::{
 };
 use std::{
     cell::RefCell,
-    collections::{BTreeSet, HashMap, HashSet},
+    collections::{BTreeSet, HashMap, HashSet, VecDeque},
     fmt,
     rc::Rc,
 };
 
-use self::properties::{subgraph_subqueries, PropertyCache};
+use self::properties::{subgraph_subqueries, subqueries, PropertyCache};
 
 pub mod cloner;
 pub mod explain;
@@ -239,7 +239,10 @@ impl QueryGraph {
     /// Returns a reference to the node under the given ID. The provided ID must
     /// be a valid node ID. Otherwise, it panics.
     pub fn node(&self, node_id: NodeId) -> &QueryNode {
-        self.nodes.get(&node_id).unwrap()
+        match self.nodes.get(&node_id) {
+            Some(node) => node,
+            None => panic!("{} not in graph", node_id),
+        }
     }
 
     /// Adds a query node to the query graph. Registers the new node as a parent
@@ -296,10 +299,32 @@ impl QueryGraph {
         self.parents.get(&node_id)
     }
 
+    /// Performs a set of node replacements that must be performed atomically, in
+    /// order for the query graph to transition from a valid state to another
+    /// valid state.
+    ///
+    /// Since we want to ensure that no detached nodes are left behind in the
+    /// query graph after each optimization rule, we need to run some checks
+    /// once all the node replacements by the rule have been performed. By
+    /// passing them all at once, we can ensure these checks are run on a valid
+    /// state of the query graph.
+    pub fn replace_nodes(&mut self, replacements: &Vec<(NodeId, NodeId)>) {
+        for (original_node, replacement_node) in replacements.iter() {
+            self.replace_node(*original_node, *replacement_node);
+        }
+
+        self.garbage_collect_subqueries();
+        self.gen_number += 1;
+
+        // Ensure no detached node is left over in the query graph
+        #[cfg(debug_assertions)]
+        self.check_detached_nodes();
+    }
+
     /// Replaces all the references to `node_id` to make them point to `new_node_id`.
     /// Invalidates the cached metadata for the nodes that are no longer part of the
     /// query graph.
-    pub fn replace_node(&mut self, node_id: NodeId, new_node_id: NodeId) {
+    fn replace_node(&mut self, node_id: NodeId, new_node_id: NodeId) {
         self.invalidate_properties_upwards(node_id);
 
         // All the parents of the old node are now parents of the new one
@@ -333,8 +358,6 @@ impl QueryGraph {
         }
 
         self.remove_detached_nodes(node_id);
-        self.garbage_collect_subqueries();
-        self.gen_number += 1;
     }
 
     pub fn garbage_collect(&mut self) {
@@ -394,6 +417,45 @@ impl QueryGraph {
             );
         }
         referenced_subqueries
+    }
+
+    #[allow(dead_code)]
+    fn collect_attached_nodes(&self) -> HashSet<NodeId> {
+        let mut attached_nodes = HashSet::new();
+        let mut queue = VecDeque::from([self.entry_node]);
+        while let Some(node_id) = queue.pop_front() {
+            self.visit_subgraph_pre(
+                &mut |query_graph, node_id| {
+                    if !attached_nodes.insert(node_id) {
+                        return PreOrderVisitationResult::DoNotVisitInputs;
+                    }
+                    let subqueries = subqueries(query_graph, node_id);
+                    queue.extend(subqueries.iter());
+                    PreOrderVisitationResult::VisitInputs
+                },
+                node_id,
+            );
+        }
+
+        attached_nodes
+    }
+
+    #[allow(dead_code)]
+    fn check_detached_nodes(&self) {
+        let attached_nodes = self.collect_attached_nodes();
+        let detached_nodes = self
+            .nodes
+            .iter()
+            .filter(|(node_id, _)| !attached_nodes.contains(node_id))
+            .map(|(node_id, _)| *node_id)
+            .sorted()
+            .collect_vec();
+        assert!(
+            detached_nodes.is_empty(),
+            "Detached nodes {}\n{}",
+            detached_nodes.iter().join(", "),
+            self.explain()
+        );
     }
 }
 
@@ -488,9 +550,13 @@ impl QueryGraph {
     /// Removes the nodes under the given one that are no longer
     /// attached to the plan.
     fn remove_detached_nodes(&mut self, node_id: NodeId) {
-        let mut stack = vec![node_id];
-        while let Some(current_id) = stack.pop() {
-            if !self.parents.contains_key(&current_id) {
+        if !self.parents.contains_key(&node_id) {
+            let mut stack = vec![node_id];
+            while let Some(current_id) = stack.pop() {
+                // TODO(asenac) the root node should be an non-replaceable node!
+                if current_id == self.entry_node {
+                    continue;
+                }
                 self.invalidate_bottom_up_properties(current_id);
                 self.invalidate_single_node_properties(current_id);
 
@@ -507,6 +573,7 @@ impl QueryGraph {
                         parents.remove(&current_id);
                         if parents.is_empty() {
                             self.parents.remove(child_id);
+                            stack.push(*child_id);
                         }
                     }
                 }
