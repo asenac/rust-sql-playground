@@ -2,35 +2,43 @@ run
 project_normalization_1
 ----
 ----
-[2] Project [ref_1, ref_2, eq(ref_2, 'hello')]
+[0] QueryRoot
     - Num Columns: 3
     - Row Type: string, string, bool
     - Pulled Up Predicates: ref_2, raw_eq(ref_2, eq(ref_1, 'hello')), lt(ref_0, 'hello')
-  [1] Filter [lt(ref_1, 'hello'), eq(ref_2, 'hello')]
-      - Num Columns: 5
-      - Row Type: string, string, string, string, string
-      - Pulled Up Predicates: eq(ref_2, 'hello'), lt(ref_1, 'hello')
-    [0] TableScan id: 1
+  [3] Project [ref_1, ref_2, eq(ref_2, 'hello')]
+      - Num Columns: 3
+      - Row Type: string, string, bool
+      - Pulled Up Predicates: ref_2, raw_eq(ref_2, eq(ref_1, 'hello')), lt(ref_0, 'hello')
+    [2] Filter [lt(ref_1, 'hello'), eq(ref_2, 'hello')]
         - Num Columns: 5
         - Row Type: string, string, string, string, string
+        - Pulled Up Predicates: eq(ref_2, 'hello'), lt(ref_1, 'hello')
+      [1] TableScan id: 1
+          - Num Columns: 5
+          - Row Type: string, string, string, string, string
 
 
 Optimized:
-[3] Project [ref_1, 'hello', TRUE]
+[0] QueryRoot
     - Num Columns: 3
     - Row Type: string, string, bool
     - Pulled Up Predicates: raw_eq(ref_1, 'hello'), raw_eq(ref_2, TRUE), lt(ref_0, ref_1)
-  [4] Filter [eq(ref_2, 'hello'), lt(ref_1, 'hello')]
-      - Num Columns: 5
-      - Row Type: string, string, string, string, string
-      - Pulled Up Predicates: eq(ref_2, 'hello'), lt(ref_1, 'hello')
-    [0] TableScan id: 1
+  [4] Project [ref_1, 'hello', TRUE]
+      - Num Columns: 3
+      - Row Type: string, string, bool
+      - Pulled Up Predicates: raw_eq(ref_1, 'hello'), raw_eq(ref_2, TRUE), lt(ref_0, ref_1)
+    [5] Filter [eq(ref_2, 'hello'), lt(ref_1, 'hello')]
         - Num Columns: 5
         - Row Type: string, string, string, string, string
+        - Pulled Up Predicates: eq(ref_2, 'hello'), lt(ref_1, 'hello')
+      [1] TableScan id: 1
+          - Num Columns: 5
+          - Row Type: string, string, string, string, string
 
-initial {"nodes":[{"id":"2","label":"[2] Project [ref_1, ref_2, eq(ref_2, 'hello')]","annotations":["Num Columns: 3","Row Type: string, string, bool","Pulled Up Predicates: ref_2, raw_eq(ref_2, eq(ref_1, 'hello')), lt(ref_0, 'hello')"]},{"id":"1","label":"[1] Filter [lt(ref_1, 'hello'), eq(ref_2, 'hello')]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_2, 'hello'), lt(ref_1, 'hello')"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"2","to":"1","label":"input 0"},{"from":"1","to":"0","label":"input 0"}]}
-step ProjectNormalizationRule {"nodes":[{"id":"2","label":"[2] Project [ref_1, ref_2, eq(ref_2, 'hello')]","annotations":["Num Columns: 3","Row Type: string, string, bool","Pulled Up Predicates: ref_2, raw_eq(ref_2, eq(ref_1, 'hello')), lt(ref_0, 'hello')"]},{"id":"1","label":"[1] Filter [lt(ref_1, 'hello'), eq(ref_2, 'hello')]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_2, 'hello'), lt(ref_1, 'hello')"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"3","label":"[3] Project [ref_1, 'hello', TRUE]","annotations":["Num Columns: 3","Row Type: string, string, bool","Pulled Up Predicates: raw_eq(ref_1, 'hello'), raw_eq(ref_2, TRUE), lt(ref_0, ref_1)"]}],"edges":[{"from":"2","to":"1","label":"input 0"},{"from":"1","to":"0","label":"input 0"},{"from":"3","to":"1","label":"input 0"},{"from":"2","to":"3","label":"ProjectNormalizationRule"}]}
-step FilterNormalizationRule {"nodes":[{"id":"3","label":"[3] Project [ref_1, 'hello', TRUE]","annotations":["Num Columns: 3","Row Type: string, string, bool","Pulled Up Predicates: raw_eq(ref_1, 'hello'), raw_eq(ref_2, TRUE), lt(ref_0, ref_1)"]},{"id":"1","label":"[1] Filter [lt(ref_1, 'hello'), eq(ref_2, 'hello')]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_2, 'hello'), lt(ref_1, 'hello')"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"4","label":"[4] Filter [eq(ref_2, 'hello'), lt(ref_1, 'hello')]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_2, 'hello'), lt(ref_1, 'hello')"]}],"edges":[{"from":"3","to":"1","label":"input 0"},{"from":"1","to":"0","label":"input 0"},{"from":"4","to":"0","label":"input 0"},{"from":"1","to":"4","label":"FilterNormalizationRule"}]}
-final {"nodes":[{"id":"3","label":"[3] Project [ref_1, 'hello', TRUE]","annotations":["Num Columns: 3","Row Type: string, string, bool","Pulled Up Predicates: raw_eq(ref_1, 'hello'), raw_eq(ref_2, TRUE), lt(ref_0, ref_1)"]},{"id":"4","label":"[4] Filter [eq(ref_2, 'hello'), lt(ref_1, 'hello')]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_2, 'hello'), lt(ref_1, 'hello')"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"3","to":"4","label":"input 0"},{"from":"4","to":"0","label":"input 0"}]}
+initial {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 3","Row Type: string, string, bool","Pulled Up Predicates: ref_2, raw_eq(ref_2, eq(ref_1, 'hello')), lt(ref_0, 'hello')"]},{"id":"3","label":"[3] Project [ref_1, ref_2, eq(ref_2, 'hello')]","annotations":["Num Columns: 3","Row Type: string, string, bool","Pulled Up Predicates: ref_2, raw_eq(ref_2, eq(ref_1, 'hello')), lt(ref_0, 'hello')"]},{"id":"2","label":"[2] Filter [lt(ref_1, 'hello'), eq(ref_2, 'hello')]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_2, 'hello'), lt(ref_1, 'hello')"]},{"id":"1","label":"[1] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"0","to":"3","label":"input 0"},{"from":"3","to":"2","label":"input 0"},{"from":"2","to":"1","label":"input 0"}]}
+step ProjectNormalizationRule {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 3","Row Type: string, string, bool","Pulled Up Predicates: ref_2, raw_eq(ref_2, eq(ref_1, 'hello')), lt(ref_0, 'hello')"]},{"id":"3","label":"[3] Project [ref_1, ref_2, eq(ref_2, 'hello')]","annotations":["Num Columns: 3","Row Type: string, string, bool","Pulled Up Predicates: ref_2, raw_eq(ref_2, eq(ref_1, 'hello')), lt(ref_0, 'hello')"]},{"id":"2","label":"[2] Filter [lt(ref_1, 'hello'), eq(ref_2, 'hello')]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_2, 'hello'), lt(ref_1, 'hello')"]},{"id":"1","label":"[1] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"4","label":"[4] Project [ref_1, 'hello', TRUE]","annotations":["Num Columns: 3","Row Type: string, string, bool","Pulled Up Predicates: raw_eq(ref_1, 'hello'), raw_eq(ref_2, TRUE), lt(ref_0, ref_1)"]}],"edges":[{"from":"0","to":"3","label":"input 0"},{"from":"3","to":"2","label":"input 0"},{"from":"2","to":"1","label":"input 0"},{"from":"4","to":"2","label":"input 0"},{"from":"3","to":"4","label":"ProjectNormalizationRule"}]}
+step FilterNormalizationRule {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 3","Row Type: string, string, bool","Pulled Up Predicates: raw_eq(ref_1, 'hello'), raw_eq(ref_2, TRUE), lt(ref_0, ref_1)"]},{"id":"4","label":"[4] Project [ref_1, 'hello', TRUE]","annotations":["Num Columns: 3","Row Type: string, string, bool","Pulled Up Predicates: raw_eq(ref_1, 'hello'), raw_eq(ref_2, TRUE), lt(ref_0, ref_1)"]},{"id":"2","label":"[2] Filter [lt(ref_1, 'hello'), eq(ref_2, 'hello')]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_2, 'hello'), lt(ref_1, 'hello')"]},{"id":"1","label":"[1] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"5","label":"[5] Filter [eq(ref_2, 'hello'), lt(ref_1, 'hello')]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_2, 'hello'), lt(ref_1, 'hello')"]}],"edges":[{"from":"0","to":"4","label":"input 0"},{"from":"4","to":"2","label":"input 0"},{"from":"2","to":"1","label":"input 0"},{"from":"5","to":"1","label":"input 0"},{"from":"2","to":"5","label":"FilterNormalizationRule"}]}
+final {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 3","Row Type: string, string, bool","Pulled Up Predicates: raw_eq(ref_1, 'hello'), raw_eq(ref_2, TRUE), lt(ref_0, ref_1)"]},{"id":"4","label":"[4] Project [ref_1, 'hello', TRUE]","annotations":["Num Columns: 3","Row Type: string, string, bool","Pulled Up Predicates: raw_eq(ref_1, 'hello'), raw_eq(ref_2, TRUE), lt(ref_0, ref_1)"]},{"id":"5","label":"[5] Filter [eq(ref_2, 'hello'), lt(ref_1, 'hello')]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_2, 'hello'), lt(ref_1, 'hello')"]},{"id":"1","label":"[1] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"0","to":"4","label":"input 0"},{"from":"4","to":"5","label":"input 0"},{"from":"5","to":"1","label":"input 0"}]}
 ----
 ----

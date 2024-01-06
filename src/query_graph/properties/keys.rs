@@ -146,6 +146,11 @@ impl Keys {
     ) -> Rc<Vec<KeyBounds>> {
         let mut keys = Vec::new();
         match query_graph.node(node_id) {
+            QueryNode::QueryRoot { input } => {
+                if let Some(input) = input {
+                    keys.extend(self.keys_unchecked(query_graph, *input).iter().cloned());
+                }
+            }
             QueryNode::Project { outputs, input } => {
                 let input_keys = self.keys_unchecked(query_graph, *input);
                 // Lift the input keys through the projection expressions.

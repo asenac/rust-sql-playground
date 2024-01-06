@@ -70,6 +70,9 @@ impl<'a> QueryGraphPrePostVisitor for JsonSerializer<'a> {
         }
         let prefix = format!("[{}] ", node_id);
         let label = match query_graph.node(node_id) {
+            QueryNode::QueryRoot { .. } => {
+                format!("{}QueryRoot", prefix)
+            }
             QueryNode::Project { outputs, .. } => {
                 format!("{}Project [{}]", prefix, explain_scalar_expr_vec(outputs))
             }

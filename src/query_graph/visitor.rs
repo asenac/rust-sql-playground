@@ -49,7 +49,7 @@ impl QueryGraph {
     where
         V: QueryGraphPrePostVisitor,
     {
-        self.visit_subgraph(visitor, self.entry_node);
+        self.visit_subgraph(visitor, QueryGraph::ROOT_NODE_ID);
     }
 
     /// Visits the sub-graph under the given node.
@@ -145,7 +145,7 @@ impl QueryGraph {
     where
         V: QueryGraphPrePostVisitorMut,
     {
-        self.visit_subgraph_mut(visitor, self.entry_node)
+        self.visit_subgraph_mut(visitor, QueryGraph::ROOT_NODE_ID)
     }
 
     pub fn visit_subgraph_mut<V>(&mut self, visitor: &mut V, node_id: NodeId)
@@ -192,7 +192,7 @@ impl QueryGraph {
     where
         F: FnMut(&QueryGraph, NodeId) -> PreOrderVisitationResult,
     {
-        self.visit_subgraph_pre(visitor, self.entry_node)
+        self.visit_subgraph_pre(visitor, QueryGraph::ROOT_NODE_ID)
     }
 
     pub fn visit_subgraph_pre<F>(&self, visitor: &mut F, node_id: NodeId)
@@ -292,7 +292,12 @@ mod tests {
             ordered
         );
 
-        let all_nodes = query_graph.nodes.keys().cloned().collect::<HashSet<_>>();
+        let all_nodes = query_graph
+            .nodes
+            .keys()
+            .filter(|node_id| **node_id != QueryGraph::ROOT_NODE_ID)
+            .cloned()
+            .collect::<HashSet<_>>();
         assert_eq!(query_graph.collect_nodes_above(table_scan), all_nodes);
         assert_eq!(
             query_graph.collect_nodes_above(union_),

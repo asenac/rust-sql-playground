@@ -80,7 +80,6 @@ where
                 input,
             } => *input = inputs[0],
             QueryNode::Union { inputs: inputs_ref } => *inputs_ref = inputs.to_vec(),
-            QueryNode::SubqueryRoot { input } => *input = inputs[0],
             QueryNode::Apply {
                 correlation: _,
                 left,
@@ -89,6 +88,9 @@ where
             } => {
                 *left = inputs[0];
                 *right = inputs[1];
+            }
+            QueryNode::QueryRoot { .. } | QueryNode::SubqueryRoot { .. } => {
+                panic!("Root nodes cannot be cloned")
             }
         }
         self.stack.truncate(self.stack.len() - num_inputs);

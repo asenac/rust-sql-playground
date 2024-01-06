@@ -100,6 +100,15 @@ impl PulledUpPredicates {
     ) -> Rc<Vec<ScalarExprRef>> {
         let mut predicates = Vec::new();
         match query_graph.node(node_id) {
+            QueryNode::QueryRoot { input } => {
+                if let Some(input) = input {
+                    predicates.extend(
+                        self.predicates_unchecked(query_graph, *input)
+                            .iter()
+                            .cloned(),
+                    );
+                }
+            }
             QueryNode::Project { outputs, input } => {
                 predicates.extend(
                     self.predicates_unchecked(query_graph, *input)

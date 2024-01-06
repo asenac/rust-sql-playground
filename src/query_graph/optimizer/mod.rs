@@ -128,7 +128,9 @@ impl Optimizer {
 
     /// Optimize the given query graph by applying the rules in this optimizer instance.
     pub fn optimize(&self, context: &mut OptimizerContext, query_graph: &mut QueryGraph) {
-        self.optimization_loop(context, query_graph, |query_graph| query_graph.entry_node);
+        self.optimization_loop(context, query_graph, true, |query_graph| {
+            query_graph.node(QueryGraph::ROOT_NODE_ID).get_input(0)
+        });
 
         // Optimize the subqueries in the query graph
         // Note: optimizing a subquery may result on some other subquery being removed.
@@ -139,7 +141,7 @@ impl Optimizer {
             .find(|i| last_subquery.is_none() || **i > last_subquery.unwrap())
             .cloned()
         {
-            self.optimization_loop(context, query_graph, |query_graph| {
+            self.optimization_loop(context, query_graph, false, |query_graph| {
                 query_graph.node(next_subquery).get_input(0)
             });
             last_subquery = Some(next_subquery);
@@ -150,6 +152,7 @@ impl Optimizer {
         &self,
         context: &mut OptimizerContext,
         query_graph: &mut QueryGraph,
+        is_query_root: bool,
         get_node_id: F,
     ) where
         F: Fn(&QueryGraph) -> NodeId,
@@ -159,7 +162,7 @@ impl Optimizer {
             let last_gen_number = query_graph.gen_number;
 
             let mut node_id = get_node_id(query_graph);
-            if node_id == query_graph.entry_node {
+            if is_query_root {
                 // TODO(asenac) RootOnly vs. AnyRoot rules
                 self.apply_root_only_rules(context, query_graph, &mut node_id);
             }

@@ -51,6 +51,9 @@ pub struct CorrelationContext<E: VisitableExpr + RewritableExpr> {
 
 #[derive(Clone, PartialEq, Eq)]
 pub enum QueryNode {
+    QueryRoot {
+        input: Option<NodeId>,
+    },
     Project {
         outputs: Vec<ScalarExprRef>,
         input: NodeId,
@@ -93,8 +96,6 @@ pub struct QueryGraph {
     /// All the nodes in the query graph. May contain nodes not attached to the plan, ie.
     /// not reachable from the entry node.
     nodes: HashMap<NodeId, QueryNode>,
-    /// The top-level root node of the query graph.
-    pub entry_node: NodeId,
     /// The ID that will be given to the next node added to the query graph.
     next_node_id: usize,
     /// For each node, it contains a set with the nodes pointing to it through any of their
@@ -111,6 +112,7 @@ impl QueryNode {
     /// Returns the number of inputs of this node.
     pub fn num_inputs(&self) -> usize {
         match self {
+            Self::QueryRoot { input } => input.map(|_| 1).unwrap_or(0),
             Self::Project { .. } | Self::Filter { .. } | Self::Aggregate { .. } => 1,
             Self::TableScan { .. } => 0,
             Self::Join { .. } => 2,
@@ -125,6 +127,7 @@ impl QueryNode {
         assert!(input_idx < self.num_inputs());
 
         match self {
+            Self::QueryRoot { input } => input.unwrap(),
             Self::Project { input, .. }
             | Self::Filter { input, .. }
             | Self::Aggregate { input, .. }
@@ -147,6 +150,7 @@ impl QueryNode {
         assert!(input_idx < self.num_inputs());
 
         match self {
+            Self::QueryRoot { input } => *input = Some(node_id),
             Self::Project { input, .. }
             | Self::Filter { input, .. }
             | Self::Aggregate { input, .. }
@@ -180,7 +184,8 @@ impl QueryNode {
                     visitor(expr);
                 }
             }
-            QueryNode::TableScan { .. }
+            QueryNode::QueryRoot { .. }
+            | QueryNode::TableScan { .. }
             | QueryNode::Aggregate { .. }
             | QueryNode::Union { .. }
             | QueryNode::SubqueryRoot { .. } => {}
@@ -220,11 +225,12 @@ impl QueryNode {
 }
 
 impl QueryGraph {
+    pub const ROOT_NODE_ID: NodeId = 0;
+
     pub fn new() -> QueryGraph {
         Self {
-            nodes: HashMap::new(),
-            entry_node: 0,
-            next_node_id: 0,
+            nodes: HashMap::from([(Self::ROOT_NODE_ID, QueryNode::QueryRoot { input: None })]),
+            next_node_id: Self::ROOT_NODE_ID + 1,
             gen_number: 0,
             parents: HashMap::new(),
             subqueries: Vec::new(),
@@ -233,7 +239,28 @@ impl QueryGraph {
     }
 
     pub fn set_entry_node(&mut self, entry_node: NodeId) {
-        self.entry_node = entry_node;
+        match self.nodes.get_mut(&Self::ROOT_NODE_ID).unwrap() {
+            QueryNode::QueryRoot { input } => {
+                let old_entry_node = input.clone();
+                if let Some(old_entry_node) = old_entry_node {
+                    self.parents
+                        .get_mut(&old_entry_node)
+                        .unwrap()
+                        .remove(&Self::ROOT_NODE_ID);
+                }
+
+                *input = Some(entry_node);
+                self.parents
+                    .entry(entry_node)
+                    .or_insert_with(|| BTreeSet::new())
+                    .insert(Self::ROOT_NODE_ID);
+
+                if let Some(old_entry_node) = old_entry_node {
+                    self.remove_detached_nodes(old_entry_node);
+                }
+            }
+            _ => panic!("Unexpected root node"),
+        }
     }
 
     /// Returns a reference to the node under the given ID. The provided ID must
@@ -325,6 +352,7 @@ impl QueryGraph {
     /// Invalidates the cached metadata for the nodes that are no longer part of the
     /// query graph.
     fn replace_node(&mut self, node_id: NodeId, new_node_id: NodeId) {
+        assert!(self.can_be_replaced(node_id));
         self.invalidate_properties_upwards(node_id);
 
         // All the parents of the old node are now parents of the new one
@@ -352,17 +380,20 @@ impl QueryGraph {
                 self.parents.insert(new_node_id, parents);
             }
         }
-        // Replace the reference to the entry node as well
-        if self.entry_node == node_id {
-            self.entry_node = new_node_id;
-        }
 
         self.remove_detached_nodes(node_id);
     }
 
+    pub fn can_be_replaced(&self, node_id: NodeId) -> bool {
+        match self.node(node_id) {
+            QueryNode::QueryRoot { .. } | QueryNode::SubqueryRoot { .. } => false,
+            _ => true,
+        }
+    }
+
     pub fn garbage_collect(&mut self) {
         let mut visited_nodes = HashSet::new();
-        let mut stack = vec![self.entry_node];
+        let mut stack = vec![Self::ROOT_NODE_ID];
         while !stack.is_empty() {
             let current = stack.pop().unwrap();
             if visited_nodes.insert(current) {
@@ -404,7 +435,7 @@ impl QueryGraph {
     /// hanging from the entry node.
     fn collect_referenced_subqueries(&self) -> HashSet<NodeId> {
         let mut referenced_subqueries = HashSet::new();
-        let mut stack = subgraph_subqueries(self, self.entry_node)
+        let mut stack = subgraph_subqueries(self, Self::ROOT_NODE_ID)
             .iter()
             .cloned()
             .collect_vec();
@@ -422,7 +453,7 @@ impl QueryGraph {
     #[allow(dead_code)]
     fn collect_attached_nodes(&self) -> HashSet<NodeId> {
         let mut attached_nodes = HashSet::new();
-        let mut queue = VecDeque::from([self.entry_node]);
+        let mut queue = VecDeque::from([Self::ROOT_NODE_ID]);
         while let Some(node_id) = queue.pop_front() {
             self.visit_subgraph_pre(
                 &mut |query_graph, node_id| {
@@ -509,7 +540,6 @@ impl Clone for QueryGraph {
     fn clone(&self) -> Self {
         Self {
             nodes: self.nodes.clone(),
-            entry_node: self.entry_node,
             next_node_id: self.next_node_id,
             gen_number: self.gen_number,
             parents: self.parents.clone(),
@@ -553,10 +583,6 @@ impl QueryGraph {
         if !self.parents.contains_key(&node_id) {
             let mut stack = vec![node_id];
             while let Some(current_id) = stack.pop() {
-                // TODO(asenac) the root node should be an non-replaceable node!
-                if current_id == self.entry_node {
-                    continue;
-                }
                 self.invalidate_bottom_up_properties(current_id);
                 self.invalidate_single_node_properties(current_id);
 

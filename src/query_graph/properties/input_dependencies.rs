@@ -21,6 +21,11 @@ pub fn input_dependencies(query_graph: &QueryGraph, node_id: NodeId) -> Rc<HashS
     }
     let mut dependencies = HashSet::new();
     match query_graph.node(node_id) {
+        QueryNode::QueryRoot { input } => {
+            if let Some(input) = input {
+                dependencies.extend(0..num_columns(query_graph, *input));
+            }
+        }
         QueryNode::Project { outputs: exprs, .. }
         | QueryNode::Join {
             conditions: exprs, ..

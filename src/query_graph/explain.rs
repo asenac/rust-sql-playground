@@ -19,7 +19,7 @@ impl<'a> Explainer<'a> {
             query_graph,
             leaves: HashSet::new(),
             annotators: Vec::new(),
-            entry_point: query_graph.entry_node,
+            entry_point: QueryGraph::ROOT_NODE_ID,
         }
     }
 
@@ -119,6 +119,9 @@ impl<'a> QueryGraphPrePostVisitor for ExplainVisitor<'a> {
         }
         let prefix = format!("{}[{}] ", line_prefix, node_id);
         let node = match query_graph.node(node_id) {
+            QueryNode::QueryRoot { .. } => {
+                format!("{}QueryRoot\n", prefix)
+            }
             QueryNode::Project { outputs, .. } => {
                 format!("{}Project [{}]\n", prefix, explain_scalar_expr_vec(outputs))
             }

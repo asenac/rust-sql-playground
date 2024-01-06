@@ -46,6 +46,13 @@ impl NumColumns {
 
     fn compute_num_columns_for_node(&self, query_graph: &QueryGraph, node_id: NodeId) -> usize {
         match query_graph.node(node_id) {
+            QueryNode::QueryRoot { input } => {
+                if let Some(input) = input {
+                    self.num_columns_unchecked(query_graph, *input)
+                } else {
+                    0
+                }
+            }
             QueryNode::Project { outputs, .. } => outputs.len(),
             QueryNode::Filter { input, .. } | QueryNode::SubqueryRoot { input } => {
                 self.num_columns_unchecked(query_graph, *input)

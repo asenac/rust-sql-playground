@@ -1789,7 +1789,7 @@ mod test_queries {
         queries.insert("left_apply_2".to_string(), {
             let mut query_graph = queries.get("left_apply_1").unwrap().clone();
             let project = query_graph.project(
-                query_graph.entry_node,
+                query_graph.node(QueryGraph::ROOT_NODE_ID).get_input(0),
                 vec![
                     ScalarExpr::input_ref(4).into(),
                     ScalarExpr::input_ref(6).into(),
@@ -1853,7 +1853,7 @@ mod test_queries {
         queries.insert("nested_apply_2".to_string(), {
             let mut query_graph = queries.get("nested_apply_1").unwrap().clone();
             let project = query_graph.project(
-                query_graph.entry_node,
+                query_graph.node(QueryGraph::ROOT_NODE_ID).get_input(0),
                 vec![
                     ScalarExpr::input_ref(4).into(),
                     ScalarExpr::input_ref(6).into(),
@@ -1931,7 +1931,7 @@ mod test_queries {
         queries.insert("nested_apply_4".to_string(), {
             let mut query_graph = queries.get("nested_apply_3").unwrap().clone();
             let project = query_graph.project(
-                query_graph.entry_node,
+                query_graph.node(QueryGraph::ROOT_NODE_ID).get_input(0),
                 vec![
                     ScalarExpr::input_ref(4).into(),
                     ScalarExpr::input_ref(6).into(),
@@ -2483,7 +2483,7 @@ impl OptimizerListener for DebugOptimizerListener {
         }
 
         let mut serializer = JsonSerializer::new_with_all_annotators();
-        serializer.add_subgraph(query_graph, query_graph.entry_node);
+        serializer.add_subgraph(query_graph, QueryGraph::ROOT_NODE_ID);
         for (old_node_id, new_node_id) in replacements.iter() {
             serializer.add_node_replacement(
                 query_graph,
@@ -2546,7 +2546,7 @@ fn test_explain_properties() {
                 .unwrap();
 
             let mut serializer = JsonSerializer::new_with_all_annotators();
-            serializer.add_subgraph(query_graph, query_graph.entry_node);
+            serializer.add_subgraph(query_graph, QueryGraph::ROOT_NODE_ID);
             let initial_graph = format!("initial {}", serializer.serialize().unwrap());
             println!("{}", initial_graph);
 
@@ -2554,7 +2554,7 @@ fn test_explain_properties() {
             let mut listener2 = FullGraphCollector::new();
             listener2
                 .serializer
-                .add_subgraph(&cloned_query_graph, cloned_query_graph.entry_node);
+                .add_subgraph(&cloned_query_graph, QueryGraph::ROOT_NODE_ID);
             let mut listener = DebugOptimizerListener::default();
             let mut opt_context = OptimizerContext::new();
             opt_context.append_listener(&mut listener);
@@ -2569,7 +2569,7 @@ fn test_explain_properties() {
             }
 
             let mut serializer = JsonSerializer::new_with_all_annotators();
-            serializer.add_subgraph(&cloned_query_graph, cloned_query_graph.entry_node);
+            serializer.add_subgraph(&cloned_query_graph, QueryGraph::ROOT_NODE_ID);
             let final_graph = format!("final {}", serializer.serialize().unwrap());
             println!("{}", final_graph);
 

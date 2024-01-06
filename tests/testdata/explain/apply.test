@@ -2,44 +2,50 @@ run
 left_apply_1
 ----
 ----
-[3] Left Outer Apply parameters: [ref_1]
+[0] QueryRoot
     - Num Columns: 10
     - Row Type: string, string, string, string, string, string, string, string, string, string
-  [2] TableScan id: 2
-      - Num Columns: 5
-      - Row Type: string, string, string, string, string
-  [1] Filter [eq(ref_0, ctx_0.ref_0)]
-      - Num Columns: 5
-      - Row Type: string, string, string, string, string
-      - Pulled Up Predicates: eq(ref_0, ctx_0.ref_0)
-      - Correlated References: ctx_0.ref_0
-    [0] TableScan id: 1
-        - Num Columns: 5
-        - Row Type: string, string, string, string, string
-
-
-Optimized:
-[4] Project [ref_0, ref_1, ref_2, ref_3, ref_4, ref_5, ref_6, ref_7, ref_8, ref_9]
-    - Num Columns: 10
-    - Row Type: string, string, string, string, string, string, string, string, string, string
-  [3] Left Outer Apply parameters: [ref_1]
+  [4] Left Outer Apply parameters: [ref_1]
       - Num Columns: 10
       - Row Type: string, string, string, string, string, string, string, string, string, string
-    [2] TableScan id: 2
+    [3] TableScan id: 2
         - Num Columns: 5
         - Row Type: string, string, string, string, string
-    [1] Filter [eq(ref_0, ctx_0.ref_0)]
+    [2] Filter [eq(ref_0, ctx_0.ref_0)]
         - Num Columns: 5
         - Row Type: string, string, string, string, string
         - Pulled Up Predicates: eq(ref_0, ctx_0.ref_0)
         - Correlated References: ctx_0.ref_0
-      [0] TableScan id: 1
+      [1] TableScan id: 1
           - Num Columns: 5
           - Row Type: string, string, string, string, string
 
-initial {"nodes":[{"id":"3","label":"[3] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"1","label":"[1] Filter [eq(ref_0, ctx_0.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0)","Correlated References: ctx_0.ref_0"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"3","to":"2","label":"input 0"},{"from":"3","to":"1","label":"input 1"},{"from":"1","to":"0","label":"input 0"}]}
-step TopProjectionRule {"nodes":[{"id":"3","label":"[3] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"1","label":"[1] Filter [eq(ref_0, ctx_0.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0)","Correlated References: ctx_0.ref_0"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"4","label":"[4] Project [ref_0, ref_1, ref_2, ref_3, ref_4, ref_5, ref_6, ref_7, ref_8, ref_9]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string"]}],"edges":[{"from":"3","to":"2","label":"input 0"},{"from":"3","to":"1","label":"input 1"},{"from":"1","to":"0","label":"input 0"},{"from":"4","to":"3","label":"input 0"},{"from":"3","to":"4","label":"TopProjectionRule"}]}
-final {"nodes":[{"id":"4","label":"[4] Project [ref_0, ref_1, ref_2, ref_3, ref_4, ref_5, ref_6, ref_7, ref_8, ref_9]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string"]},{"id":"3","label":"[3] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"1","label":"[1] Filter [eq(ref_0, ctx_0.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0)","Correlated References: ctx_0.ref_0"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"4","to":"3","label":"input 0"},{"from":"3","to":"2","label":"input 0"},{"from":"3","to":"1","label":"input 1"},{"from":"1","to":"0","label":"input 0"}]}
+
+Optimized:
+[0] QueryRoot
+    - Num Columns: 10
+    - Row Type: string, string, string, string, string, string, string, string, string, string
+  [5] Project [ref_0, ref_1, ref_2, ref_3, ref_4, ref_5, ref_6, ref_7, ref_8, ref_9]
+      - Num Columns: 10
+      - Row Type: string, string, string, string, string, string, string, string, string, string
+    [4] Left Outer Apply parameters: [ref_1]
+        - Num Columns: 10
+        - Row Type: string, string, string, string, string, string, string, string, string, string
+      [3] TableScan id: 2
+          - Num Columns: 5
+          - Row Type: string, string, string, string, string
+      [2] Filter [eq(ref_0, ctx_0.ref_0)]
+          - Num Columns: 5
+          - Row Type: string, string, string, string, string
+          - Pulled Up Predicates: eq(ref_0, ctx_0.ref_0)
+          - Correlated References: ctx_0.ref_0
+        [1] TableScan id: 1
+            - Num Columns: 5
+            - Row Type: string, string, string, string, string
+
+initial {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string"]},{"id":"4","label":"[4] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string"]},{"id":"3","label":"[3] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"2","label":"[2] Filter [eq(ref_0, ctx_0.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0)","Correlated References: ctx_0.ref_0"]},{"id":"1","label":"[1] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"0","to":"4","label":"input 0"},{"from":"4","to":"3","label":"input 0"},{"from":"4","to":"2","label":"input 1"},{"from":"2","to":"1","label":"input 0"}]}
+step TopProjectionRule {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string"]},{"id":"4","label":"[4] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string"]},{"id":"3","label":"[3] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"2","label":"[2] Filter [eq(ref_0, ctx_0.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0)","Correlated References: ctx_0.ref_0"]},{"id":"1","label":"[1] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"5","label":"[5] Project [ref_0, ref_1, ref_2, ref_3, ref_4, ref_5, ref_6, ref_7, ref_8, ref_9]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string"]}],"edges":[{"from":"0","to":"4","label":"input 0"},{"from":"4","to":"3","label":"input 0"},{"from":"4","to":"2","label":"input 1"},{"from":"2","to":"1","label":"input 0"},{"from":"5","to":"4","label":"input 0"},{"from":"4","to":"5","label":"TopProjectionRule"}]}
+final {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string"]},{"id":"5","label":"[5] Project [ref_0, ref_1, ref_2, ref_3, ref_4, ref_5, ref_6, ref_7, ref_8, ref_9]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string"]},{"id":"4","label":"[4] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string"]},{"id":"3","label":"[3] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"2","label":"[2] Filter [eq(ref_0, ctx_0.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0)","Correlated References: ctx_0.ref_0"]},{"id":"1","label":"[1] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"0","to":"5","label":"input 0"},{"from":"5","to":"4","label":"input 0"},{"from":"4","to":"3","label":"input 0"},{"from":"4","to":"2","label":"input 1"},{"from":"2","to":"1","label":"input 0"}]}
 ----
 ----
 
@@ -47,58 +53,64 @@ run
 nested_apply_1
 ----
 ----
-[5] Inner Apply parameters: [ref_3]
+[0] QueryRoot
     - Num Columns: 15
     - Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string
-  [4] TableScan id: 3
-      - Num Columns: 5
-      - Row Type: string, string, string, string, string
-  [3] Left Outer Apply parameters: [ref_1]
-      - Num Columns: 10
-      - Row Type: string, string, string, string, string, string, string, string, string, string
-      - Correlated References: ctx_0.ref_0
-    [2] TableScan id: 2
-        - Num Columns: 5
-        - Row Type: string, string, string, string, string
-    [1] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)]
-        - Num Columns: 5
-        - Row Type: string, string, string, string, string
-        - Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)
-        - Correlated References: ctx_0.ref_0, ctx_1.ref_0
-      [0] TableScan id: 1
-          - Num Columns: 5
-          - Row Type: string, string, string, string, string
-
-
-Optimized:
-[6] Project [ref_0, ref_1, ref_2, ref_3, ref_4, ref_5, ref_6, ref_7, ref_8, ref_9, ref_10, ref_11, ref_12, ref_13, ref_14]
-    - Num Columns: 15
-    - Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string
-  [5] Inner Apply parameters: [ref_3]
+  [6] Inner Apply parameters: [ref_3]
       - Num Columns: 15
       - Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string
-    [4] TableScan id: 3
+    [5] TableScan id: 3
         - Num Columns: 5
         - Row Type: string, string, string, string, string
-    [3] Left Outer Apply parameters: [ref_1]
+    [4] Left Outer Apply parameters: [ref_1]
         - Num Columns: 10
         - Row Type: string, string, string, string, string, string, string, string, string, string
         - Correlated References: ctx_0.ref_0
-      [2] TableScan id: 2
+      [3] TableScan id: 2
           - Num Columns: 5
           - Row Type: string, string, string, string, string
-      [1] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)]
+      [2] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)]
           - Num Columns: 5
           - Row Type: string, string, string, string, string
           - Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)
           - Correlated References: ctx_0.ref_0, ctx_1.ref_0
-        [0] TableScan id: 1
+        [1] TableScan id: 1
             - Num Columns: 5
             - Row Type: string, string, string, string, string
 
-initial {"nodes":[{"id":"5","label":"[5] Inner Apply parameters: [ref_3]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string"]},{"id":"4","label":"[4] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"3","label":"[3] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Correlated References: ctx_0.ref_0"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"1","label":"[1] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)","Correlated References: ctx_0.ref_0, ctx_1.ref_0"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"5","to":"4","label":"input 0"},{"from":"5","to":"3","label":"input 1"},{"from":"3","to":"2","label":"input 0"},{"from":"3","to":"1","label":"input 1"},{"from":"1","to":"0","label":"input 0"}]}
-step TopProjectionRule {"nodes":[{"id":"5","label":"[5] Inner Apply parameters: [ref_3]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string"]},{"id":"4","label":"[4] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"3","label":"[3] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Correlated References: ctx_0.ref_0"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"1","label":"[1] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)","Correlated References: ctx_0.ref_0, ctx_1.ref_0"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"6","label":"[6] Project [ref_0, ref_1, ref_2, ref_3, ref_4, ref_5, ref_6, ref_7, ref_8, ref_9, ref_10, ref_11, ref_12, ref_13, ref_14]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string"]}],"edges":[{"from":"5","to":"4","label":"input 0"},{"from":"5","to":"3","label":"input 1"},{"from":"3","to":"2","label":"input 0"},{"from":"3","to":"1","label":"input 1"},{"from":"1","to":"0","label":"input 0"},{"from":"6","to":"5","label":"input 0"},{"from":"5","to":"6","label":"TopProjectionRule"}]}
-final {"nodes":[{"id":"6","label":"[6] Project [ref_0, ref_1, ref_2, ref_3, ref_4, ref_5, ref_6, ref_7, ref_8, ref_9, ref_10, ref_11, ref_12, ref_13, ref_14]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string"]},{"id":"5","label":"[5] Inner Apply parameters: [ref_3]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string"]},{"id":"4","label":"[4] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"3","label":"[3] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Correlated References: ctx_0.ref_0"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"1","label":"[1] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)","Correlated References: ctx_0.ref_0, ctx_1.ref_0"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"6","to":"5","label":"input 0"},{"from":"5","to":"4","label":"input 0"},{"from":"5","to":"3","label":"input 1"},{"from":"3","to":"2","label":"input 0"},{"from":"3","to":"1","label":"input 1"},{"from":"1","to":"0","label":"input 0"}]}
+
+Optimized:
+[0] QueryRoot
+    - Num Columns: 15
+    - Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string
+  [7] Project [ref_0, ref_1, ref_2, ref_3, ref_4, ref_5, ref_6, ref_7, ref_8, ref_9, ref_10, ref_11, ref_12, ref_13, ref_14]
+      - Num Columns: 15
+      - Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string
+    [6] Inner Apply parameters: [ref_3]
+        - Num Columns: 15
+        - Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string
+      [5] TableScan id: 3
+          - Num Columns: 5
+          - Row Type: string, string, string, string, string
+      [4] Left Outer Apply parameters: [ref_1]
+          - Num Columns: 10
+          - Row Type: string, string, string, string, string, string, string, string, string, string
+          - Correlated References: ctx_0.ref_0
+        [3] TableScan id: 2
+            - Num Columns: 5
+            - Row Type: string, string, string, string, string
+        [2] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)]
+            - Num Columns: 5
+            - Row Type: string, string, string, string, string
+            - Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)
+            - Correlated References: ctx_0.ref_0, ctx_1.ref_0
+          [1] TableScan id: 1
+              - Num Columns: 5
+              - Row Type: string, string, string, string, string
+
+initial {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string"]},{"id":"6","label":"[6] Inner Apply parameters: [ref_3]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string"]},{"id":"5","label":"[5] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"4","label":"[4] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Correlated References: ctx_0.ref_0"]},{"id":"3","label":"[3] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"2","label":"[2] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)","Correlated References: ctx_0.ref_0, ctx_1.ref_0"]},{"id":"1","label":"[1] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"0","to":"6","label":"input 0"},{"from":"6","to":"5","label":"input 0"},{"from":"6","to":"4","label":"input 1"},{"from":"4","to":"3","label":"input 0"},{"from":"4","to":"2","label":"input 1"},{"from":"2","to":"1","label":"input 0"}]}
+step TopProjectionRule {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string"]},{"id":"6","label":"[6] Inner Apply parameters: [ref_3]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string"]},{"id":"5","label":"[5] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"4","label":"[4] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Correlated References: ctx_0.ref_0"]},{"id":"3","label":"[3] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"2","label":"[2] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)","Correlated References: ctx_0.ref_0, ctx_1.ref_0"]},{"id":"1","label":"[1] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"7","label":"[7] Project [ref_0, ref_1, ref_2, ref_3, ref_4, ref_5, ref_6, ref_7, ref_8, ref_9, ref_10, ref_11, ref_12, ref_13, ref_14]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string"]}],"edges":[{"from":"0","to":"6","label":"input 0"},{"from":"6","to":"5","label":"input 0"},{"from":"6","to":"4","label":"input 1"},{"from":"4","to":"3","label":"input 0"},{"from":"4","to":"2","label":"input 1"},{"from":"2","to":"1","label":"input 0"},{"from":"7","to":"6","label":"input 0"},{"from":"6","to":"7","label":"TopProjectionRule"}]}
+final {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string"]},{"id":"7","label":"[7] Project [ref_0, ref_1, ref_2, ref_3, ref_4, ref_5, ref_6, ref_7, ref_8, ref_9, ref_10, ref_11, ref_12, ref_13, ref_14]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string"]},{"id":"6","label":"[6] Inner Apply parameters: [ref_3]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string"]},{"id":"5","label":"[5] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"4","label":"[4] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Correlated References: ctx_0.ref_0"]},{"id":"3","label":"[3] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"2","label":"[2] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)","Correlated References: ctx_0.ref_0, ctx_1.ref_0"]},{"id":"1","label":"[1] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"0","to":"7","label":"input 0"},{"from":"7","to":"6","label":"input 0"},{"from":"6","to":"5","label":"input 0"},{"from":"6","to":"4","label":"input 1"},{"from":"4","to":"3","label":"input 0"},{"from":"4","to":"2","label":"input 1"},{"from":"2","to":"1","label":"input 0"}]}
 ----
 ----
 
@@ -106,57 +118,63 @@ run
 left_apply_2
 ----
 ----
-[4] Project [ref_4, ref_6, ref_7]
+[0] QueryRoot
     - Num Columns: 3
     - Row Type: string, string, string
-  [3] Left Outer Apply parameters: [ref_1]
-      - Num Columns: 10
-      - Row Type: string, string, string, string, string, string, string, string, string, string
-    [2] TableScan id: 2
-        - Num Columns: 5
-        - Row Type: string, string, string, string, string
-    [1] Filter [eq(ref_0, ctx_0.ref_0)]
-        - Num Columns: 5
-        - Row Type: string, string, string, string, string
-        - Pulled Up Predicates: eq(ref_0, ctx_0.ref_0)
-        - Correlated References: ctx_0.ref_0
-      [0] TableScan id: 1
-          - Num Columns: 5
-          - Row Type: string, string, string, string, string
-
-
-Optimized:
-[12] Project [ref_0, ref_1, ref_2]
-    - Num Columns: 3
-    - Row Type: string, string, string
-  [11] Left Outer Apply parameters: [ref_1]
+  [5] Project [ref_4, ref_6, ref_7]
       - Num Columns: 3
       - Row Type: string, string, string
-    [13] Project [ref_4]
-        - Num Columns: 1
-        - Row Type: string
-      [2] TableScan id: 2
+    [4] Left Outer Apply parameters: [ref_1]
+        - Num Columns: 10
+        - Row Type: string, string, string, string, string, string, string, string, string, string
+      [3] TableScan id: 2
           - Num Columns: 5
           - Row Type: string, string, string, string, string
-    [6] Project [ref_1, ref_2]
-        - Num Columns: 2
-        - Row Type: string, string
-        - Correlated References: ctx_0.ref_0
-      [1] Filter [eq(ref_0, ctx_0.ref_0)]
+      [2] Filter [eq(ref_0, ctx_0.ref_0)]
           - Num Columns: 5
           - Row Type: string, string, string, string, string
           - Pulled Up Predicates: eq(ref_0, ctx_0.ref_0)
           - Correlated References: ctx_0.ref_0
-        [0] TableScan id: 1
+        [1] TableScan id: 1
             - Num Columns: 5
             - Row Type: string, string, string, string, string
 
-initial {"nodes":[{"id":"4","label":"[4] Project [ref_4, ref_6, ref_7]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"3","label":"[3] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"1","label":"[1] Filter [eq(ref_0, ctx_0.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0)","Correlated References: ctx_0.ref_0"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"4","to":"3","label":"input 0"},{"from":"3","to":"2","label":"input 0"},{"from":"3","to":"1","label":"input 1"},{"from":"1","to":"0","label":"input 0"}]}
-step ApplyPruningRule {"nodes":[{"id":"4","label":"[4] Project [ref_4, ref_6, ref_7]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"3","label":"[3] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"1","label":"[1] Filter [eq(ref_0, ctx_0.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0)","Correlated References: ctx_0.ref_0"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"8","label":"[8] Project [ref_1, ref_2, ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"7","label":"[7] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 4","Row Type: string, string, string, string"]},{"id":"5","label":"[5] Project [ref_1, ref_4]","annotations":["Num Columns: 2","Row Type: string, string"]},{"id":"6","label":"[6] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]}],"edges":[{"from":"4","to":"3","label":"input 0"},{"from":"3","to":"2","label":"input 0"},{"from":"3","to":"1","label":"input 1"},{"from":"1","to":"0","label":"input 0"},{"from":"8","to":"7","label":"input 0"},{"from":"7","to":"5","label":"input 0"},{"from":"7","to":"6","label":"input 1"},{"from":"5","to":"2","label":"input 0"},{"from":"6","to":"1","label":"input 0"},{"from":"4","to":"8","label":"ApplyPruningRule"}]}
-step ApplyPruningRule {"nodes":[{"id":"8","label":"[8] Project [ref_1, ref_2, ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"7","label":"[7] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 4","Row Type: string, string, string, string"]},{"id":"5","label":"[5] Project [ref_1, ref_4]","annotations":["Num Columns: 2","Row Type: string, string"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"6","label":"[6] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]},{"id":"1","label":"[1] Filter [eq(ref_0, ctx_0.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0)","Correlated References: ctx_0.ref_0"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"12","label":"[12] Project [ref_0, ref_1, ref_2]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"11","label":"[11] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"9","label":"[9] Project [ref_1]","annotations":["Num Columns: 1","Row Type: string"]},{"id":"10","label":"[10] Project [ref_0, ref_1]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]}],"edges":[{"from":"8","to":"7","label":"input 0"},{"from":"7","to":"5","label":"input 0"},{"from":"7","to":"6","label":"input 1"},{"from":"5","to":"2","label":"input 0"},{"from":"6","to":"1","label":"input 0"},{"from":"1","to":"0","label":"input 0"},{"from":"12","to":"11","label":"input 0"},{"from":"11","to":"9","label":"input 0"},{"from":"11","to":"10","label":"input 1"},{"from":"9","to":"5","label":"input 0"},{"from":"10","to":"6","label":"input 0"},{"from":"8","to":"12","label":"ApplyPruningRule"}]}
-step ProjectMergeRule {"nodes":[{"id":"12","label":"[12] Project [ref_0, ref_1, ref_2]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"11","label":"[11] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"9","label":"[9] Project [ref_1]","annotations":["Num Columns: 1","Row Type: string"]},{"id":"5","label":"[5] Project [ref_1, ref_4]","annotations":["Num Columns: 2","Row Type: string, string"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"10","label":"[10] Project [ref_0, ref_1]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]},{"id":"6","label":"[6] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]},{"id":"1","label":"[1] Filter [eq(ref_0, ctx_0.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0)","Correlated References: ctx_0.ref_0"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"13","label":"[13] Project [ref_4]","annotations":["Num Columns: 1","Row Type: string"]}],"edges":[{"from":"12","to":"11","label":"input 0"},{"from":"11","to":"9","label":"input 0"},{"from":"11","to":"10","label":"input 1"},{"from":"9","to":"5","label":"input 0"},{"from":"5","to":"2","label":"input 0"},{"from":"10","to":"6","label":"input 0"},{"from":"6","to":"1","label":"input 0"},{"from":"1","to":"0","label":"input 0"},{"from":"13","to":"2","label":"input 0"},{"from":"9","to":"13","label":"ProjectMergeRule"}]}
-step ProjectMergeRule {"nodes":[{"id":"12","label":"[12] Project [ref_0, ref_1, ref_2]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"11","label":"[11] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"13","label":"[13] Project [ref_4]","annotations":["Num Columns: 1","Row Type: string"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"10","label":"[10] Project [ref_0, ref_1]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]},{"id":"6","label":"[6] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]},{"id":"1","label":"[1] Filter [eq(ref_0, ctx_0.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0)","Correlated References: ctx_0.ref_0"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"12","to":"11","label":"input 0"},{"from":"11","to":"13","label":"input 0"},{"from":"11","to":"10","label":"input 1"},{"from":"13","to":"2","label":"input 0"},{"from":"10","to":"6","label":"input 0"},{"from":"6","to":"1","label":"input 0"},{"from":"1","to":"0","label":"input 0"},{"from":"10","to":"6","label":"ProjectMergeRule"}]}
-final {"nodes":[{"id":"12","label":"[12] Project [ref_0, ref_1, ref_2]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"11","label":"[11] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"13","label":"[13] Project [ref_4]","annotations":["Num Columns: 1","Row Type: string"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"6","label":"[6] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]},{"id":"1","label":"[1] Filter [eq(ref_0, ctx_0.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0)","Correlated References: ctx_0.ref_0"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"12","to":"11","label":"input 0"},{"from":"11","to":"13","label":"input 0"},{"from":"11","to":"6","label":"input 1"},{"from":"13","to":"2","label":"input 0"},{"from":"6","to":"1","label":"input 0"},{"from":"1","to":"0","label":"input 0"}]}
+
+Optimized:
+[0] QueryRoot
+    - Num Columns: 3
+    - Row Type: string, string, string
+  [13] Project [ref_0, ref_1, ref_2]
+      - Num Columns: 3
+      - Row Type: string, string, string
+    [12] Left Outer Apply parameters: [ref_1]
+        - Num Columns: 3
+        - Row Type: string, string, string
+      [14] Project [ref_4]
+          - Num Columns: 1
+          - Row Type: string
+        [3] TableScan id: 2
+            - Num Columns: 5
+            - Row Type: string, string, string, string, string
+      [7] Project [ref_1, ref_2]
+          - Num Columns: 2
+          - Row Type: string, string
+          - Correlated References: ctx_0.ref_0
+        [2] Filter [eq(ref_0, ctx_0.ref_0)]
+            - Num Columns: 5
+            - Row Type: string, string, string, string, string
+            - Pulled Up Predicates: eq(ref_0, ctx_0.ref_0)
+            - Correlated References: ctx_0.ref_0
+          [1] TableScan id: 1
+              - Num Columns: 5
+              - Row Type: string, string, string, string, string
+
+initial {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"5","label":"[5] Project [ref_4, ref_6, ref_7]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"4","label":"[4] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string"]},{"id":"3","label":"[3] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"2","label":"[2] Filter [eq(ref_0, ctx_0.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0)","Correlated References: ctx_0.ref_0"]},{"id":"1","label":"[1] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"0","to":"5","label":"input 0"},{"from":"5","to":"4","label":"input 0"},{"from":"4","to":"3","label":"input 0"},{"from":"4","to":"2","label":"input 1"},{"from":"2","to":"1","label":"input 0"}]}
+step ApplyPruningRule {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"5","label":"[5] Project [ref_4, ref_6, ref_7]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"4","label":"[4] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string"]},{"id":"3","label":"[3] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"2","label":"[2] Filter [eq(ref_0, ctx_0.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0)","Correlated References: ctx_0.ref_0"]},{"id":"1","label":"[1] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"9","label":"[9] Project [ref_1, ref_2, ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"8","label":"[8] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 4","Row Type: string, string, string, string"]},{"id":"6","label":"[6] Project [ref_1, ref_4]","annotations":["Num Columns: 2","Row Type: string, string"]},{"id":"7","label":"[7] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]}],"edges":[{"from":"0","to":"5","label":"input 0"},{"from":"5","to":"4","label":"input 0"},{"from":"4","to":"3","label":"input 0"},{"from":"4","to":"2","label":"input 1"},{"from":"2","to":"1","label":"input 0"},{"from":"9","to":"8","label":"input 0"},{"from":"8","to":"6","label":"input 0"},{"from":"8","to":"7","label":"input 1"},{"from":"6","to":"3","label":"input 0"},{"from":"7","to":"2","label":"input 0"},{"from":"5","to":"9","label":"ApplyPruningRule"}]}
+step ApplyPruningRule {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"9","label":"[9] Project [ref_1, ref_2, ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"8","label":"[8] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 4","Row Type: string, string, string, string"]},{"id":"6","label":"[6] Project [ref_1, ref_4]","annotations":["Num Columns: 2","Row Type: string, string"]},{"id":"3","label":"[3] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"7","label":"[7] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]},{"id":"2","label":"[2] Filter [eq(ref_0, ctx_0.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0)","Correlated References: ctx_0.ref_0"]},{"id":"1","label":"[1] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"13","label":"[13] Project [ref_0, ref_1, ref_2]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"12","label":"[12] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"10","label":"[10] Project [ref_1]","annotations":["Num Columns: 1","Row Type: string"]},{"id":"11","label":"[11] Project [ref_0, ref_1]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]}],"edges":[{"from":"0","to":"9","label":"input 0"},{"from":"9","to":"8","label":"input 0"},{"from":"8","to":"6","label":"input 0"},{"from":"8","to":"7","label":"input 1"},{"from":"6","to":"3","label":"input 0"},{"from":"7","to":"2","label":"input 0"},{"from":"2","to":"1","label":"input 0"},{"from":"13","to":"12","label":"input 0"},{"from":"12","to":"10","label":"input 0"},{"from":"12","to":"11","label":"input 1"},{"from":"10","to":"6","label":"input 0"},{"from":"11","to":"7","label":"input 0"},{"from":"9","to":"13","label":"ApplyPruningRule"}]}
+step ProjectMergeRule {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"13","label":"[13] Project [ref_0, ref_1, ref_2]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"12","label":"[12] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"10","label":"[10] Project [ref_1]","annotations":["Num Columns: 1","Row Type: string"]},{"id":"6","label":"[6] Project [ref_1, ref_4]","annotations":["Num Columns: 2","Row Type: string, string"]},{"id":"3","label":"[3] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"11","label":"[11] Project [ref_0, ref_1]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]},{"id":"7","label":"[7] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]},{"id":"2","label":"[2] Filter [eq(ref_0, ctx_0.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0)","Correlated References: ctx_0.ref_0"]},{"id":"1","label":"[1] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"14","label":"[14] Project [ref_4]","annotations":["Num Columns: 1","Row Type: string"]}],"edges":[{"from":"0","to":"13","label":"input 0"},{"from":"13","to":"12","label":"input 0"},{"from":"12","to":"10","label":"input 0"},{"from":"12","to":"11","label":"input 1"},{"from":"10","to":"6","label":"input 0"},{"from":"6","to":"3","label":"input 0"},{"from":"11","to":"7","label":"input 0"},{"from":"7","to":"2","label":"input 0"},{"from":"2","to":"1","label":"input 0"},{"from":"14","to":"3","label":"input 0"},{"from":"10","to":"14","label":"ProjectMergeRule"}]}
+step ProjectMergeRule {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"13","label":"[13] Project [ref_0, ref_1, ref_2]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"12","label":"[12] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"14","label":"[14] Project [ref_4]","annotations":["Num Columns: 1","Row Type: string"]},{"id":"3","label":"[3] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"11","label":"[11] Project [ref_0, ref_1]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]},{"id":"7","label":"[7] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]},{"id":"2","label":"[2] Filter [eq(ref_0, ctx_0.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0)","Correlated References: ctx_0.ref_0"]},{"id":"1","label":"[1] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"0","to":"13","label":"input 0"},{"from":"13","to":"12","label":"input 0"},{"from":"12","to":"14","label":"input 0"},{"from":"12","to":"11","label":"input 1"},{"from":"14","to":"3","label":"input 0"},{"from":"11","to":"7","label":"input 0"},{"from":"7","to":"2","label":"input 0"},{"from":"2","to":"1","label":"input 0"},{"from":"11","to":"7","label":"ProjectMergeRule"}]}
+final {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"13","label":"[13] Project [ref_0, ref_1, ref_2]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"12","label":"[12] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"14","label":"[14] Project [ref_4]","annotations":["Num Columns: 1","Row Type: string"]},{"id":"3","label":"[3] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"7","label":"[7] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]},{"id":"2","label":"[2] Filter [eq(ref_0, ctx_0.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0)","Correlated References: ctx_0.ref_0"]},{"id":"1","label":"[1] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"0","to":"13","label":"input 0"},{"from":"13","to":"12","label":"input 0"},{"from":"12","to":"14","label":"input 0"},{"from":"12","to":"7","label":"input 1"},{"from":"14","to":"3","label":"input 0"},{"from":"7","to":"2","label":"input 0"},{"from":"2","to":"1","label":"input 0"}]}
 ----
 ----
 
@@ -164,76 +182,82 @@ run
 nested_apply_2
 ----
 ----
-[6] Project [ref_4, ref_6, ref_7]
+[0] QueryRoot
     - Num Columns: 3
     - Row Type: string, string, string
-  [5] Inner Apply parameters: [ref_3]
-      - Num Columns: 15
-      - Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string
-    [4] TableScan id: 3
-        - Num Columns: 5
-        - Row Type: string, string, string, string, string
-    [3] Left Outer Apply parameters: [ref_1]
-        - Num Columns: 10
-        - Row Type: string, string, string, string, string, string, string, string, string, string
-        - Correlated References: ctx_0.ref_0
-      [2] TableScan id: 2
-          - Num Columns: 5
-          - Row Type: string, string, string, string, string
-      [1] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)]
-          - Num Columns: 5
-          - Row Type: string, string, string, string, string
-          - Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)
-          - Correlated References: ctx_0.ref_0, ctx_1.ref_0
-        [0] TableScan id: 1
-            - Num Columns: 5
-            - Row Type: string, string, string, string, string
-
-
-Optimized:
-[14] Project [ref_0, ref_1, ref_2]
-    - Num Columns: 3
-    - Row Type: string, string, string
-  [13] Inner Apply parameters: [ref_3]
+  [7] Project [ref_4, ref_6, ref_7]
       - Num Columns: 3
       - Row Type: string, string, string
-    [15] Project [ref_4]
-        - Num Columns: 1
-        - Row Type: string
-      [4] TableScan id: 3
+    [6] Inner Apply parameters: [ref_3]
+        - Num Columns: 15
+        - Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string
+      [5] TableScan id: 3
           - Num Columns: 5
           - Row Type: string, string, string, string, string
-    [18] Left Outer Apply parameters: [ref_1]
-        - Num Columns: 2
-        - Row Type: string, string
-        - Correlated References: ctx_0.ref_0
-      [16] Project [ref_1, ref_2]
-          - Num Columns: 2
-          - Row Type: string, string
-        [2] TableScan id: 2
+      [4] Left Outer Apply parameters: [ref_1]
+          - Num Columns: 10
+          - Row Type: string, string, string, string, string, string, string, string, string, string
+          - Correlated References: ctx_0.ref_0
+        [3] TableScan id: 2
             - Num Columns: 5
             - Row Type: string, string, string, string, string
-      [17] Project []
-          - Num Columns: 0
-          - Row Type: 
-          - Correlated References: ctx_0.ref_0, ctx_1.ref_0
-        [1] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)]
+        [2] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)]
             - Num Columns: 5
             - Row Type: string, string, string, string, string
             - Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)
             - Correlated References: ctx_0.ref_0, ctx_1.ref_0
-          [0] TableScan id: 1
+          [1] TableScan id: 1
               - Num Columns: 5
               - Row Type: string, string, string, string, string
 
-initial {"nodes":[{"id":"6","label":"[6] Project [ref_4, ref_6, ref_7]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"5","label":"[5] Inner Apply parameters: [ref_3]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string"]},{"id":"4","label":"[4] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"3","label":"[3] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Correlated References: ctx_0.ref_0"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"1","label":"[1] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)","Correlated References: ctx_0.ref_0, ctx_1.ref_0"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"6","to":"5","label":"input 0"},{"from":"5","to":"4","label":"input 0"},{"from":"5","to":"3","label":"input 1"},{"from":"3","to":"2","label":"input 0"},{"from":"3","to":"1","label":"input 1"},{"from":"1","to":"0","label":"input 0"}]}
-step ApplyPruningRule {"nodes":[{"id":"6","label":"[6] Project [ref_4, ref_6, ref_7]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"5","label":"[5] Inner Apply parameters: [ref_3]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string"]},{"id":"4","label":"[4] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"3","label":"[3] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Correlated References: ctx_0.ref_0"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"1","label":"[1] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)","Correlated References: ctx_0.ref_0, ctx_1.ref_0"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"10","label":"[10] Project [ref_1, ref_2, ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"9","label":"[9] Inner Apply parameters: [ref_3]","annotations":["Num Columns: 4","Row Type: string, string, string, string"]},{"id":"7","label":"[7] Project [ref_3, ref_4]","annotations":["Num Columns: 2","Row Type: string, string"]},{"id":"8","label":"[8] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]}],"edges":[{"from":"6","to":"5","label":"input 0"},{"from":"5","to":"4","label":"input 0"},{"from":"5","to":"3","label":"input 1"},{"from":"3","to":"2","label":"input 0"},{"from":"3","to":"1","label":"input 1"},{"from":"1","to":"0","label":"input 0"},{"from":"10","to":"9","label":"input 0"},{"from":"9","to":"7","label":"input 0"},{"from":"9","to":"8","label":"input 1"},{"from":"7","to":"4","label":"input 0"},{"from":"8","to":"3","label":"input 0"},{"from":"6","to":"10","label":"ApplyPruningRule"}]}
-step ApplyPruningRule {"nodes":[{"id":"10","label":"[10] Project [ref_1, ref_2, ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"9","label":"[9] Inner Apply parameters: [ref_3]","annotations":["Num Columns: 4","Row Type: string, string, string, string"]},{"id":"7","label":"[7] Project [ref_3, ref_4]","annotations":["Num Columns: 2","Row Type: string, string"]},{"id":"4","label":"[4] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"8","label":"[8] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]},{"id":"3","label":"[3] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Correlated References: ctx_0.ref_0"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"1","label":"[1] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)","Correlated References: ctx_0.ref_0, ctx_1.ref_0"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"14","label":"[14] Project [ref_0, ref_1, ref_2]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"13","label":"[13] Inner Apply parameters: [ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"11","label":"[11] Project [ref_1]","annotations":["Num Columns: 1","Row Type: string"]},{"id":"12","label":"[12] Project [ref_0, ref_1]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]}],"edges":[{"from":"10","to":"9","label":"input 0"},{"from":"9","to":"7","label":"input 0"},{"from":"9","to":"8","label":"input 1"},{"from":"7","to":"4","label":"input 0"},{"from":"8","to":"3","label":"input 0"},{"from":"3","to":"2","label":"input 0"},{"from":"3","to":"1","label":"input 1"},{"from":"1","to":"0","label":"input 0"},{"from":"14","to":"13","label":"input 0"},{"from":"13","to":"11","label":"input 0"},{"from":"13","to":"12","label":"input 1"},{"from":"11","to":"7","label":"input 0"},{"from":"12","to":"8","label":"input 0"},{"from":"10","to":"14","label":"ApplyPruningRule"}]}
-step ProjectMergeRule {"nodes":[{"id":"14","label":"[14] Project [ref_0, ref_1, ref_2]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"13","label":"[13] Inner Apply parameters: [ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"11","label":"[11] Project [ref_1]","annotations":["Num Columns: 1","Row Type: string"]},{"id":"7","label":"[7] Project [ref_3, ref_4]","annotations":["Num Columns: 2","Row Type: string, string"]},{"id":"4","label":"[4] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"12","label":"[12] Project [ref_0, ref_1]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]},{"id":"8","label":"[8] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]},{"id":"3","label":"[3] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Correlated References: ctx_0.ref_0"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"1","label":"[1] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)","Correlated References: ctx_0.ref_0, ctx_1.ref_0"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"15","label":"[15] Project [ref_4]","annotations":["Num Columns: 1","Row Type: string"]}],"edges":[{"from":"14","to":"13","label":"input 0"},{"from":"13","to":"11","label":"input 0"},{"from":"13","to":"12","label":"input 1"},{"from":"11","to":"7","label":"input 0"},{"from":"7","to":"4","label":"input 0"},{"from":"12","to":"8","label":"input 0"},{"from":"8","to":"3","label":"input 0"},{"from":"3","to":"2","label":"input 0"},{"from":"3","to":"1","label":"input 1"},{"from":"1","to":"0","label":"input 0"},{"from":"15","to":"4","label":"input 0"},{"from":"11","to":"15","label":"ProjectMergeRule"}]}
-step ProjectMergeRule {"nodes":[{"id":"14","label":"[14] Project [ref_0, ref_1, ref_2]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"13","label":"[13] Inner Apply parameters: [ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"15","label":"[15] Project [ref_4]","annotations":["Num Columns: 1","Row Type: string"]},{"id":"4","label":"[4] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"12","label":"[12] Project [ref_0, ref_1]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]},{"id":"8","label":"[8] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]},{"id":"3","label":"[3] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Correlated References: ctx_0.ref_0"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"1","label":"[1] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)","Correlated References: ctx_0.ref_0, ctx_1.ref_0"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"14","to":"13","label":"input 0"},{"from":"13","to":"15","label":"input 0"},{"from":"13","to":"12","label":"input 1"},{"from":"15","to":"4","label":"input 0"},{"from":"12","to":"8","label":"input 0"},{"from":"8","to":"3","label":"input 0"},{"from":"3","to":"2","label":"input 0"},{"from":"3","to":"1","label":"input 1"},{"from":"1","to":"0","label":"input 0"},{"from":"12","to":"8","label":"ProjectMergeRule"}]}
-step ApplyPruningRule {"nodes":[{"id":"14","label":"[14] Project [ref_0, ref_1, ref_2]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"13","label":"[13] Inner Apply parameters: [ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"15","label":"[15] Project [ref_4]","annotations":["Num Columns: 1","Row Type: string"]},{"id":"4","label":"[4] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"8","label":"[8] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]},{"id":"3","label":"[3] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Correlated References: ctx_0.ref_0"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"1","label":"[1] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)","Correlated References: ctx_0.ref_0, ctx_1.ref_0"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"19","label":"[19] Project [ref_0, ref_1]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]},{"id":"18","label":"[18] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]},{"id":"16","label":"[16] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string"]},{"id":"17","label":"[17] Project []","annotations":["Num Columns: 0","Row Type: ","Correlated References: ctx_0.ref_0, ctx_1.ref_0"]}],"edges":[{"from":"14","to":"13","label":"input 0"},{"from":"13","to":"15","label":"input 0"},{"from":"13","to":"8","label":"input 1"},{"from":"15","to":"4","label":"input 0"},{"from":"8","to":"3","label":"input 0"},{"from":"3","to":"2","label":"input 0"},{"from":"3","to":"1","label":"input 1"},{"from":"1","to":"0","label":"input 0"},{"from":"19","to":"18","label":"input 0"},{"from":"18","to":"16","label":"input 0"},{"from":"18","to":"17","label":"input 1"},{"from":"16","to":"2","label":"input 0"},{"from":"17","to":"1","label":"input 0"},{"from":"8","to":"19","label":"ApplyPruningRule"}]}
-step RemovePassthroughProjectRule {"nodes":[{"id":"14","label":"[14] Project [ref_0, ref_1, ref_2]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"13","label":"[13] Inner Apply parameters: [ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"15","label":"[15] Project [ref_4]","annotations":["Num Columns: 1","Row Type: string"]},{"id":"4","label":"[4] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"19","label":"[19] Project [ref_0, ref_1]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]},{"id":"18","label":"[18] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]},{"id":"16","label":"[16] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"17","label":"[17] Project []","annotations":["Num Columns: 0","Row Type: ","Correlated References: ctx_0.ref_0, ctx_1.ref_0"]},{"id":"1","label":"[1] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)","Correlated References: ctx_0.ref_0, ctx_1.ref_0"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"14","to":"13","label":"input 0"},{"from":"13","to":"15","label":"input 0"},{"from":"13","to":"19","label":"input 1"},{"from":"15","to":"4","label":"input 0"},{"from":"19","to":"18","label":"input 0"},{"from":"18","to":"16","label":"input 0"},{"from":"18","to":"17","label":"input 1"},{"from":"16","to":"2","label":"input 0"},{"from":"17","to":"1","label":"input 0"},{"from":"1","to":"0","label":"input 0"},{"from":"19","to":"18","label":"RemovePassthroughProjectRule"}]}
-final {"nodes":[{"id":"14","label":"[14] Project [ref_0, ref_1, ref_2]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"13","label":"[13] Inner Apply parameters: [ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"15","label":"[15] Project [ref_4]","annotations":["Num Columns: 1","Row Type: string"]},{"id":"4","label":"[4] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"18","label":"[18] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]},{"id":"16","label":"[16] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"17","label":"[17] Project []","annotations":["Num Columns: 0","Row Type: ","Correlated References: ctx_0.ref_0, ctx_1.ref_0"]},{"id":"1","label":"[1] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)","Correlated References: ctx_0.ref_0, ctx_1.ref_0"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"14","to":"13","label":"input 0"},{"from":"13","to":"15","label":"input 0"},{"from":"13","to":"18","label":"input 1"},{"from":"15","to":"4","label":"input 0"},{"from":"18","to":"16","label":"input 0"},{"from":"18","to":"17","label":"input 1"},{"from":"16","to":"2","label":"input 0"},{"from":"17","to":"1","label":"input 0"},{"from":"1","to":"0","label":"input 0"}]}
+
+Optimized:
+[0] QueryRoot
+    - Num Columns: 3
+    - Row Type: string, string, string
+  [15] Project [ref_0, ref_1, ref_2]
+      - Num Columns: 3
+      - Row Type: string, string, string
+    [14] Inner Apply parameters: [ref_3]
+        - Num Columns: 3
+        - Row Type: string, string, string
+      [16] Project [ref_4]
+          - Num Columns: 1
+          - Row Type: string
+        [5] TableScan id: 3
+            - Num Columns: 5
+            - Row Type: string, string, string, string, string
+      [19] Left Outer Apply parameters: [ref_1]
+          - Num Columns: 2
+          - Row Type: string, string
+          - Correlated References: ctx_0.ref_0
+        [17] Project [ref_1, ref_2]
+            - Num Columns: 2
+            - Row Type: string, string
+          [3] TableScan id: 2
+              - Num Columns: 5
+              - Row Type: string, string, string, string, string
+        [18] Project []
+            - Num Columns: 0
+            - Row Type: 
+            - Correlated References: ctx_0.ref_0, ctx_1.ref_0
+          [2] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)]
+              - Num Columns: 5
+              - Row Type: string, string, string, string, string
+              - Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)
+              - Correlated References: ctx_0.ref_0, ctx_1.ref_0
+            [1] TableScan id: 1
+                - Num Columns: 5
+                - Row Type: string, string, string, string, string
+
+initial {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"7","label":"[7] Project [ref_4, ref_6, ref_7]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"6","label":"[6] Inner Apply parameters: [ref_3]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string"]},{"id":"5","label":"[5] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"4","label":"[4] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Correlated References: ctx_0.ref_0"]},{"id":"3","label":"[3] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"2","label":"[2] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)","Correlated References: ctx_0.ref_0, ctx_1.ref_0"]},{"id":"1","label":"[1] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"0","to":"7","label":"input 0"},{"from":"7","to":"6","label":"input 0"},{"from":"6","to":"5","label":"input 0"},{"from":"6","to":"4","label":"input 1"},{"from":"4","to":"3","label":"input 0"},{"from":"4","to":"2","label":"input 1"},{"from":"2","to":"1","label":"input 0"}]}
+step ApplyPruningRule {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"7","label":"[7] Project [ref_4, ref_6, ref_7]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"6","label":"[6] Inner Apply parameters: [ref_3]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string"]},{"id":"5","label":"[5] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"4","label":"[4] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Correlated References: ctx_0.ref_0"]},{"id":"3","label":"[3] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"2","label":"[2] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)","Correlated References: ctx_0.ref_0, ctx_1.ref_0"]},{"id":"1","label":"[1] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"11","label":"[11] Project [ref_1, ref_2, ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"10","label":"[10] Inner Apply parameters: [ref_3]","annotations":["Num Columns: 4","Row Type: string, string, string, string"]},{"id":"8","label":"[8] Project [ref_3, ref_4]","annotations":["Num Columns: 2","Row Type: string, string"]},{"id":"9","label":"[9] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]}],"edges":[{"from":"0","to":"7","label":"input 0"},{"from":"7","to":"6","label":"input 0"},{"from":"6","to":"5","label":"input 0"},{"from":"6","to":"4","label":"input 1"},{"from":"4","to":"3","label":"input 0"},{"from":"4","to":"2","label":"input 1"},{"from":"2","to":"1","label":"input 0"},{"from":"11","to":"10","label":"input 0"},{"from":"10","to":"8","label":"input 0"},{"from":"10","to":"9","label":"input 1"},{"from":"8","to":"5","label":"input 0"},{"from":"9","to":"4","label":"input 0"},{"from":"7","to":"11","label":"ApplyPruningRule"}]}
+step ApplyPruningRule {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"11","label":"[11] Project [ref_1, ref_2, ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"10","label":"[10] Inner Apply parameters: [ref_3]","annotations":["Num Columns: 4","Row Type: string, string, string, string"]},{"id":"8","label":"[8] Project [ref_3, ref_4]","annotations":["Num Columns: 2","Row Type: string, string"]},{"id":"5","label":"[5] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"9","label":"[9] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]},{"id":"4","label":"[4] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Correlated References: ctx_0.ref_0"]},{"id":"3","label":"[3] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"2","label":"[2] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)","Correlated References: ctx_0.ref_0, ctx_1.ref_0"]},{"id":"1","label":"[1] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"15","label":"[15] Project [ref_0, ref_1, ref_2]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"14","label":"[14] Inner Apply parameters: [ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"12","label":"[12] Project [ref_1]","annotations":["Num Columns: 1","Row Type: string"]},{"id":"13","label":"[13] Project [ref_0, ref_1]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]}],"edges":[{"from":"0","to":"11","label":"input 0"},{"from":"11","to":"10","label":"input 0"},{"from":"10","to":"8","label":"input 0"},{"from":"10","to":"9","label":"input 1"},{"from":"8","to":"5","label":"input 0"},{"from":"9","to":"4","label":"input 0"},{"from":"4","to":"3","label":"input 0"},{"from":"4","to":"2","label":"input 1"},{"from":"2","to":"1","label":"input 0"},{"from":"15","to":"14","label":"input 0"},{"from":"14","to":"12","label":"input 0"},{"from":"14","to":"13","label":"input 1"},{"from":"12","to":"8","label":"input 0"},{"from":"13","to":"9","label":"input 0"},{"from":"11","to":"15","label":"ApplyPruningRule"}]}
+step ProjectMergeRule {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"15","label":"[15] Project [ref_0, ref_1, ref_2]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"14","label":"[14] Inner Apply parameters: [ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"12","label":"[12] Project [ref_1]","annotations":["Num Columns: 1","Row Type: string"]},{"id":"8","label":"[8] Project [ref_3, ref_4]","annotations":["Num Columns: 2","Row Type: string, string"]},{"id":"5","label":"[5] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"13","label":"[13] Project [ref_0, ref_1]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]},{"id":"9","label":"[9] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]},{"id":"4","label":"[4] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Correlated References: ctx_0.ref_0"]},{"id":"3","label":"[3] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"2","label":"[2] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)","Correlated References: ctx_0.ref_0, ctx_1.ref_0"]},{"id":"1","label":"[1] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"16","label":"[16] Project [ref_4]","annotations":["Num Columns: 1","Row Type: string"]}],"edges":[{"from":"0","to":"15","label":"input 0"},{"from":"15","to":"14","label":"input 0"},{"from":"14","to":"12","label":"input 0"},{"from":"14","to":"13","label":"input 1"},{"from":"12","to":"8","label":"input 0"},{"from":"8","to":"5","label":"input 0"},{"from":"13","to":"9","label":"input 0"},{"from":"9","to":"4","label":"input 0"},{"from":"4","to":"3","label":"input 0"},{"from":"4","to":"2","label":"input 1"},{"from":"2","to":"1","label":"input 0"},{"from":"16","to":"5","label":"input 0"},{"from":"12","to":"16","label":"ProjectMergeRule"}]}
+step ProjectMergeRule {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"15","label":"[15] Project [ref_0, ref_1, ref_2]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"14","label":"[14] Inner Apply parameters: [ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"16","label":"[16] Project [ref_4]","annotations":["Num Columns: 1","Row Type: string"]},{"id":"5","label":"[5] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"13","label":"[13] Project [ref_0, ref_1]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]},{"id":"9","label":"[9] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]},{"id":"4","label":"[4] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Correlated References: ctx_0.ref_0"]},{"id":"3","label":"[3] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"2","label":"[2] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)","Correlated References: ctx_0.ref_0, ctx_1.ref_0"]},{"id":"1","label":"[1] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"0","to":"15","label":"input 0"},{"from":"15","to":"14","label":"input 0"},{"from":"14","to":"16","label":"input 0"},{"from":"14","to":"13","label":"input 1"},{"from":"16","to":"5","label":"input 0"},{"from":"13","to":"9","label":"input 0"},{"from":"9","to":"4","label":"input 0"},{"from":"4","to":"3","label":"input 0"},{"from":"4","to":"2","label":"input 1"},{"from":"2","to":"1","label":"input 0"},{"from":"13","to":"9","label":"ProjectMergeRule"}]}
+step ApplyPruningRule {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"15","label":"[15] Project [ref_0, ref_1, ref_2]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"14","label":"[14] Inner Apply parameters: [ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"16","label":"[16] Project [ref_4]","annotations":["Num Columns: 1","Row Type: string"]},{"id":"5","label":"[5] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"9","label":"[9] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]},{"id":"4","label":"[4] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Correlated References: ctx_0.ref_0"]},{"id":"3","label":"[3] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"2","label":"[2] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)","Correlated References: ctx_0.ref_0, ctx_1.ref_0"]},{"id":"1","label":"[1] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"20","label":"[20] Project [ref_0, ref_1]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]},{"id":"19","label":"[19] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]},{"id":"17","label":"[17] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string"]},{"id":"18","label":"[18] Project []","annotations":["Num Columns: 0","Row Type: ","Correlated References: ctx_0.ref_0, ctx_1.ref_0"]}],"edges":[{"from":"0","to":"15","label":"input 0"},{"from":"15","to":"14","label":"input 0"},{"from":"14","to":"16","label":"input 0"},{"from":"14","to":"9","label":"input 1"},{"from":"16","to":"5","label":"input 0"},{"from":"9","to":"4","label":"input 0"},{"from":"4","to":"3","label":"input 0"},{"from":"4","to":"2","label":"input 1"},{"from":"2","to":"1","label":"input 0"},{"from":"20","to":"19","label":"input 0"},{"from":"19","to":"17","label":"input 0"},{"from":"19","to":"18","label":"input 1"},{"from":"17","to":"3","label":"input 0"},{"from":"18","to":"2","label":"input 0"},{"from":"9","to":"20","label":"ApplyPruningRule"}]}
+step RemovePassthroughProjectRule {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"15","label":"[15] Project [ref_0, ref_1, ref_2]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"14","label":"[14] Inner Apply parameters: [ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"16","label":"[16] Project [ref_4]","annotations":["Num Columns: 1","Row Type: string"]},{"id":"5","label":"[5] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"20","label":"[20] Project [ref_0, ref_1]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]},{"id":"19","label":"[19] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]},{"id":"17","label":"[17] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string"]},{"id":"3","label":"[3] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"18","label":"[18] Project []","annotations":["Num Columns: 0","Row Type: ","Correlated References: ctx_0.ref_0, ctx_1.ref_0"]},{"id":"2","label":"[2] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)","Correlated References: ctx_0.ref_0, ctx_1.ref_0"]},{"id":"1","label":"[1] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"0","to":"15","label":"input 0"},{"from":"15","to":"14","label":"input 0"},{"from":"14","to":"16","label":"input 0"},{"from":"14","to":"20","label":"input 1"},{"from":"16","to":"5","label":"input 0"},{"from":"20","to":"19","label":"input 0"},{"from":"19","to":"17","label":"input 0"},{"from":"19","to":"18","label":"input 1"},{"from":"17","to":"3","label":"input 0"},{"from":"18","to":"2","label":"input 0"},{"from":"2","to":"1","label":"input 0"},{"from":"20","to":"19","label":"RemovePassthroughProjectRule"}]}
+final {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"15","label":"[15] Project [ref_0, ref_1, ref_2]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"14","label":"[14] Inner Apply parameters: [ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"16","label":"[16] Project [ref_4]","annotations":["Num Columns: 1","Row Type: string"]},{"id":"5","label":"[5] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"19","label":"[19] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0"]},{"id":"17","label":"[17] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string"]},{"id":"3","label":"[3] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"18","label":"[18] Project []","annotations":["Num Columns: 0","Row Type: ","Correlated References: ctx_0.ref_0, ctx_1.ref_0"]},{"id":"2","label":"[2] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0)","Correlated References: ctx_0.ref_0, ctx_1.ref_0"]},{"id":"1","label":"[1] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"0","to":"15","label":"input 0"},{"from":"15","to":"14","label":"input 0"},{"from":"14","to":"16","label":"input 0"},{"from":"14","to":"19","label":"input 1"},{"from":"16","to":"5","label":"input 0"},{"from":"19","to":"17","label":"input 0"},{"from":"19","to":"18","label":"input 1"},{"from":"17","to":"3","label":"input 0"},{"from":"18","to":"2","label":"input 0"},{"from":"2","to":"1","label":"input 0"}]}
 ----
 ----
 
@@ -241,58 +265,64 @@ run
 nested_apply_3
 ----
 ----
-[5] Inner Apply parameters: [ref_3, ref_4]
+[0] QueryRoot
     - Num Columns: 15
     - Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string
-  [4] TableScan id: 3
-      - Num Columns: 5
-      - Row Type: string, string, string, string, string
-  [3] Left Outer Apply parameters: [ref_1]
-      - Num Columns: 10
-      - Row Type: string, string, string, string, string, string, string, string, string, string
-      - Correlated References: ctx_0.ref_0, ctx_0.ref_1
-    [2] TableScan id: 2
-        - Num Columns: 5
-        - Row Type: string, string, string, string, string
-    [1] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)]
-        - Num Columns: 5
-        - Row Type: string, string, string, string, string
-        - Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)
-        - Correlated References: ctx_0.ref_0, ctx_1.ref_0, ctx_1.ref_1
-      [0] TableScan id: 1
-          - Num Columns: 5
-          - Row Type: string, string, string, string, string
-
-
-Optimized:
-[6] Project [ref_0, ref_1, ref_2, ref_3, ref_4, ref_5, ref_6, ref_7, ref_8, ref_9, ref_10, ref_11, ref_12, ref_13, ref_14]
-    - Num Columns: 15
-    - Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string
-  [5] Inner Apply parameters: [ref_3, ref_4]
+  [6] Inner Apply parameters: [ref_3, ref_4]
       - Num Columns: 15
       - Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string
-    [4] TableScan id: 3
+    [5] TableScan id: 3
         - Num Columns: 5
         - Row Type: string, string, string, string, string
-    [3] Left Outer Apply parameters: [ref_1]
+    [4] Left Outer Apply parameters: [ref_1]
         - Num Columns: 10
         - Row Type: string, string, string, string, string, string, string, string, string, string
         - Correlated References: ctx_0.ref_0, ctx_0.ref_1
-      [2] TableScan id: 2
+      [3] TableScan id: 2
           - Num Columns: 5
           - Row Type: string, string, string, string, string
-      [1] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)]
+      [2] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)]
           - Num Columns: 5
           - Row Type: string, string, string, string, string
           - Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)
           - Correlated References: ctx_0.ref_0, ctx_1.ref_0, ctx_1.ref_1
-        [0] TableScan id: 1
+        [1] TableScan id: 1
             - Num Columns: 5
             - Row Type: string, string, string, string, string
 
-initial {"nodes":[{"id":"5","label":"[5] Inner Apply parameters: [ref_3, ref_4]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string"]},{"id":"4","label":"[4] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"3","label":"[3] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Correlated References: ctx_0.ref_0, ctx_0.ref_1"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"1","label":"[1] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)","Correlated References: ctx_0.ref_0, ctx_1.ref_0, ctx_1.ref_1"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"5","to":"4","label":"input 0"},{"from":"5","to":"3","label":"input 1"},{"from":"3","to":"2","label":"input 0"},{"from":"3","to":"1","label":"input 1"},{"from":"1","to":"0","label":"input 0"}]}
-step TopProjectionRule {"nodes":[{"id":"5","label":"[5] Inner Apply parameters: [ref_3, ref_4]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string"]},{"id":"4","label":"[4] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"3","label":"[3] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Correlated References: ctx_0.ref_0, ctx_0.ref_1"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"1","label":"[1] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)","Correlated References: ctx_0.ref_0, ctx_1.ref_0, ctx_1.ref_1"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"6","label":"[6] Project [ref_0, ref_1, ref_2, ref_3, ref_4, ref_5, ref_6, ref_7, ref_8, ref_9, ref_10, ref_11, ref_12, ref_13, ref_14]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string"]}],"edges":[{"from":"5","to":"4","label":"input 0"},{"from":"5","to":"3","label":"input 1"},{"from":"3","to":"2","label":"input 0"},{"from":"3","to":"1","label":"input 1"},{"from":"1","to":"0","label":"input 0"},{"from":"6","to":"5","label":"input 0"},{"from":"5","to":"6","label":"TopProjectionRule"}]}
-final {"nodes":[{"id":"6","label":"[6] Project [ref_0, ref_1, ref_2, ref_3, ref_4, ref_5, ref_6, ref_7, ref_8, ref_9, ref_10, ref_11, ref_12, ref_13, ref_14]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string"]},{"id":"5","label":"[5] Inner Apply parameters: [ref_3, ref_4]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string"]},{"id":"4","label":"[4] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"3","label":"[3] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Correlated References: ctx_0.ref_0, ctx_0.ref_1"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"1","label":"[1] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)","Correlated References: ctx_0.ref_0, ctx_1.ref_0, ctx_1.ref_1"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"6","to":"5","label":"input 0"},{"from":"5","to":"4","label":"input 0"},{"from":"5","to":"3","label":"input 1"},{"from":"3","to":"2","label":"input 0"},{"from":"3","to":"1","label":"input 1"},{"from":"1","to":"0","label":"input 0"}]}
+
+Optimized:
+[0] QueryRoot
+    - Num Columns: 15
+    - Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string
+  [7] Project [ref_0, ref_1, ref_2, ref_3, ref_4, ref_5, ref_6, ref_7, ref_8, ref_9, ref_10, ref_11, ref_12, ref_13, ref_14]
+      - Num Columns: 15
+      - Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string
+    [6] Inner Apply parameters: [ref_3, ref_4]
+        - Num Columns: 15
+        - Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string
+      [5] TableScan id: 3
+          - Num Columns: 5
+          - Row Type: string, string, string, string, string
+      [4] Left Outer Apply parameters: [ref_1]
+          - Num Columns: 10
+          - Row Type: string, string, string, string, string, string, string, string, string, string
+          - Correlated References: ctx_0.ref_0, ctx_0.ref_1
+        [3] TableScan id: 2
+            - Num Columns: 5
+            - Row Type: string, string, string, string, string
+        [2] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)]
+            - Num Columns: 5
+            - Row Type: string, string, string, string, string
+            - Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)
+            - Correlated References: ctx_0.ref_0, ctx_1.ref_0, ctx_1.ref_1
+          [1] TableScan id: 1
+              - Num Columns: 5
+              - Row Type: string, string, string, string, string
+
+initial {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string"]},{"id":"6","label":"[6] Inner Apply parameters: [ref_3, ref_4]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string"]},{"id":"5","label":"[5] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"4","label":"[4] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Correlated References: ctx_0.ref_0, ctx_0.ref_1"]},{"id":"3","label":"[3] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"2","label":"[2] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)","Correlated References: ctx_0.ref_0, ctx_1.ref_0, ctx_1.ref_1"]},{"id":"1","label":"[1] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"0","to":"6","label":"input 0"},{"from":"6","to":"5","label":"input 0"},{"from":"6","to":"4","label":"input 1"},{"from":"4","to":"3","label":"input 0"},{"from":"4","to":"2","label":"input 1"},{"from":"2","to":"1","label":"input 0"}]}
+step TopProjectionRule {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string"]},{"id":"6","label":"[6] Inner Apply parameters: [ref_3, ref_4]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string"]},{"id":"5","label":"[5] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"4","label":"[4] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Correlated References: ctx_0.ref_0, ctx_0.ref_1"]},{"id":"3","label":"[3] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"2","label":"[2] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)","Correlated References: ctx_0.ref_0, ctx_1.ref_0, ctx_1.ref_1"]},{"id":"1","label":"[1] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"7","label":"[7] Project [ref_0, ref_1, ref_2, ref_3, ref_4, ref_5, ref_6, ref_7, ref_8, ref_9, ref_10, ref_11, ref_12, ref_13, ref_14]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string"]}],"edges":[{"from":"0","to":"6","label":"input 0"},{"from":"6","to":"5","label":"input 0"},{"from":"6","to":"4","label":"input 1"},{"from":"4","to":"3","label":"input 0"},{"from":"4","to":"2","label":"input 1"},{"from":"2","to":"1","label":"input 0"},{"from":"7","to":"6","label":"input 0"},{"from":"6","to":"7","label":"TopProjectionRule"}]}
+final {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string"]},{"id":"7","label":"[7] Project [ref_0, ref_1, ref_2, ref_3, ref_4, ref_5, ref_6, ref_7, ref_8, ref_9, ref_10, ref_11, ref_12, ref_13, ref_14]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string"]},{"id":"6","label":"[6] Inner Apply parameters: [ref_3, ref_4]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string"]},{"id":"5","label":"[5] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"4","label":"[4] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Correlated References: ctx_0.ref_0, ctx_0.ref_1"]},{"id":"3","label":"[3] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"2","label":"[2] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)","Correlated References: ctx_0.ref_0, ctx_1.ref_0, ctx_1.ref_1"]},{"id":"1","label":"[1] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"0","to":"7","label":"input 0"},{"from":"7","to":"6","label":"input 0"},{"from":"6","to":"5","label":"input 0"},{"from":"6","to":"4","label":"input 1"},{"from":"4","to":"3","label":"input 0"},{"from":"4","to":"2","label":"input 1"},{"from":"2","to":"1","label":"input 0"}]}
 ----
 ----
 
@@ -300,72 +330,78 @@ run
 nested_apply_4
 ----
 ----
-[6] Project [ref_4, ref_6, ref_7]
+[0] QueryRoot
     - Num Columns: 3
     - Row Type: string, string, string
-  [5] Inner Apply parameters: [ref_3, ref_4]
-      - Num Columns: 15
-      - Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string
-    [4] TableScan id: 3
-        - Num Columns: 5
-        - Row Type: string, string, string, string, string
-    [3] Left Outer Apply parameters: [ref_1]
-        - Num Columns: 10
-        - Row Type: string, string, string, string, string, string, string, string, string, string
-        - Correlated References: ctx_0.ref_0, ctx_0.ref_1
-      [2] TableScan id: 2
+  [7] Project [ref_4, ref_6, ref_7]
+      - Num Columns: 3
+      - Row Type: string, string, string
+    [6] Inner Apply parameters: [ref_3, ref_4]
+        - Num Columns: 15
+        - Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string
+      [5] TableScan id: 3
           - Num Columns: 5
           - Row Type: string, string, string, string, string
-      [1] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)]
-          - Num Columns: 5
-          - Row Type: string, string, string, string, string
-          - Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)
-          - Correlated References: ctx_0.ref_0, ctx_1.ref_0, ctx_1.ref_1
-        [0] TableScan id: 1
+      [4] Left Outer Apply parameters: [ref_1]
+          - Num Columns: 10
+          - Row Type: string, string, string, string, string, string, string, string, string, string
+          - Correlated References: ctx_0.ref_0, ctx_0.ref_1
+        [3] TableScan id: 2
             - Num Columns: 5
             - Row Type: string, string, string, string, string
-
-
-Optimized:
-[10] Project [ref_1, ref_2, ref_3]
-    - Num Columns: 3
-    - Row Type: string, string, string
-  [9] Inner Apply parameters: [ref_3, ref_4]
-      - Num Columns: 4
-      - Row Type: string, string, string, string
-    [7] Project [ref_3, ref_4]
-        - Num Columns: 2
-        - Row Type: string, string
-      [4] TableScan id: 3
-          - Num Columns: 5
-          - Row Type: string, string, string, string, string
-    [13] Left Outer Apply parameters: [ref_1]
-        - Num Columns: 2
-        - Row Type: string, string
-        - Correlated References: ctx_0.ref_0, ctx_0.ref_1
-      [11] Project [ref_1, ref_2]
-          - Num Columns: 2
-          - Row Type: string, string
-        [2] TableScan id: 2
-            - Num Columns: 5
-            - Row Type: string, string, string, string, string
-      [12] Project []
-          - Num Columns: 0
-          - Row Type: 
-          - Correlated References: ctx_0.ref_0, ctx_1.ref_0, ctx_1.ref_1
-        [1] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)]
+        [2] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)]
             - Num Columns: 5
             - Row Type: string, string, string, string, string
             - Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)
             - Correlated References: ctx_0.ref_0, ctx_1.ref_0, ctx_1.ref_1
-          [0] TableScan id: 1
+          [1] TableScan id: 1
               - Num Columns: 5
               - Row Type: string, string, string, string, string
 
-initial {"nodes":[{"id":"6","label":"[6] Project [ref_4, ref_6, ref_7]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"5","label":"[5] Inner Apply parameters: [ref_3, ref_4]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string"]},{"id":"4","label":"[4] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"3","label":"[3] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Correlated References: ctx_0.ref_0, ctx_0.ref_1"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"1","label":"[1] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)","Correlated References: ctx_0.ref_0, ctx_1.ref_0, ctx_1.ref_1"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"6","to":"5","label":"input 0"},{"from":"5","to":"4","label":"input 0"},{"from":"5","to":"3","label":"input 1"},{"from":"3","to":"2","label":"input 0"},{"from":"3","to":"1","label":"input 1"},{"from":"1","to":"0","label":"input 0"}]}
-step ApplyPruningRule {"nodes":[{"id":"6","label":"[6] Project [ref_4, ref_6, ref_7]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"5","label":"[5] Inner Apply parameters: [ref_3, ref_4]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string"]},{"id":"4","label":"[4] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"3","label":"[3] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Correlated References: ctx_0.ref_0, ctx_0.ref_1"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"1","label":"[1] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)","Correlated References: ctx_0.ref_0, ctx_1.ref_0, ctx_1.ref_1"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"10","label":"[10] Project [ref_1, ref_2, ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"9","label":"[9] Inner Apply parameters: [ref_3, ref_4]","annotations":["Num Columns: 4","Row Type: string, string, string, string"]},{"id":"7","label":"[7] Project [ref_3, ref_4]","annotations":["Num Columns: 2","Row Type: string, string"]},{"id":"8","label":"[8] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0, ctx_0.ref_1"]}],"edges":[{"from":"6","to":"5","label":"input 0"},{"from":"5","to":"4","label":"input 0"},{"from":"5","to":"3","label":"input 1"},{"from":"3","to":"2","label":"input 0"},{"from":"3","to":"1","label":"input 1"},{"from":"1","to":"0","label":"input 0"},{"from":"10","to":"9","label":"input 0"},{"from":"9","to":"7","label":"input 0"},{"from":"9","to":"8","label":"input 1"},{"from":"7","to":"4","label":"input 0"},{"from":"8","to":"3","label":"input 0"},{"from":"6","to":"10","label":"ApplyPruningRule"}]}
-step ApplyPruningRule {"nodes":[{"id":"10","label":"[10] Project [ref_1, ref_2, ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"9","label":"[9] Inner Apply parameters: [ref_3, ref_4]","annotations":["Num Columns: 4","Row Type: string, string, string, string"]},{"id":"7","label":"[7] Project [ref_3, ref_4]","annotations":["Num Columns: 2","Row Type: string, string"]},{"id":"4","label":"[4] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"8","label":"[8] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0, ctx_0.ref_1"]},{"id":"3","label":"[3] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Correlated References: ctx_0.ref_0, ctx_0.ref_1"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"1","label":"[1] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)","Correlated References: ctx_0.ref_0, ctx_1.ref_0, ctx_1.ref_1"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"14","label":"[14] Project [ref_0, ref_1]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0, ctx_0.ref_1"]},{"id":"13","label":"[13] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0, ctx_0.ref_1"]},{"id":"11","label":"[11] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string"]},{"id":"12","label":"[12] Project []","annotations":["Num Columns: 0","Row Type: ","Correlated References: ctx_0.ref_0, ctx_1.ref_0, ctx_1.ref_1"]}],"edges":[{"from":"10","to":"9","label":"input 0"},{"from":"9","to":"7","label":"input 0"},{"from":"9","to":"8","label":"input 1"},{"from":"7","to":"4","label":"input 0"},{"from":"8","to":"3","label":"input 0"},{"from":"3","to":"2","label":"input 0"},{"from":"3","to":"1","label":"input 1"},{"from":"1","to":"0","label":"input 0"},{"from":"14","to":"13","label":"input 0"},{"from":"13","to":"11","label":"input 0"},{"from":"13","to":"12","label":"input 1"},{"from":"11","to":"2","label":"input 0"},{"from":"12","to":"1","label":"input 0"},{"from":"8","to":"14","label":"ApplyPruningRule"}]}
-step RemovePassthroughProjectRule {"nodes":[{"id":"10","label":"[10] Project [ref_1, ref_2, ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"9","label":"[9] Inner Apply parameters: [ref_3, ref_4]","annotations":["Num Columns: 4","Row Type: string, string, string, string"]},{"id":"7","label":"[7] Project [ref_3, ref_4]","annotations":["Num Columns: 2","Row Type: string, string"]},{"id":"4","label":"[4] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"14","label":"[14] Project [ref_0, ref_1]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0, ctx_0.ref_1"]},{"id":"13","label":"[13] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0, ctx_0.ref_1"]},{"id":"11","label":"[11] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"12","label":"[12] Project []","annotations":["Num Columns: 0","Row Type: ","Correlated References: ctx_0.ref_0, ctx_1.ref_0, ctx_1.ref_1"]},{"id":"1","label":"[1] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)","Correlated References: ctx_0.ref_0, ctx_1.ref_0, ctx_1.ref_1"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"10","to":"9","label":"input 0"},{"from":"9","to":"7","label":"input 0"},{"from":"9","to":"14","label":"input 1"},{"from":"7","to":"4","label":"input 0"},{"from":"14","to":"13","label":"input 0"},{"from":"13","to":"11","label":"input 0"},{"from":"13","to":"12","label":"input 1"},{"from":"11","to":"2","label":"input 0"},{"from":"12","to":"1","label":"input 0"},{"from":"1","to":"0","label":"input 0"},{"from":"14","to":"13","label":"RemovePassthroughProjectRule"}]}
-final {"nodes":[{"id":"10","label":"[10] Project [ref_1, ref_2, ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"9","label":"[9] Inner Apply parameters: [ref_3, ref_4]","annotations":["Num Columns: 4","Row Type: string, string, string, string"]},{"id":"7","label":"[7] Project [ref_3, ref_4]","annotations":["Num Columns: 2","Row Type: string, string"]},{"id":"4","label":"[4] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"13","label":"[13] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0, ctx_0.ref_1"]},{"id":"11","label":"[11] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string"]},{"id":"2","label":"[2] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"12","label":"[12] Project []","annotations":["Num Columns: 0","Row Type: ","Correlated References: ctx_0.ref_0, ctx_1.ref_0, ctx_1.ref_1"]},{"id":"1","label":"[1] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)","Correlated References: ctx_0.ref_0, ctx_1.ref_0, ctx_1.ref_1"]},{"id":"0","label":"[0] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"10","to":"9","label":"input 0"},{"from":"9","to":"7","label":"input 0"},{"from":"9","to":"13","label":"input 1"},{"from":"7","to":"4","label":"input 0"},{"from":"13","to":"11","label":"input 0"},{"from":"13","to":"12","label":"input 1"},{"from":"11","to":"2","label":"input 0"},{"from":"12","to":"1","label":"input 0"},{"from":"1","to":"0","label":"input 0"}]}
+
+Optimized:
+[0] QueryRoot
+    - Num Columns: 3
+    - Row Type: string, string, string
+  [11] Project [ref_1, ref_2, ref_3]
+      - Num Columns: 3
+      - Row Type: string, string, string
+    [10] Inner Apply parameters: [ref_3, ref_4]
+        - Num Columns: 4
+        - Row Type: string, string, string, string
+      [8] Project [ref_3, ref_4]
+          - Num Columns: 2
+          - Row Type: string, string
+        [5] TableScan id: 3
+            - Num Columns: 5
+            - Row Type: string, string, string, string, string
+      [14] Left Outer Apply parameters: [ref_1]
+          - Num Columns: 2
+          - Row Type: string, string
+          - Correlated References: ctx_0.ref_0, ctx_0.ref_1
+        [12] Project [ref_1, ref_2]
+            - Num Columns: 2
+            - Row Type: string, string
+          [3] TableScan id: 2
+              - Num Columns: 5
+              - Row Type: string, string, string, string, string
+        [13] Project []
+            - Num Columns: 0
+            - Row Type: 
+            - Correlated References: ctx_0.ref_0, ctx_1.ref_0, ctx_1.ref_1
+          [2] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)]
+              - Num Columns: 5
+              - Row Type: string, string, string, string, string
+              - Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)
+              - Correlated References: ctx_0.ref_0, ctx_1.ref_0, ctx_1.ref_1
+            [1] TableScan id: 1
+                - Num Columns: 5
+                - Row Type: string, string, string, string, string
+
+initial {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"7","label":"[7] Project [ref_4, ref_6, ref_7]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"6","label":"[6] Inner Apply parameters: [ref_3, ref_4]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string"]},{"id":"5","label":"[5] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"4","label":"[4] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Correlated References: ctx_0.ref_0, ctx_0.ref_1"]},{"id":"3","label":"[3] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"2","label":"[2] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)","Correlated References: ctx_0.ref_0, ctx_1.ref_0, ctx_1.ref_1"]},{"id":"1","label":"[1] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"0","to":"7","label":"input 0"},{"from":"7","to":"6","label":"input 0"},{"from":"6","to":"5","label":"input 0"},{"from":"6","to":"4","label":"input 1"},{"from":"4","to":"3","label":"input 0"},{"from":"4","to":"2","label":"input 1"},{"from":"2","to":"1","label":"input 0"}]}
+step ApplyPruningRule {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"7","label":"[7] Project [ref_4, ref_6, ref_7]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"6","label":"[6] Inner Apply parameters: [ref_3, ref_4]","annotations":["Num Columns: 15","Row Type: string, string, string, string, string, string, string, string, string, string, string, string, string, string, string"]},{"id":"5","label":"[5] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"4","label":"[4] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Correlated References: ctx_0.ref_0, ctx_0.ref_1"]},{"id":"3","label":"[3] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"2","label":"[2] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)","Correlated References: ctx_0.ref_0, ctx_1.ref_0, ctx_1.ref_1"]},{"id":"1","label":"[1] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"11","label":"[11] Project [ref_1, ref_2, ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"10","label":"[10] Inner Apply parameters: [ref_3, ref_4]","annotations":["Num Columns: 4","Row Type: string, string, string, string"]},{"id":"8","label":"[8] Project [ref_3, ref_4]","annotations":["Num Columns: 2","Row Type: string, string"]},{"id":"9","label":"[9] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0, ctx_0.ref_1"]}],"edges":[{"from":"0","to":"7","label":"input 0"},{"from":"7","to":"6","label":"input 0"},{"from":"6","to":"5","label":"input 0"},{"from":"6","to":"4","label":"input 1"},{"from":"4","to":"3","label":"input 0"},{"from":"4","to":"2","label":"input 1"},{"from":"2","to":"1","label":"input 0"},{"from":"11","to":"10","label":"input 0"},{"from":"10","to":"8","label":"input 0"},{"from":"10","to":"9","label":"input 1"},{"from":"8","to":"5","label":"input 0"},{"from":"9","to":"4","label":"input 0"},{"from":"7","to":"11","label":"ApplyPruningRule"}]}
+step ApplyPruningRule {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"11","label":"[11] Project [ref_1, ref_2, ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"10","label":"[10] Inner Apply parameters: [ref_3, ref_4]","annotations":["Num Columns: 4","Row Type: string, string, string, string"]},{"id":"8","label":"[8] Project [ref_3, ref_4]","annotations":["Num Columns: 2","Row Type: string, string"]},{"id":"5","label":"[5] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"9","label":"[9] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0, ctx_0.ref_1"]},{"id":"4","label":"[4] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 10","Row Type: string, string, string, string, string, string, string, string, string, string","Correlated References: ctx_0.ref_0, ctx_0.ref_1"]},{"id":"3","label":"[3] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"2","label":"[2] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)","Correlated References: ctx_0.ref_0, ctx_1.ref_0, ctx_1.ref_1"]},{"id":"1","label":"[1] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"15","label":"[15] Project [ref_0, ref_1]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0, ctx_0.ref_1"]},{"id":"14","label":"[14] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0, ctx_0.ref_1"]},{"id":"12","label":"[12] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string"]},{"id":"13","label":"[13] Project []","annotations":["Num Columns: 0","Row Type: ","Correlated References: ctx_0.ref_0, ctx_1.ref_0, ctx_1.ref_1"]}],"edges":[{"from":"0","to":"11","label":"input 0"},{"from":"11","to":"10","label":"input 0"},{"from":"10","to":"8","label":"input 0"},{"from":"10","to":"9","label":"input 1"},{"from":"8","to":"5","label":"input 0"},{"from":"9","to":"4","label":"input 0"},{"from":"4","to":"3","label":"input 0"},{"from":"4","to":"2","label":"input 1"},{"from":"2","to":"1","label":"input 0"},{"from":"15","to":"14","label":"input 0"},{"from":"14","to":"12","label":"input 0"},{"from":"14","to":"13","label":"input 1"},{"from":"12","to":"3","label":"input 0"},{"from":"13","to":"2","label":"input 0"},{"from":"9","to":"15","label":"ApplyPruningRule"}]}
+step RemovePassthroughProjectRule {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"11","label":"[11] Project [ref_1, ref_2, ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"10","label":"[10] Inner Apply parameters: [ref_3, ref_4]","annotations":["Num Columns: 4","Row Type: string, string, string, string"]},{"id":"8","label":"[8] Project [ref_3, ref_4]","annotations":["Num Columns: 2","Row Type: string, string"]},{"id":"5","label":"[5] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"15","label":"[15] Project [ref_0, ref_1]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0, ctx_0.ref_1"]},{"id":"14","label":"[14] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0, ctx_0.ref_1"]},{"id":"12","label":"[12] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string"]},{"id":"3","label":"[3] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"13","label":"[13] Project []","annotations":["Num Columns: 0","Row Type: ","Correlated References: ctx_0.ref_0, ctx_1.ref_0, ctx_1.ref_1"]},{"id":"2","label":"[2] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)","Correlated References: ctx_0.ref_0, ctx_1.ref_0, ctx_1.ref_1"]},{"id":"1","label":"[1] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"0","to":"11","label":"input 0"},{"from":"11","to":"10","label":"input 0"},{"from":"10","to":"8","label":"input 0"},{"from":"10","to":"15","label":"input 1"},{"from":"8","to":"5","label":"input 0"},{"from":"15","to":"14","label":"input 0"},{"from":"14","to":"12","label":"input 0"},{"from":"14","to":"13","label":"input 1"},{"from":"12","to":"3","label":"input 0"},{"from":"13","to":"2","label":"input 0"},{"from":"2","to":"1","label":"input 0"},{"from":"15","to":"14","label":"RemovePassthroughProjectRule"}]}
+final {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"11","label":"[11] Project [ref_1, ref_2, ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"10","label":"[10] Inner Apply parameters: [ref_3, ref_4]","annotations":["Num Columns: 4","Row Type: string, string, string, string"]},{"id":"8","label":"[8] Project [ref_3, ref_4]","annotations":["Num Columns: 2","Row Type: string, string"]},{"id":"5","label":"[5] TableScan id: 3","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"14","label":"[14] Left Outer Apply parameters: [ref_1]","annotations":["Num Columns: 2","Row Type: string, string","Correlated References: ctx_0.ref_0, ctx_0.ref_1"]},{"id":"12","label":"[12] Project [ref_1, ref_2]","annotations":["Num Columns: 2","Row Type: string, string"]},{"id":"3","label":"[3] TableScan id: 2","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"13","label":"[13] Project []","annotations":["Num Columns: 0","Row Type: ","Correlated References: ctx_0.ref_0, ctx_1.ref_0, ctx_1.ref_1"]},{"id":"2","label":"[2] Filter [eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: eq(ref_0, ctx_0.ref_0), eq(ref_1, ctx_1.ref_0), eq(ref_2, ctx_1.ref_1)","Correlated References: ctx_0.ref_0, ctx_1.ref_0, ctx_1.ref_1"]},{"id":"1","label":"[1] TableScan id: 1","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"0","to":"11","label":"input 0"},{"from":"11","to":"10","label":"input 0"},{"from":"10","to":"8","label":"input 0"},{"from":"10","to":"14","label":"input 1"},{"from":"8","to":"5","label":"input 0"},{"from":"14","to":"12","label":"input 0"},{"from":"14","to":"13","label":"input 1"},{"from":"12","to":"3","label":"input 0"},{"from":"13","to":"2","label":"input 0"},{"from":"2","to":"1","label":"input 0"}]}
 ----
 ----

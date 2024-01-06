@@ -79,6 +79,13 @@ impl RowType {
         node_id: NodeId,
     ) -> Rc<Vec<DataType>> {
         match query_graph.node(node_id) {
+            QueryNode::QueryRoot { input } => {
+                if let Some(input) = input {
+                    self.row_type_unchecked(query_graph, *input)
+                } else {
+                    Default::default()
+                }
+            }
             QueryNode::Project { outputs, input } => {
                 let input_row_type = self.row_type_unchecked(query_graph, *input);
                 outputs

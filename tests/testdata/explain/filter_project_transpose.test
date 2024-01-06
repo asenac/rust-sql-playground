@@ -2,35 +2,43 @@ run
 filter_project_transpose_1
 ----
 ----
-[2] Filter [gt(ref_2, ref_1)]
+[0] QueryRoot
     - Num Columns: 3
     - Row Type: string, string, string
     - Pulled Up Predicates: gt(ref_2, ref_1)
-  [1] Project [ref_4, ref_2, ref_3]
+  [3] Filter [gt(ref_2, ref_1)]
       - Num Columns: 3
       - Row Type: string, string, string
-    [0] TableScan id: 0
-        - Num Columns: 5
-        - Row Type: string, string, string, string, string
+      - Pulled Up Predicates: gt(ref_2, ref_1)
+    [2] Project [ref_4, ref_2, ref_3]
+        - Num Columns: 3
+        - Row Type: string, string, string
+      [1] TableScan id: 0
+          - Num Columns: 5
+          - Row Type: string, string, string, string, string
 
 
 Optimized:
-[5] Project [ref_4, ref_2, ref_3]
+[0] QueryRoot
     - Num Columns: 3
     - Row Type: string, string, string
     - Pulled Up Predicates: gt(ref_2, ref_1)
-  [4] Filter [gt(ref_3, ref_2)]
-      - Num Columns: 5
-      - Row Type: string, string, string, string, string
-      - Pulled Up Predicates: gt(ref_3, ref_2)
-    [0] TableScan id: 0
+  [6] Project [ref_4, ref_2, ref_3]
+      - Num Columns: 3
+      - Row Type: string, string, string
+      - Pulled Up Predicates: gt(ref_2, ref_1)
+    [5] Filter [gt(ref_3, ref_2)]
         - Num Columns: 5
         - Row Type: string, string, string, string, string
+        - Pulled Up Predicates: gt(ref_3, ref_2)
+      [1] TableScan id: 0
+          - Num Columns: 5
+          - Row Type: string, string, string, string, string
 
-initial {"nodes":[{"id":"2","label":"[2] Filter [gt(ref_2, ref_1)]","annotations":["Num Columns: 3","Row Type: string, string, string","Pulled Up Predicates: gt(ref_2, ref_1)"]},{"id":"1","label":"[1] Project [ref_4, ref_2, ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"0","label":"[0] TableScan id: 0","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"2","to":"1","label":"input 0"},{"from":"1","to":"0","label":"input 0"}]}
-step TopProjectionRule {"nodes":[{"id":"2","label":"[2] Filter [gt(ref_2, ref_1)]","annotations":["Num Columns: 3","Row Type: string, string, string","Pulled Up Predicates: gt(ref_2, ref_1)"]},{"id":"1","label":"[1] Project [ref_4, ref_2, ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"0","label":"[0] TableScan id: 0","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"3","label":"[3] Project [ref_0, ref_1, ref_2]","annotations":["Num Columns: 3","Row Type: string, string, string","Pulled Up Predicates: gt(ref_2, ref_1)"]}],"edges":[{"from":"2","to":"1","label":"input 0"},{"from":"1","to":"0","label":"input 0"},{"from":"3","to":"2","label":"input 0"},{"from":"2","to":"3","label":"TopProjectionRule"}]}
-step FilterProjectTransposeRule {"nodes":[{"id":"3","label":"[3] Project [ref_0, ref_1, ref_2]","annotations":["Num Columns: 3","Row Type: string, string, string","Pulled Up Predicates: gt(ref_2, ref_1)"]},{"id":"2","label":"[2] Filter [gt(ref_2, ref_1)]","annotations":["Num Columns: 3","Row Type: string, string, string","Pulled Up Predicates: gt(ref_2, ref_1)"]},{"id":"1","label":"[1] Project [ref_4, ref_2, ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"0","label":"[0] TableScan id: 0","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"5","label":"[5] Project [ref_4, ref_2, ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string","Pulled Up Predicates: gt(ref_2, ref_1)"]},{"id":"4","label":"[4] Filter [gt(ref_3, ref_2)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: gt(ref_3, ref_2)"]}],"edges":[{"from":"3","to":"2","label":"input 0"},{"from":"2","to":"1","label":"input 0"},{"from":"1","to":"0","label":"input 0"},{"from":"5","to":"4","label":"input 0"},{"from":"4","to":"0","label":"input 0"},{"from":"2","to":"5","label":"FilterProjectTransposeRule"}]}
-step ProjectMergeRule {"nodes":[{"id":"3","label":"[3] Project [ref_0, ref_1, ref_2]","annotations":["Num Columns: 3","Row Type: string, string, string","Pulled Up Predicates: gt(ref_2, ref_1)"]},{"id":"5","label":"[5] Project [ref_4, ref_2, ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string","Pulled Up Predicates: gt(ref_2, ref_1)"]},{"id":"4","label":"[4] Filter [gt(ref_3, ref_2)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: gt(ref_3, ref_2)"]},{"id":"0","label":"[0] TableScan id: 0","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"3","to":"5","label":"input 0"},{"from":"5","to":"4","label":"input 0"},{"from":"4","to":"0","label":"input 0"},{"from":"3","to":"5","label":"ProjectMergeRule"}]}
-final {"nodes":[{"id":"5","label":"[5] Project [ref_4, ref_2, ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string","Pulled Up Predicates: gt(ref_2, ref_1)"]},{"id":"4","label":"[4] Filter [gt(ref_3, ref_2)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: gt(ref_3, ref_2)"]},{"id":"0","label":"[0] TableScan id: 0","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"5","to":"4","label":"input 0"},{"from":"4","to":"0","label":"input 0"}]}
+initial {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 3","Row Type: string, string, string","Pulled Up Predicates: gt(ref_2, ref_1)"]},{"id":"3","label":"[3] Filter [gt(ref_2, ref_1)]","annotations":["Num Columns: 3","Row Type: string, string, string","Pulled Up Predicates: gt(ref_2, ref_1)"]},{"id":"2","label":"[2] Project [ref_4, ref_2, ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"1","label":"[1] TableScan id: 0","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"0","to":"3","label":"input 0"},{"from":"3","to":"2","label":"input 0"},{"from":"2","to":"1","label":"input 0"}]}
+step TopProjectionRule {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 3","Row Type: string, string, string","Pulled Up Predicates: gt(ref_2, ref_1)"]},{"id":"3","label":"[3] Filter [gt(ref_2, ref_1)]","annotations":["Num Columns: 3","Row Type: string, string, string","Pulled Up Predicates: gt(ref_2, ref_1)"]},{"id":"2","label":"[2] Project [ref_4, ref_2, ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"1","label":"[1] TableScan id: 0","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"4","label":"[4] Project [ref_0, ref_1, ref_2]","annotations":["Num Columns: 3","Row Type: string, string, string","Pulled Up Predicates: gt(ref_2, ref_1)"]}],"edges":[{"from":"0","to":"3","label":"input 0"},{"from":"3","to":"2","label":"input 0"},{"from":"2","to":"1","label":"input 0"},{"from":"4","to":"3","label":"input 0"},{"from":"3","to":"4","label":"TopProjectionRule"}]}
+step FilterProjectTransposeRule {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 3","Row Type: string, string, string","Pulled Up Predicates: gt(ref_2, ref_1)"]},{"id":"4","label":"[4] Project [ref_0, ref_1, ref_2]","annotations":["Num Columns: 3","Row Type: string, string, string","Pulled Up Predicates: gt(ref_2, ref_1)"]},{"id":"3","label":"[3] Filter [gt(ref_2, ref_1)]","annotations":["Num Columns: 3","Row Type: string, string, string","Pulled Up Predicates: gt(ref_2, ref_1)"]},{"id":"2","label":"[2] Project [ref_4, ref_2, ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string"]},{"id":"1","label":"[1] TableScan id: 0","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]},{"id":"6","label":"[6] Project [ref_4, ref_2, ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string","Pulled Up Predicates: gt(ref_2, ref_1)"]},{"id":"5","label":"[5] Filter [gt(ref_3, ref_2)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: gt(ref_3, ref_2)"]}],"edges":[{"from":"0","to":"4","label":"input 0"},{"from":"4","to":"3","label":"input 0"},{"from":"3","to":"2","label":"input 0"},{"from":"2","to":"1","label":"input 0"},{"from":"6","to":"5","label":"input 0"},{"from":"5","to":"1","label":"input 0"},{"from":"3","to":"6","label":"FilterProjectTransposeRule"}]}
+step ProjectMergeRule {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 3","Row Type: string, string, string","Pulled Up Predicates: gt(ref_2, ref_1)"]},{"id":"4","label":"[4] Project [ref_0, ref_1, ref_2]","annotations":["Num Columns: 3","Row Type: string, string, string","Pulled Up Predicates: gt(ref_2, ref_1)"]},{"id":"6","label":"[6] Project [ref_4, ref_2, ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string","Pulled Up Predicates: gt(ref_2, ref_1)"]},{"id":"5","label":"[5] Filter [gt(ref_3, ref_2)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: gt(ref_3, ref_2)"]},{"id":"1","label":"[1] TableScan id: 0","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"0","to":"4","label":"input 0"},{"from":"4","to":"6","label":"input 0"},{"from":"6","to":"5","label":"input 0"},{"from":"5","to":"1","label":"input 0"},{"from":"4","to":"6","label":"ProjectMergeRule"}]}
+final {"nodes":[{"id":"0","label":"[0] QueryRoot","annotations":["Num Columns: 3","Row Type: string, string, string","Pulled Up Predicates: gt(ref_2, ref_1)"]},{"id":"6","label":"[6] Project [ref_4, ref_2, ref_3]","annotations":["Num Columns: 3","Row Type: string, string, string","Pulled Up Predicates: gt(ref_2, ref_1)"]},{"id":"5","label":"[5] Filter [gt(ref_3, ref_2)]","annotations":["Num Columns: 5","Row Type: string, string, string, string, string","Pulled Up Predicates: gt(ref_3, ref_2)"]},{"id":"1","label":"[1] TableScan id: 0","annotations":["Num Columns: 5","Row Type: string, string, string, string, string"]}],"edges":[{"from":"0","to":"6","label":"input 0"},{"from":"6","to":"5","label":"input 0"},{"from":"5","to":"1","label":"input 0"}]}
 ----
 ----

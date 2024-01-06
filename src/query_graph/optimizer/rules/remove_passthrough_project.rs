@@ -15,6 +15,13 @@ impl SingleReplacementRule for RemovePassthroughProjectRule {
     }
 
     fn apply(&self, query_graph: &mut QueryGraph, node_id: NodeId) -> Option<NodeId> {
+        if query_graph
+            .get_parents(node_id)
+            .map(|parents| parents.contains(&QueryGraph::ROOT_NODE_ID))
+            .unwrap_or(false)
+        {
+            return None;
+        }
         if let QueryNode::Project { outputs, input } = query_graph.node(node_id) {
             if query_graph.num_parents(node_id) > 0
                 && outputs.len() == num_columns(query_graph, *input)
