@@ -509,6 +509,22 @@ impl RewritableExpr for ExtendedScalarExpr {
                     }),
                 },
             },
+            ExtendedScalarExpr::BaseColumn { index, data_type } => ExtendedScalarExpr::BaseColumn {
+                index: *index,
+                data_type: data_type.clone(),
+            },
+            ExtendedScalarExpr::NormalizedVariable { input, .. } => {
+                ExtendedScalarExpr::NormalizedVariable {
+                    input: *input,
+                    expr: inputs[0].clone(),
+                }
+            }
+            ExtendedScalarExpr::NormalizedCorrelatedVariable { context_offset, .. } => {
+                ExtendedScalarExpr::NormalizedCorrelatedVariable {
+                    context_offset: *context_offset,
+                    expr: inputs[0].clone(),
+                }
+            }
         }
         .into()
     }

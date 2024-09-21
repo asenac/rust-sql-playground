@@ -20,6 +20,7 @@ use self::properties::{subgraph_subqueries, subqueries, PropertyCache};
 pub mod cloner;
 pub mod explain;
 pub mod json;
+pub mod normalized_ir;
 pub mod optimizer;
 pub mod properties;
 pub mod visitor;

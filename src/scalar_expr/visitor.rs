@@ -234,6 +234,9 @@ impl VisitableExpr for ExtendedScalarExpr {
                     .unwrap_or(0)
             }
             ExtendedScalarExpr::CorrelatedInputRef { .. } => 0,
+            ExtendedScalarExpr::BaseColumn { .. } => 0,
+            ExtendedScalarExpr::NormalizedVariable { .. } => 1,
+            ExtendedScalarExpr::NormalizedCorrelatedVariable { .. } => 1,
         }
     }
 
@@ -267,6 +270,9 @@ impl VisitableExpr for ExtendedScalarExpr {
                     subquery.correlation.as_ref().unwrap().parameters[input_idx - 1].clone()
                 }
             }
+            ExtendedScalarExpr::BaseColumn { .. } => panic!(),
+            ExtendedScalarExpr::NormalizedVariable { expr, .. }
+            | ExtendedScalarExpr::NormalizedCorrelatedVariable { expr, .. } => expr.clone(),
         }
     }
 }

@@ -476,6 +476,18 @@ pub enum ExtendedScalarExpr {
         index: usize,
         data_type: DataType,
     },
+    BaseColumn {
+        index: usize,
+        data_type: DataType,
+    },
+    NormalizedVariable {
+        input: usize,
+        expr: Rc<ExtendedScalarExpr>,
+    },
+    NormalizedCorrelatedVariable {
+        context_offset: usize,
+        expr: Rc<ExtendedScalarExpr>,
+    },
 }
 
 pub type ExtendedScalarExprRef = Rc<ExtendedScalarExpr>;
@@ -522,6 +534,9 @@ impl ExtendedScalarExpr {
             ExtendedScalarExpr::ExistsSubquery { .. } => DataType::Bool,
             ExtendedScalarExpr::ScalarSubqueryCmp { .. } => DataType::Bool,
             ExtendedScalarExpr::CorrelatedInputRef { data_type, .. } => data_type.clone(),
+            ExtendedScalarExpr::BaseColumn { data_type, .. } => data_type.clone(),
+            ExtendedScalarExpr::NormalizedVariable { .. }
+            | ExtendedScalarExpr::NormalizedCorrelatedVariable { .. } => operand_types[0].clone(),
         }
     }
 }
@@ -559,10 +574,6 @@ impl ToScalarExpr for Rc<ExtendedScalarExpr> {
                     };
                     stack.truncate(stack.len() - operands.len());
                     expr
-                }
-                ExtendedScalarExpr::Aggregate { .. } => {
-                    stack.clear();
-                    return PostOrderVisitationResult::Abort;
                 }
                 ExtendedScalarExpr::ScalarSubquery { subquery } => {
                     let operands = stack[stack.len()
@@ -647,6 +658,13 @@ impl ToScalarExpr for Rc<ExtendedScalarExpr> {
                     index: *index,
                     data_type: data_type.clone(),
                 },
+                ExtendedScalarExpr::Aggregate { .. }
+                | ExtendedScalarExpr::BaseColumn { .. }
+                | ExtendedScalarExpr::NormalizedVariable { .. }
+                | ExtendedScalarExpr::NormalizedCorrelatedVariable { .. } => {
+                    stack.clear();
+                    return PostOrderVisitationResult::Abort;
+                }
             };
             stack.push(extended_expr.into());
             PostOrderVisitationResult::Continue
