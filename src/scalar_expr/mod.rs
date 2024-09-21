@@ -488,6 +488,9 @@ pub enum ExtendedScalarExpr {
         context_offset: usize,
         expr: Rc<ExtendedScalarExpr>,
     },
+    NormalizedUnion {
+        exprs: Vec<Rc<ExtendedScalarExpr>>,
+    },
 }
 
 pub type ExtendedScalarExprRef = Rc<ExtendedScalarExpr>;
@@ -536,6 +539,7 @@ impl ExtendedScalarExpr {
             ExtendedScalarExpr::CorrelatedInputRef { data_type, .. } => data_type.clone(),
             ExtendedScalarExpr::BaseColumn { data_type, .. } => data_type.clone(),
             ExtendedScalarExpr::NormalizedVariable { .. }
+            | ExtendedScalarExpr::NormalizedUnion { .. }
             | ExtendedScalarExpr::NormalizedCorrelatedVariable { .. } => operand_types[0].clone(),
         }
     }
@@ -661,6 +665,7 @@ impl ToScalarExpr for Rc<ExtendedScalarExpr> {
                 ExtendedScalarExpr::Aggregate { .. }
                 | ExtendedScalarExpr::BaseColumn { .. }
                 | ExtendedScalarExpr::NormalizedVariable { .. }
+                | ExtendedScalarExpr::NormalizedUnion { .. }
                 | ExtendedScalarExpr::NormalizedCorrelatedVariable { .. } => {
                     stack.clear();
                     return PostOrderVisitationResult::Abort;

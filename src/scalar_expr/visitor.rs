@@ -237,6 +237,7 @@ impl VisitableExpr for ExtendedScalarExpr {
             ExtendedScalarExpr::BaseColumn { .. } => 0,
             ExtendedScalarExpr::NormalizedVariable { .. } => 1,
             ExtendedScalarExpr::NormalizedCorrelatedVariable { .. } => 1,
+            ExtendedScalarExpr::NormalizedUnion { exprs } => exprs.len(),
         }
     }
 
@@ -273,6 +274,7 @@ impl VisitableExpr for ExtendedScalarExpr {
             ExtendedScalarExpr::BaseColumn { .. } => panic!(),
             ExtendedScalarExpr::NormalizedVariable { expr, .. }
             | ExtendedScalarExpr::NormalizedCorrelatedVariable { expr, .. } => expr.clone(),
+            ExtendedScalarExpr::NormalizedUnion { exprs } => exprs[input_idx].clone(),
         }
     }
 }

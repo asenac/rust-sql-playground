@@ -525,6 +525,9 @@ impl RewritableExpr for ExtendedScalarExpr {
                     expr: inputs[0].clone(),
                 }
             }
+            ExtendedScalarExpr::NormalizedUnion { .. } => ExtendedScalarExpr::NormalizedUnion {
+                exprs: inputs.to_vec(),
+            },
         }
         .into()
     }
